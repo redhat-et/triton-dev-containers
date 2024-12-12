@@ -41,5 +41,10 @@ triton-image: image-builder-check ## Build the triton devcontainer image
  --build-arg NPROC=${NPROC}  --build-arg INSTALL_CUDNN=true  -f Dockerfile.triton .
 
 triton-run: image-builder-check ## Run the triton devcontainer image
-	$(CTR_CMD) run --runtime=nvidia --gpus=all -ti  -v ${triton_path}:/triton $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash
+	@if [ "${triton_path}" != "${source_dir}" ]; then \
+		volume_arg="-v ${triton_path}:/triton"; \
+	else \
+		volume_arg=""; \
+	fi; \
+	$(CTR_CMD) run --runtime=nvidia --gpus=all -ti $$volume_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash
 
