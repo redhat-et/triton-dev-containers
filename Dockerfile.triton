@@ -94,7 +94,7 @@ RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel &&
     dnf clean all
 RUN pip install --upgrade pip
 RUN pip install pre-commit
-RUN pip install numpy matplotlib pandas tabulate scipy
+RUN pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11 nvidia-cudnn-cu12
 COPY --from=triton-build /wheelhouse /wheelhouse
 RUN pip install --no-cache-dir /wheelhouse/*.whl
 COPY --from=pytorch-build /pytorch/dist /pytorch/dist
