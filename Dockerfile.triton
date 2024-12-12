@@ -51,42 +51,6 @@ ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1
 
-FROM base AS triton-build
-RUN git clone https://github.com/triton-lang/triton.git /triton
-WORKDIR /triton
-RUN git submodule init
-RUN git submodule update
-# Install dependencies
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install ninja cmake wheel pybind11
-RUN if [[ "$INSTALL_CUDNN" == "true" ]]; then \
-	python3 -m pip install nvidia-cudnn-cu12; \
-fi
-
-# Conditionally set the env vars based on CUSTOM_LLVM
-RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-    echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
-    echo "export LLVM_INCLUDE_DIRS=/llvm-project/build /include" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_LIBRARY_DIR=/llvm-project/build /lib" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_SYSPATH=/llvm-project/build " >> "${HOME}/.bashrc"; \
-fi
-
-RUN pip wheel --wheel-dir=/wheelhouse -e python
-
-FROM base AS pytorch-build
-RUN git clone --recursive https://github.com/pytorch/pytorch.git /pytorch
-WORKDIR /pytorch
-RUN pip install -r requirements.txt
-RUN pip install ninja cmake rust mkl-static mkl-include
-COPY --from=triton-build /wheelhouse /wheelhouse
-RUN pip install /wheelhouse/*.whl
-ENV USE_CUDA=1 \
-    BUILD_TEST=0 \
-    TRITON_PATH="/opt/app-root/lib64/python3.12/site-packages/triton"
-RUN python setup.py clean
-RUN python setup.py bdist_wheel
-
 FROM base AS triton-dev
 RUN git clone https://github.com/triton-lang/triton.git /triton
 WORKDIR /triton
@@ -95,10 +59,6 @@ RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel &&
 RUN pip install --upgrade pip
 RUN pip install pre-commit
 RUN pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11 nvidia-cudnn-cu12
-COPY --from=triton-build /wheelhouse /wheelhouse
-RUN pip install --no-cache-dir /wheelhouse/*.whl
-COPY --from=pytorch-build /pytorch/dist /pytorch/dist
-RUN pip install --no-cache-dir /pytorch/dist/*.whl
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY entrypoint.sh /entrypoint.sh
