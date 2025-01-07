@@ -14,6 +14,7 @@ all building and running tasks isolated within the container.
 > **_NOTE_**: If you are using an NVIDIA GPU, you also need to complete the steps
   to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
+> **_NOTE_**: NVIDIA Container Toolkit is not required for `triton-cpu`.
 
 ## Building the triton devcontainer
 
@@ -25,4 +26,16 @@ all building and running tasks isolated within the container.
 
 ```sh
  make triton-run triton_path=<path-to-triton-on-host>
+```
+
+## Building the triton-cpu devcontainer
+
+```sh
+ make triton-cpu-build
+```
+
+## Running the triton-cpu  devcontainer
+
+```sh
+ make triton-cpu-run triton_path=<path-to-triton-cpu-on-host>
 ```

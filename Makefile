@@ -27,6 +27,7 @@ NPROC=$(shell nproc)
 CUSTOM_LLVM?=false
 IMAGE_REPO ?= quay.io/mtahhan
 IMAGE_NAME ?= triton
+CPU_IMAGE_NAME ?= triton-cpu
 TRITON_TAG         ?= devcontainer-latest
 export CTR_CMD?=$(or $(shell command -v podman), $(shell command -v docker))
 
@@ -40,6 +41,10 @@ triton-image: image-builder-check ## Build the triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USER} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
  --build-arg NPROC=${NPROC}  --build-arg INSTALL_CUDNN=true  -f Dockerfile.triton .
 
+ triton-cpu-image: image-builder-check ## Build the triton-cpu devcontainer image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USER} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
+ --build-arg NPROC=${NPROC}  --build-arg INSTALL_CUDNN=true  -f Dockerfile.triton-cpu .
+
 triton-run: image-builder-check ## Run the triton devcontainer image
 	@if [ "${triton_path}" != "${source_dir}" ]; then \
 		volume_arg="-v ${triton_path}:/triton"; \
@@ -48,3 +53,10 @@ triton-run: image-builder-check ## Run the triton devcontainer image
 	fi; \
 	$(CTR_CMD) run --runtime=nvidia --gpus=all -ti $$volume_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash
 
+triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
+	@if [ "${triton_path}" != "${source_dir}" ]; then \
+		volume_arg="-v ${triton_path}:/triton-cpu"; \
+	else \
+		volume_arg=""; \
+	fi; \
+	$(CTR_CMD) run -ti $$volume_arg $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash

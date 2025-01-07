@@ -25,7 +25,7 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
         git clone https://github.com/llvm/llvm-project && \
         cd llvm-project && \
-        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
+        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton-cpu/refs/heads/main/cmake/llvm-hash.txt) &&\
         git checkout $COMMIT && \
         mkdir build && \
         cd build && \
@@ -40,7 +40,6 @@ ARG USERNAME=1001
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ARG CUSTOM_LLVM
-ARG INSTALL_CUDNN
 
 USER 0
 COPY user.sh user.sh
@@ -65,15 +64,16 @@ FROM llvm-local-${CUSTOM_LLVM} AS final
 
 ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TRITON_CPU_BACKEND=1
 
-RUN git clone https://github.com/triton-lang/triton.git /triton
-WORKDIR /triton
+RUN git clone https://github.com/triton-lang/triton-cpu.git /triton-cpu
+WORKDIR /triton-cpu
 RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
     dnf clean all
 RUN pip install --upgrade pip
 RUN pip install pre-commit
-RUN pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11 nvidia-cudnn-cu12
+RUN pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY entrypoint.sh /entrypoint.sh
