@@ -9,6 +9,17 @@ and with GitHub Codespaces for cloud-based workflows.
 
 Copy the `.devcontainer` folder to your triton directotry.
 
+OR
+
+```
+git clone -n --depth=1 --filter=tree:0 https://github.com/maryamtahhan/triton-dev-container/ .devcontainer
+cd .devcontainer
+git sparse-checkout set --no-cone .devcontainer/triton
+git checkout
+mv .devcontainer/triton ./
+rm -rf .devcontainer/ .git
+```
+
 ## Prerequisites
 
 * **VSCode**
