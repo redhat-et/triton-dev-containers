@@ -5,11 +5,15 @@ configured with all the tools needed to build and run Triton. The Dev
 Container setup is compatible with local development in Visual Studio Code
 and with GitHub Codespaces for cloud-based workflows.
 
+## How to use these containers?
+
+Copy the `.devcontainer` folder to your triton directotry.
+
 ## Prerequisites
 
 * **VSCode**
 * **Docker**
-* **NVIDIA Container Toolkit for GPU Usage**
+* **NVIDIA Container Toolkit for GPU Usage** (not needed for triton-cpu)
 * **VSCode Dev Containers Extension**
 
 > **_NOTE_**: Details of the Dev Container prerequisites can be found
