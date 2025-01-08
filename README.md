@@ -8,8 +8,8 @@ all building and running tasks isolated within the container.
 
 ## Prerequisites
 
-* **Docker** or **Podman**
-* **NVIDIA Container Toolkit for GPU Usage**
+- **Docker** or **Podman**
+- **NVIDIA Container Toolkit for GPU Usage**
 
 > **_NOTE_**: If you are using an NVIDIA GPU, you also need to complete the steps
   to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).

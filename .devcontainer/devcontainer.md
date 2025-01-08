@@ -1,9 +1,9 @@
 # Device Containers Getting Started Guide
 
 This guide will walk you through using a [Development Container](https://containers.dev/)
-configured with all the tools needed to build and run Triton (or Triton-CPU). The Dev
-Container setup is compatible with local development in Visual Studio Code
-and with GitHub Codespaces for cloud-based workflows.
+configured with all the tools needed to build and run Triton (or Triton-CPU).
+The Dev Container setup is compatible with local development in Visual Studio
+Code and with GitHub Codespaces for cloud-based workflows.
 
 ## How to use these containers?
 
@@ -24,18 +24,18 @@ rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 
 ## Prerequisites
 
-* **VSCode**
-* **Docker**
-* **NVIDIA Container Toolkit for GPU Usage** (not needed for triton-cpu)
-* **VSCode Dev Containers Extension**
+- **VSCode**
+- **Docker**
+- **NVIDIA Container Toolkit for GPU Usage** (not needed for triton-cpu)
+- **VSCode Dev Containers Extension**
 
 > **_NOTE_**: Details of the Dev Container prerequisites can be found
-[here](https://code.visualstudio.com/docs/devcontainers/tutorial#_prerequisites).
+  [here](https://code.visualstudio.com/docs/devcontainers/tutorial#_prerequisites).
 
 > **_NOTE_**: If you are using an NVIDIA GPU, you also need to complete the steps
   to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
-## Basic Workflow:
+## Basic Workflow
 
 1. Dev Container Configuration: `.devcontainer/triton/devcontainer.json`
    file is set up with configuration details: the Docker image to use,
@@ -59,8 +59,8 @@ in project in a Dev Container.
 ![reopen-in-container](./gsg/images/reopen-in-container.png)
 
 If the pop up doesn't appear, the container can be launched by accessing the
-Visual Studio Code Command Palette and looking for the: `Dev Containers: Reopen in Container`
-option as shown below.
+Visual Studio Code Command Palette and looking for the:
+`Dev Containers: Reopen in Container` option as shown below.
 
 ![reopen-in-container](./gsg/images/rebuild-container.png)
 
@@ -93,7 +93,7 @@ Use GitHub Codespaces for cloud-based development with the same Dev Container co
 3. Edit the Branch, the Dev Container configuration (Triton), GPU and CPU settings.
 
 4. Click the Button to `Create codespace`.
-  > **_NOTE_**: This step can take a few minutes to complete.
+   > **_NOTE_**: This step can take a few minutes to complete.
 
 When the codespace is available the Triton tutorials can be run as follows:
 
