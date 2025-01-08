@@ -1,23 +1,25 @@
 # Device Containers Getting Started Guide
 
 This guide will walk you through using a [Development Container](https://containers.dev/)
-configured with all the tools needed to build and run Triton. The Dev
+configured with all the tools needed to build and run Triton (or Triton-CPU). The Dev
 Container setup is compatible with local development in Visual Studio Code
 and with GitHub Codespaces for cloud-based workflows.
 
 ## How to use these containers?
 
-Copy the `.devcontainer` folder to your triton directotry.
+Copy the `.devcontainer` folder to your triton directory.
 
 OR
 
-```
+In your triton directory:
+
+```sh
 git clone -n --depth=1 --filter=tree:0 https://github.com/maryamtahhan/triton-dev-container/ .devcontainer
 cd .devcontainer
 git sparse-checkout set --no-cone .devcontainer/triton
 git checkout
 mv .devcontainer/triton ./
-rm -rf .devcontainer/ .git
+rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 ```
 
 ## Prerequisites
