@@ -54,13 +54,13 @@ Studio Code.
 
 Open the project in Visual Studio Code. A pop up will appear asking to reopen
 in project in a Dev Container.
-![reopen-in-container](./images/reopen-in-container.png)
+![reopen-in-container](./gsg/images/reopen-in-container.png)
 
 If the pop up doesn't appear, the container can be launched by accessing the
 Visual Studio Code Command Palette and looking for the: `Dev Containers: Reopen in Container`
 option as shown below.
 
-![reopen-in-container](./images/rebuild-container.png)
+![reopen-in-container](./gsg/images/rebuild-container.png)
 
 Visual Studio Code will relaunch inside the Dev Container.
 
