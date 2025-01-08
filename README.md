@@ -39,3 +39,7 @@ all building and running tasks isolated within the container.
 ```sh
  make triton-cpu-run triton_path=<path-to-triton-cpu-on-host>
 ```
+
+## Using .devcontainers
+
+Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)
