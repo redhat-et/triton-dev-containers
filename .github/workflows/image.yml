@@ -1,19 +1,17 @@
 name: image
 
 on: # yamllint disable-line rule:truthy
-  workflow_call:
-    inputs:
-      imageTag:
-        default: latest
-        type: string
-      pushImage:
-        default: true
-        type: boolean
-    secrets:
-      username:
-        required: true
-      password:
-        required: true
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/image.yml
+      - Dockerfile.triton
+  pull_request:
+    paths:
+      - .github/workflows/image.yml
+      - Dockerfile.triton
+  workflow_dispatch:
 
 jobs:
   image_build:
@@ -30,7 +28,7 @@ jobs:
           - IMAGE_NAME: triton
             IMAGE_FILE: Dockerfile.triton
             PLATFORMS: linux/amd64
-            LABEL: ${{ inputs.imageTag }}
+            LABEL: devcontainer-latest
 
     steps:
       - name: Checkout
@@ -53,58 +51,57 @@ jobs:
         uses: sigstore/cosign-installer@main
 
       - name: Login to Quay
-        if: ${{ inputs.pushImage }}
+        if: ${{ github.event_name == 'push' }}
         uses: docker/login-action@v3
         with:
           registry: quay.io/mtahhan
           username: ${{ secrets.qt_username }}
           password: ${{ secrets.qt_password }}
 
-      - name: Build and push image
+      - name: Build and (conditionally) push image
         id: build-push-image
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: ${{matrix.PLATFORMS}}
-          push: ${{ inputs.pushImage }}
-          build-args: ${{matrix.BUILD_ARGS}}
-          tags: quay.io/mtahhan/${{matrix.IMAGE_NAME}}:${{matrix.LABEL}}
-          labels: ${{matrix.LABEL}}
-          file: ${{matrix.IMAGE_FILE}}
+          platforms: ${{ matrix.PLATFORMS }}
+          push: ${{ github.event_name == 'push' }}
+          tags: quay.io/mtahhan/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
+          file: ${{ matrix.IMAGE_FILE }}
 
       - name: Sign images with GitHub OIDC Token
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch')}}
+        if: ${{ github.event_name == 'push' }}
         run: |
-          cosign sign -y quay.io/mtahhan/${{matrix.IMAGE_NAME}}:${{matrix.LABEL}}@${{ steps.build-push-image.outputs.digest }}
+          cosign sign -y quay.io/mtahhan/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}@${{ steps.build-push-image.outputs.digest }}
 
       - name: Generate image attestation
-        if: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch')}}
+        if: ${{ github.event_name == 'push' }}
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: quay.io/mtahhan/${{matrix.IMAGE_NAME}}
+          subject-name: quay.io/mtahhan/${{ matrix.IMAGE_NAME }}
           subject-digest: ${{ steps.build-push-image.outputs.digest }}
-          push-to-registry: ${{ inputs.pushImage }}
+          push-to-registry: true
 
       - name: Generate SBOM
+        if: ${{ github.event_name == 'push' }}
         uses: anchore/sbom-action@v0.17.9
         with:
-          image: quay.io/mtahhan/${{matrix.IMAGE_NAME}}:${{matrix.LABEL}}
-          artifact-name: sbom-${{matrix.IMAGE_NAME}}-${{matrix.LABEL}}.json
-          output-file: ./sbom-${{matrix.IMAGE_NAME}}-${{matrix.LABEL}}.spdx.json
+          image: quay.io/mtahhan/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
+          artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
+          output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
 
-      - name: save Triton image SBOM as artifact
-        if: ${{ inputs.pushImage }}
+      - name: Save Triton image SBOM as artifact
+        if: ${{ github.event_name == 'push' }}
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: sbom-${{matrix.IMAGE_NAME}}-${{matrix.LABEL}}.spdx.json
-          path: ./sbom-${{matrix.IMAGE_NAME}}-${{matrix.LABEL}}.spdx.json
+          name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
           retention-days: 1
 
       - name: Generate SBOM attestation
+        if: ${{ github.event_name == 'push' }}
         uses: actions/attest-sbom@v2
-        if: ${{ inputs.pushImage }}
         with:
-          subject-name: quay.io/mtahhan/${{matrix.IMAGE_NAME}}
+          subject-name: quay.io/mtahhan/${{ matrix.IMAGE_NAME }}
           subject-digest: ${{ steps.build-push-image.outputs.digest }}
-          sbom-path: ./sbom-${{matrix.IMAGE_NAME}}-${{matrix.LABEL}}.spdx.json
-          push-to-registry: ${{ inputs.pushImage }}
+          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          push-to-registry: true
