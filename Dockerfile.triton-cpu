@@ -48,6 +48,8 @@ COPY user.sh user.sh
 RUN ./user.sh -u $USERNAME -g $USER_GID
 RUN dnf update -y && \
     dnf -y install clang cmake lld ninja-build;
+RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
+    dnf clean all
 # Set the user
 USER $USERNAME
 
@@ -67,10 +69,9 @@ ENV PYTHON_VERSION=3.12 \
     PYTHONUNBUFFERED=1 \
     TRITON_CPU_BACKEND=1
 
+WORKDIR /opt
 RUN git clone https://github.com/triton-lang/triton-cpu.git /triton-cpu
-WORKDIR /triton-cpu
-RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
-    dnf clean all
+WORKDIR /opt/triton-cpu
 RUN pip install --upgrade pip
 RUN pip install pre-commit
 RUN pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
