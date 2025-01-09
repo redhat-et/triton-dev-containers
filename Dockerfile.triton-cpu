@@ -70,7 +70,7 @@ ENV PYTHON_VERSION=3.12 \
     TRITON_CPU_BACKEND=1
 
 WORKDIR /opt
-RUN git clone https://github.com/triton-lang/triton-cpu.git /triton-cpu
+RUN git clone https://github.com/triton-lang/triton-cpu.git triton-cpu
 WORKDIR /opt/triton-cpu
 RUN pip install --upgrade pip
 RUN pip install pre-commit
