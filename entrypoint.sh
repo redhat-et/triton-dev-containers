@@ -42,11 +42,18 @@ install_dependencies() {
 
     echo "Installing Python dependencies..."
     pip install --upgrade pip
+
     if [ -n "$INSTALL_CUDNN" ] && [ "$INSTALL_CUDNN" = "true" ]; then
+        echo "Installing CUDA dependencies..."
         python3 -m pip install nvidia-cudnn-cu12;
     fi
+
+    echo "Installing pre-commit dependencies..."
     pip install pre-commit
+
+    echo "Installing Triton dependencies..."
     pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
+
     pre-commit install
 }
 
