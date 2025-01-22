@@ -26,13 +26,13 @@ install_dependencies() {
         if [ ! -d "/opt/triton-cpu" ]; then
             echo "/opt/triton-cpu not found. Cloning repository..."
             git clone https://github.com/triton-lang/triton-cpu.git /opt/triton-cpu
-            cd /opt/triton-cpu
+            cd /opt/triton-cpu || exit 1
         fi
     else
         if [ ! -d "/opt/triton" ]; then
             echo "/opt/triton not found. Cloning repository..."
             git clone https://github.com/triton-lang/triton.git /opt/triton
-            cd /opt/triton
+            cd /opt/triton || exit 1
         fi
     fi
 
@@ -61,7 +61,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
     if ! id -u "$USER" >/dev/null 2>&1; then
         echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
-        ./user.sh -u $USER -g $USER_ID
+        ./user.sh -u "$USER" -g "$USER_ID"
     fi
 
    # Run the installation as the new user
