@@ -51,7 +51,7 @@ triton-run: image-builder-check ## Run the triton devcontainer image
 	else \
 		volume_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=$(whoami) --runtime=nvidia --gpus=all -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
+	$(CTR_CMD) run -e USERNAME=${USER} --runtime=nvidia --gpus=all -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
 
 triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
@@ -59,4 +59,4 @@ triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		volume_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=$(whoami) -it $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
+	$(CTR_CMD) run -e USERNAME=${USER} -it $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;

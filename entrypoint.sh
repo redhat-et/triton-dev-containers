@@ -36,7 +36,6 @@ install_dependencies() {
         fi
     fi
 
-
     git submodule init
     git submodule update
 
@@ -57,10 +56,9 @@ install_dependencies() {
     pre-commit install
 }
 
-# Check if the USERNAME environment variable is set and not empty
-if [ -n "$USERNAME" ] && [ "$USERNAME" != "root" ]; then
+# Check if the USER environment variable is set and not empty
+if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
-
     if ! id -u "$USER" >/dev/null 2>&1; then
         echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
         ./user.sh -u $USER -g $USER_ID
@@ -71,7 +69,7 @@ if [ -n "$USERNAME" ] && [ "$USERNAME" != "root" ]; then
     runuser -u "$USER" -- bash -c "$(declare -f install_dependencies); install_dependencies"
 
     # Switch to the new user and execute the original command
-    exec runuser -u "$USER" -- "$@"
+    exec su "$USER" -c "$@"
 else
 
     # Install dependencies
