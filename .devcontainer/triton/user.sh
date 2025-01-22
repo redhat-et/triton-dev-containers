@@ -1,6 +1,6 @@
 #! /bin/bash -e
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (C) 2024 Red Hat, Inc.
+# Copyright (C) 2024-2025 Red Hat, Inc.
 
 set -euo pipefail
 

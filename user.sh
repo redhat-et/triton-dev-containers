@@ -1,6 +1,6 @@
 #! /bin/bash -e
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (C) 2024 Red Hat, Inc.
+# Copyright (C) 2024-2025 Red Hat, Inc.
 
 set -euo pipefail
 
@@ -74,9 +74,12 @@ if [ ! -d "${HOME_DIR}" ]; then
 fi
 
 # Add current (arbitrary) user to /etc/passwd and /etc/group
-if [ -w /etc/passwd ]; then
-  echo "${USER_NAME:-user}:x:$(id -u):0:${USER_NAME:-user}:${HOME_DIR}:/bin/bash" >> /etc/passwd
-  echo "${USER_NAME:-user}:x:$(id -u):" >> /etc/group
+if ! whoami > /dev/null 2>&1; then
+  if [ -w /etc/passwd ]; then
+    echo "update passwd file"
+    echo "${USER_NAME:-user}:x:$(id -u):0:${USER_NAME:-user} user:${HOME}:/bin/bash" >> /etc/passwd
+    echo "${USER_NAME:-user}:x:$(id -u):" >> /etc/group
+  fi
 fi
 
 # Fix up permissions

@@ -25,8 +25,11 @@ all building and running tasks isolated within the container.
 ## Running the triton devcontainer
 
 ```sh
- make triton-run triton_path=<path-to-triton-on-host>
+ make triton-run [triton_path=<path-to-triton-on-host>]
 ```
+
+> **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
+at container startup time.
 
 ## Building the triton-cpu devcontainer
 
@@ -34,11 +37,14 @@ all building and running tasks isolated within the container.
  make triton-cpu-build
 ```
 
-## Running the triton-cpu  devcontainer
+## Running the triton-cpu devcontainer
 
 ```sh
- make triton-cpu-run triton_path=<path-to-triton-cpu-on-host>
+ make triton-cpu-run [triton_path=<path-to-triton-on-host>]
 ```
+
+> **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
+at container startup time.
 
 ## Using .devcontainers
 

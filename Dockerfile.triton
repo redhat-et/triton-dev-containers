@@ -36,23 +36,14 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
     fi
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG USERNAME=1001
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
 ARG CUSTOM_LLVM
-ARG INSTALL_CUDNN
 
 USER 0
-COPY user.sh user.sh
 
-# Create the user
-RUN ./user.sh -u $USERNAME -g $USER_GID
 RUN dnf update -y && \
     dnf -y install clang cmake lld ninja-build;
 RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
     dnf clean all
-# Set the user
-USER $USERNAME
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
@@ -64,19 +55,21 @@ ENV TRITON_OFFLINE_BUILD=NO
 
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM} AS final
+ARG USERNAME=1001
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
 
 ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    INSTALL_CUDNN=true
 
 WORKDIR /opt
 RUN git clone https://github.com/triton-lang/triton.git triton
 WORKDIR /opt/triton
-RUN pip install --upgrade pip
-RUN pip install pre-commit
-RUN pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11 nvidia-cudnn-cu12
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
+COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
