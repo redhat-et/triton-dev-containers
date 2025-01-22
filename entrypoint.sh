@@ -98,4 +98,3 @@ else
     navigate  # Ensure we end in the correct directory
     exec "$@"
 fi
-
