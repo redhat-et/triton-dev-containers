@@ -35,14 +35,35 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
     fi
 
+    FROM registry.access.redhat.com/ubi9/ubi:latest AS gosu
+
+    ENV GOSU_VERSION=1.17
+    RUN dnf update -y && \
+        dnf -y install wget && \
+        dnf clean all
+    RUN set -eux; \
+        rpmArch="$(rpm --query --queryformat='%{ARCH}' rpm)"; \
+        case "$rpmArch" in \
+            aarch64) dpkgArch='arm64' ;; \
+            armv[67]*) dpkgArch='armhf' ;; \
+            i[3456]86) dpkgArch='i386' ;; \
+            ppc64le) dpkgArch='ppc64el' ;; \
+            riscv64 | s390x) dpkgArch="$rpmArch" ;; \
+            x86_64) dpkgArch='amd64' ;; \
+            *) echo >&2 "error: unknown/unsupported architecture '$rpmArch'"; exit 1 ;; \
+        esac; \
+        wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
+        wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
+        chmod +x /usr/local/bin/gosu;
+
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
 
 USER 0
 
 RUN dnf update -y && \
-    dnf -y install clang cmake lld ninja-build;
-RUN dnf install -y openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
+    dnf -y install clang cmake lld ninja-build \
+    openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
     dnf clean all
 
 # Stage for llvm-local-true
@@ -69,6 +90,7 @@ RUN git clone https://github.com/triton-lang/triton.git triton
 WORKDIR /opt/triton
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
+COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

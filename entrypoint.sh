@@ -20,21 +20,32 @@ USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 
+navigate() {
+    if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
+        if [ -d "/opt/triton-cpu" ]; then
+            cd /opt/triton-cpu || exit 1
+        fi
+    else
+        if [ -d "/opt/triton" ]; then
+            cd /opt/triton || exit 1
+        fi
+    fi
+}
 # Function to clone repo and install dependencies
 install_dependencies() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ ! -d "/opt/triton-cpu" ]; then
             echo "/opt/triton-cpu not found. Cloning repository..."
             git clone https://github.com/triton-lang/triton-cpu.git /opt/triton-cpu
-            cd /opt/triton-cpu || exit 1
         fi
     else
         if [ ! -d "/opt/triton" ]; then
             echo "/opt/triton not found. Cloning repository..."
             git clone https://github.com/triton-lang/triton.git /opt/triton
-            cd /opt/triton || exit 1
         fi
     fi
+
+    navigate
 
     git submodule init
     git submodule update
@@ -64,17 +75,27 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         ./user.sh -u "$USER" -g "$USER_ID"
     fi
 
-   # Run the installation as the new user
+   export_vars=(
+        "USERNAME=$USER"
+        "USER_UID=$USER_ID"
+        "USER_GID=$GROUP_ID"
+        "TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
+        "INSTALL_CUDNN=$INSTALL_CUDNN"
+    )
+
+    export_cmd=""
+    for var in "${export_vars[@]}"; do
+        export_cmd+="export $var; "
+    done
+
     echo "Switching to user: $USER to install dependencies."
-    runuser -u "$USER" -- bash -c "$(declare -f install_dependencies); install_dependencies"
+    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); navigate && install_dependencies"
 
-    # Switch to the new user and execute the original command
-    exec su "$USER" -c "$@"
+    navigate  # Ensure we end in the correct directory
+    exec gosu "$USER" "$@"
 else
-
-    # Install dependencies
     install_dependencies
-
-    # Execute the provided command
+    navigate  # Ensure we end in the correct directory
     exec "$@"
 fi
+
