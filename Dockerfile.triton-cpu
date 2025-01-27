@@ -55,9 +55,6 @@ RUN set -eux; \
 	wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
 	wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
 	chmod +x /usr/local/bin/gosu;
-# # verify that the binary works
-# 	gosu --version; \
-# 	gosu nobody true
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
