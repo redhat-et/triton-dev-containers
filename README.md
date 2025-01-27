@@ -84,24 +84,24 @@ predictable performance with minimal overhead.
 
 ### Benefits of Container First Development for Triton
 
-* **Compile Once Run Anywhere**: Containers offer consistency across
+- **Compile Once Run Anywhere**: Containers offer consistency across
 environments. This reduces debugging time, enhances confidence in code
 quality, and improves CI/CD pipeline reliability.
-* **Streamlined Developer Onboarding**: Onboarding new developers can
+- **Streamlined Developer Onboarding**: Onboarding new developers can
 be challenging due to inconsistent development environments.
 Pre-configured container images eliminate this hurdle, enabling
 developers to start working immediately without complex setup
 processes.
-* **Improved Collaboration**: AI projects often involve diverse
+- **Improved Collaboration**: AI projects often involve diverse
 teams—data scientists, DevOps engineers, and developers.
 Containers act as a common denominator, enabling seamless
 collaboration by standardizing tools and libraries within a
 single image that can be shared across teams.
-* **Enhanced Security**:
-  * Containers can use minimal base images, reducing the attack surface.
-  * Dockerfiles can generate Software Bills of Materials (SBOMs), helping
+- **Enhanced Security**:
+  - Containers can use minimal base images, reducing the attack surface.
+  - Dockerfiles can generate Software Bills of Materials (SBOMs), helping
     track dependencies and identify vulnerabilities quickly.
-  * Security mechanisms like image signing ensure authenticity and
+  - Security mechanisms like image signing ensure authenticity and
     integrity, reducing risks from malicious images while bolstering trust
     in the software supply chain.
 
@@ -113,13 +113,13 @@ installing all required dependencies on their local machine or
 development server. This process can be time-consuming and error-prone,
 often resulting in issues such as:
 
-* **Time-Intensive Setup**: Manually configuring environments takes valuable
+- **Time-Intensive Setup**: Manually configuring environments takes valuable
   time that could be spent on actual development work.
-* **System Configuration Disparities**: Differences in local environments can
+- **System Configuration Disparities**: Differences in local environments can
   introduce subtle bugs that are difficult to reproduce and resolve.
-* **Insufficient Documentation**: Incomplete or unclear instructions can slow
+- **Insufficient Documentation**: Incomplete or unclear instructions can slow
   developers down as they troubleshoot setup problems.
-* **Dependency Conflicts**
+- **Dependency Conflicts**
 
 A [pull request](https://github.com/triton-lang/triton/pull/5143) to add a
 [Development Container](https://containers.dev/) with all the tools needed to
@@ -142,4 +142,4 @@ robust, secure, and ready for the future.
 
 ### References
 
-* [5 Benefits of a Container-First Approach to Software Development | Docker](https://www.docker.com/blog/5-benefits-of-a-container-first-approach-to-software-development/)
+- [5 Benefits of a Container-First Approach to Software Development | Docker](https://www.docker.com/blog/5-benefits-of-a-container-first-approach-to-software-development/)
