@@ -22,9 +22,10 @@ This repo provides 2 different flavours of development containers:
 
 > **_NOTE_**: NVIDIA Container Toolkit is not required for `triton-cpu`.
 
-## Supported Hardware:
-  * NVIDIA GPUs (Compute Capability 7.0+)
-  * CPUs
+## Supported Hardware
+
+- NVIDIA GPUs
+- CPUs
 
 > **_NOTE_**: Support for AMD GPU devcontainers will be added soon.
 
@@ -61,7 +62,6 @@ at container startup time.
 ## Using .devcontainers with VSCODE
 
 Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)
-
 
 ## A Container First approach to Triton development
 
