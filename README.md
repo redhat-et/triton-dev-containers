@@ -6,6 +6,12 @@ By mounting the Triton directory from your host into the development
 container, you can continue working with your favorite IDE while keeping
 all building and running tasks isolated within the container.
 
+This repo provides 2 different flavours of development containers:
+
+1. Vanilla containers into which a development directory can be mounted.
+
+1. devcontainers for use with VSCODE.
+
 ## Prerequisites
 
 - **Docker** or **Podman**
@@ -16,12 +22,11 @@ all building and running tasks isolated within the container.
 
 > **_NOTE_**: NVIDIA Container Toolkit is not required for `triton-cpu`.
 
-This repo provides 2 different flavours of development containers:
+## Supported Hardware:
+  * NVIDIA GPUs (Compute Capability 7.0+)
+  * CPUs
 
-1. Vanilla containers into which a development directory can be mounted.
-
-1. devcontainers for use with VSCODE.
-
+> **_NOTE_**: Support for AMD GPU devcontainers will be added soon.
 
 ## Building the triton vanilla container
 
