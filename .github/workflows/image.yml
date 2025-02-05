@@ -28,7 +28,7 @@ jobs:
           - IMAGE_NAME: nvidia
             IMAGE_FILE: Dockerfile.triton
             PLATFORMS: linux/amd64
-            LABEL: devcontainer-latest
+            LABEL: latest
             BUILD_ARGS: |
               USERNAME=triton
               CUSTOM_LLVM=false
