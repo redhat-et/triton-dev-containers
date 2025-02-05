@@ -16,13 +16,20 @@ all building and running tasks isolated within the container.
 
 > **_NOTE_**: NVIDIA Container Toolkit is not required for `triton-cpu`.
 
-## Building the triton devcontainer
+This repo provides 2 different flavours of development containers:
+
+1. Vanilla containers into which a development directory can be mounted.
+
+1. devcontainers for use with VSCODE.
+
+
+## Building the triton vanilla container
 
 ```sh
  make triton-build
 ```
 
-## Running the triton devcontainer
+## Running the triton vanilla container
 
 ```sh
  make triton-run [triton_path=<path-to-triton-on-host>]
@@ -31,13 +38,13 @@ all building and running tasks isolated within the container.
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
 at container startup time.
 
-## Building the triton-cpu devcontainer
+## Building the triton-cpu vanilla container
 
 ```sh
  make triton-cpu-build
 ```
 
-## Running the triton-cpu devcontainer
+## Running the triton-cpu vanilla container
 
 ```sh
  make triton-cpu-run [triton_path=<path-to-triton-on-host>]
@@ -46,9 +53,10 @@ at container startup time.
 > **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
 at container startup time.
 
-## Using .devcontainers
+## Using .devcontainers with VSCODE
 
 Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)
+
 
 ## A Container First approach to Triton development
 
