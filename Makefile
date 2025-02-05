@@ -25,10 +25,10 @@ triton_path?=${source_dir}
 USERNAME=triton
 NPROC=$(shell nproc)
 CUSTOM_LLVM?=false
-IMAGE_REPO ?= quay.io/mtahhan
-IMAGE_NAME ?= triton
-CPU_IMAGE_NAME ?= triton-cpu
-TRITON_TAG ?= devcontainer-latest
+IMAGE_REPO ?= quay.io/triton-dev-containers
+IMAGE_NAME ?= nvidia
+CPU_IMAGE_NAME ?= cpu
+TRITON_TAG ?= latest
 export CTR_CMD?=$(or $(shell command -v podman), $(shell command -v docker))
 
 ##@ Container build.
