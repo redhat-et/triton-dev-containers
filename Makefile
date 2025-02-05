@@ -28,6 +28,7 @@ CUSTOM_LLVM?=false
 IMAGE_REPO ?= quay.io/triton-dev-containers
 IMAGE_NAME ?= nvidia
 CPU_IMAGE_NAME ?= cpu
+AMD_IMAGE_NAME ?= amd
 TRITON_TAG ?= latest
 export CTR_CMD?=$(or $(shell command -v podman), $(shell command -v docker))
 
@@ -45,6 +46,10 @@ triton-cpu-image: image-builder-check ## Build the triton-cpu devcontainer image
 	$(CTR_CMD) build --no-cache -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USERNAME} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
     -f Dockerfile.triton-cpu .
 
+triton-amd-image: image-builder-check ## Build the triton devcontainer image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USERNAME} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
+    --build-arg INSTALL_CUDNN=true  -f Dockerfile.triton-amd .
+
 triton-run: image-builder-check ## Run the triton devcontainer image
 	@if [ "${triton_path}" != "${source_dir}" ]; then \
 		volume_arg="-v ${triton_path}:/opt/triton"; \
@@ -60,3 +65,11 @@ triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 		volume_arg=""; \
 	fi; \
 	$(CTR_CMD) run -e USERNAME=${USER} -it $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
+
+triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
+	@if [ "${triton_path}" != "${source_dir}" ]; then \
+		volume_arg="-v ${triton_path}:/opt/triton"; \
+	else \
+		volume_arg=""; \
+	fi; \
+	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined  --env HIP_VISIBLE_DEVICES=0 -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;

@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-
 ARG CUSTOM_LLVM=false
 
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
@@ -57,14 +56,55 @@ RUN set -eux; \
     chmod +x /usr/local/bin/gosu;
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG CUSTOM_LLVM
-
 USER 0
+ARG ROCM_VERSION=6.2
 
+# Set environment variables for ROCm
+ENV LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8 \
+    ROCM_PATH=/opt/rocm \
+    LD_LIBRARY_PATH=/usr/lib64:/usr/lib \
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH \
+    LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib
+
+# Install system dependencies
 RUN dnf update -y && \
-    dnf -y install clang cmake lld ninja-build \
-    openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
-    dnf clean all
+    dnf install -y \
+    wget \
+    tar \
+    gcc \
+    gcc-c++ \
+    make \
+    libstdc++ \
+    git \
+    python3.11 \
+    python3-pip \
+    python3.11-devel \
+    pciutils \
+    lsof \
+    libyaml \
+    llvm clang clang-libs \
+    && dnf clean all
+
+# Set Python 3.11 as the default python3
+RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+# Add the ROCm repository
+RUN wget -qO - http://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/pki/rpm-gpg/ROCm.gpg && \
+    echo -e "[ROCm]\nname=ROCm\nbaseurl=http://repo.radeon.com/rocm/el9/$ROCM_VERSION/main\nenabled=1\ngpgcheck=0\ngpgkey=file:///etc/pki/rpm-gpg/ROCm.gpg" > /etc/yum.repos.d/rocm.repo
+
+# Install ROCm libraries and tools
+# RUN dnf install -y rocm-hip rocm-opencl rocm-rpm-macros rocm-runtime rocm-smi rocminfo amd-smi rocm
+RUN  dnf install -y \
+        amd-smi-lib \
+        amd-smi \
+        miopen-hip \
+        openmp-extras-runtime \
+        rocm-core \
+        rocm-hip-libraries \
+        rocminfo
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
@@ -82,8 +122,14 @@ ARG USER_GID=$USER_UID
 
 ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
-    PYTHONUNBUFFERED=1 \
-    INSTALL_CUDNN=true
+    PYTHONUNBUFFERED=1
+
+# Upgrade pip and install PyTorch with ROCm support
+RUN python3 -m ensurepip --upgrade
+RUN pip install torch==2.5.0 --index-url https://download.pytorch.org/whl/rocm6.2
+
+#  Some additional python modules
+RUN pip install numpy  pyyaml ctypeslib2 matplotlib pandas
 
 WORKDIR /opt
 RUN git clone https://github.com/triton-lang/triton.git triton
