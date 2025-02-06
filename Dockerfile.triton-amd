@@ -78,18 +78,11 @@ RUN dnf update -y && \
     make \
     libstdc++ \
     git \
-    python3.11 \
-    python3-pip \
-    python3.11-devel \
     pciutils \
     lsof \
     libyaml \
     llvm clang clang-libs \
     && dnf clean all
-
-# Set Python 3.11 as the default python3
-RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 # Add the ROCm repository
 RUN wget -qO - http://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/pki/rpm-gpg/ROCm.gpg && \
@@ -104,7 +97,8 @@ RUN  dnf install -y \
         openmp-extras-runtime \
         rocm-core \
         rocm-hip-libraries \
-        rocminfo
+        rocminfo \
+        && dnf clean all
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
