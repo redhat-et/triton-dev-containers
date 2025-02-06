@@ -68,6 +68,9 @@ ENV LC_ALL=C.UTF-8 \
     PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH \
     LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib
 
+RUN dnf update -y && \
+    dnf install -y wget
+
 # Add the ROCm repository
 RUN wget -qO - http://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/pki/rpm-gpg/ROCm.gpg && \
     echo -e "[ROCm]\nname=ROCm\nbaseurl=http://repo.radeon.com/rocm/el9/$ROCM_VERSION/main\nenabled=1\ngpgcheck=0\ngpgkey=file:///etc/pki/rpm-gpg/ROCm.gpg" > /etc/yum.repos.d/rocm.repo
@@ -75,12 +78,6 @@ RUN wget -qO - http://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/
 # Install system dependencies
 RUN dnf update -y && \
     dnf install -y \
-    wget \
-    tar \
-    gcc \
-    gcc-c++ \
-    make \
-    libstdc++ \
     git \
     pciutils \
     lsof \
