@@ -68,6 +68,10 @@ ENV LC_ALL=C.UTF-8 \
     PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH \
     LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib
 
+# Add the ROCm repository
+RUN wget -qO - http://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/pki/rpm-gpg/ROCm.gpg && \
+    echo -e "[ROCm]\nname=ROCm\nbaseurl=http://repo.radeon.com/rocm/el9/$ROCM_VERSION/main\nenabled=1\ngpgcheck=0\ngpgkey=file:///etc/pki/rpm-gpg/ROCm.gpg" > /etc/yum.repos.d/rocm.repo
+
 # Install system dependencies
 RUN dnf update -y && \
     dnf install -y \
@@ -82,23 +86,18 @@ RUN dnf update -y && \
     lsof \
     libyaml \
     llvm clang clang-libs \
+    rocm-hip rocm-opencl \
+    rocm-rpm-macros \
+    rocm-runtime rocm-smi \
+    rocminfo amd-smi rocm \
+    amd-smi-lib \
+    amd-smi \
+    miopen-hip \
+    openmp-extras-runtime \
+    rocm-core \
+    rocm-hip-libraries \
+    rocminfo \
     && dnf clean all
-
-# Add the ROCm repository
-RUN wget -qO - http://repo.radeon.com/rocm/rocm.gpg.key | gpg --dearmor -o /etc/pki/rpm-gpg/ROCm.gpg && \
-    echo -e "[ROCm]\nname=ROCm\nbaseurl=http://repo.radeon.com/rocm/el9/$ROCM_VERSION/main\nenabled=1\ngpgcheck=0\ngpgkey=file:///etc/pki/rpm-gpg/ROCm.gpg" > /etc/yum.repos.d/rocm.repo
-
-# Install ROCm libraries and tools
-# RUN dnf install -y rocm-hip rocm-opencl rocm-rpm-macros rocm-runtime rocm-smi rocminfo amd-smi rocm
-RUN  dnf install -y \
-        amd-smi-lib \
-        amd-smi \
-        miopen-hip \
-        openmp-extras-runtime \
-        rocm-core \
-        rocm-hip-libraries \
-        rocminfo \
-        && dnf clean all
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
