@@ -107,7 +107,7 @@ ENV PYTHON_VERSION=3.11 \
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
 
 # Copy entry scripts
-COPY user.sh /user.sh
+COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
 
 # Final settings
