@@ -60,8 +60,7 @@ RUN set -eux; \
 
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-311 AS base
-ARG ROCM_VERSION=6.1
-ARG AMDGPU_VERSION=6.1
+ARG ROCM_VERSION=6.2
 USER 0
 
 # Set environment variables for ROCm
@@ -77,19 +76,9 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "baseurl=https://repo.radeon.com/rocm/rhel9/$ROCM_VERSION/main" >> /etc/yum.repos.d/rocm.repo && \
     echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
     echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
-    echo "[amdgpu]" > /etc/yum.repos.d/amdgpu.repo && \
-    echo "name=amdgpu" >> /etc/yum.repos.d/amdgpu.repo && \
-    echo "baseurl=https://repo.radeon.com/amdgpu/$AMDGPU_VERSION/rhel/9.4/main/x86_64" >> /etc/yum.repos.d/amdgpu.repo && \
-    echo "enabled=1" >> /etc/yum.repos.d/amdgpu.repo && \
-    echo "gpgcheck=0" >> /etc/yum.repos.d/amdgpu.repo && \
-    dnf install -y rocblas rocfft rocrand miopen-hip \
+    dnf install -y --nodocs --setopt=install_weak_deps=False -y rocblas rocfft rocrand miopen-hip \
     llvm clang clang-libs lld && \
     dnf clean all && rm -rf /var/cache/yum
-
-# PyTorch Installation
-RUN python3 -m ensurepip --upgrade && \
-    pip install --no-cache-dir torch==2.5.0 --index-url https://download.pytorch.org/whl/rocm6.2 && \
-    pip install --no-cache-dir numpy pyyaml ctypeslib2 matplotlib pandas
 
 # Add Triton repository and environment configuration
 WORKDIR /opt
@@ -109,9 +98,10 @@ FROM llvm-local-${CUSTOM_LLVM} AS final
 ARG USERNAME=1001
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
-ENV PYTHON_VERSION=3.12 \
+ENV PYTHON_VERSION=3.11 \
     PATH=$HOME/.local/bin/:$PATH \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    AMD=1
 
 # Copy gosu
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
