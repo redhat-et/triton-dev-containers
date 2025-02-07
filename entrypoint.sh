@@ -79,23 +79,19 @@ install_dependencies() {
         echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
         echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
         echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc";
-        export_vars=(
+        declare -a llvm_vars=(
             "LLVM_BUILD_DIR=/llvm-project/build"
             "LLVM_INCLUDE_DIRS=/llvm-project/build/include"
             "LLVM_LIBRARY_DIR=/llvm-project/build/lib"
             "TRITON_CPU_BACKEND=/llvm-project/build"
         )
-
-        export_cmd=""
-        for var in "${export_vars[@]}"; do
-            export_cmd+="export $var; "
+        for var in "${llvm_vars[@]}"; do
+            export var
         done
-
     fi
-
 }
 
-# setup_rocm
+# Check if the USER environment variable is set and not empty
 # Check if the USER environment variable is set and not empty
 if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
@@ -104,13 +100,14 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         ./user.sh -u "$USER" -g "$USER_ID"
     fi
 
-   export_vars=(
+    # Define environment variables to export
+    declare -a export_vars=(
         "USERNAME=$USER"
         "USER_UID=$USER_ID"
         "USER_GID=$GROUP_ID"
         "TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
         "INSTALL_CUDNN=$INSTALL_CUDNN"
-        "CUSTOM_LLVM"=$CUSTOM_LLVM"
+        "CUSTOM_LLVM=$CUSTOM_LLVM"
     )
 
     export_cmd=""
