@@ -19,6 +19,7 @@
 USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
+AMD=${AMD:-false}
 
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
@@ -58,6 +59,12 @@ install_dependencies() {
         python3 -m pip install nvidia-cudnn-cu12;
     fi
 
+    if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
+        echo "Installing ROCm dependencies..."
+        pip install --no-cache-dir torch==2.5.0 --index-url https://download.pytorch.org/whl/rocm6.2
+        pip install --no-cache-dir pyyaml ctypeslib2
+    fi
+
     echo "Installing pre-commit dependencies..."
     pip install pre-commit
 
@@ -65,8 +72,30 @@ install_dependencies() {
     pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
 
     pre-commit install
+
+    if [ -n "$CUSTOM_LLVM" ] && [ "$CUSTOM_LLVM" = "true" ]; then
+        echo "CUSTOM LLVM BUILD..."
+        echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
+        echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
+        echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
+        echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc";
+        export_vars=(
+            "LLVM_BUILD_DIR=/llvm-project/build"
+            "LLVM_INCLUDE_DIRS=/llvm-project/build/include"
+            "LLVM_LIBRARY_DIR=/llvm-project/build/lib"
+            "TRITON_CPU_BACKEND=/llvm-project/build"
+        )
+
+        export_cmd=""
+        for var in "${export_vars[@]}"; do
+            export_cmd+="export $var; "
+        done
+
+    fi
+
 }
 
+# setup_rocm
 # Check if the USER environment variable is set and not empty
 if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
@@ -81,6 +110,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         "USER_GID=$GROUP_ID"
         "TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
         "INSTALL_CUDNN=$INSTALL_CUDNN"
+        "CUSTOM_LLVM"=$CUSTOM_LLVM"
     )
 
     export_cmd=""
