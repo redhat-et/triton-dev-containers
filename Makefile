@@ -22,6 +22,7 @@ help: ## Display this help.
 mkfile_path=$(abspath $(lastword $(MAKEFILE_LIST)))
 source_dir=$(shell dirname "$(mkfile_path)")
 triton_path?=${source_dir}
+gitconfig_path?="${HOME}/.gitconfig"
 USERNAME=triton
 NPROC=$(shell nproc)
 CUSTOM_LLVM?=false
@@ -56,7 +57,12 @@ triton-run: image-builder-check ## Run the triton devcontainer image
 	else \
 		volume_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} --runtime=nvidia --gpus=all -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
+	if [ -f "${gitconfig_path}" ]; then \
+		gitconfig_arg="-v ${HOME}/.gitconfig:/etc/gitconfig"; \
+	else \
+		gitconfig_arg=""; \
+	fi; \
+	$(CTR_CMD) run -e USERNAME=${USER} --runtime=nvidia --gpus=all -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
 
 triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
@@ -64,7 +70,12 @@ triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		volume_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} -it $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
+	if [ -f "${gitconfig_path}" ]; then \
+		gitconfig_arg="-v ${HOME}/.gitconfig:/etc/gitconfig"; \
+	else \
+		gitconfig_arg=""; \
+	fi; \
+	$(CTR_CMD) run -e USERNAME=${USER} -it $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
 
 triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
 	@if [ "${triton_path}" != "${source_dir}" ]; then \
@@ -72,6 +83,11 @@ triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		volume_arg=""; \
 	fi; \
+	if [ -f "${gitconfig_path}" ]; then \
+		gitconfig_arg="-v ${HOME}/.gitconfig:/etc/gitconfig"; \
+	else \
+		gitconfig_arg=""; \
+	fi; \
 	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined \
-	--group-add=video --ipc=host --cap-add=SYS_PTRACE --shm-size 8G \
-	--env HIP_VISIBLE_DEVICES=0 -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;
+	--group-add=video --ipc=host --cap-add=SYS_PTRACE \
+	--env HIP_VISIBLE_DEVICES=0 -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;
