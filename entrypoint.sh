@@ -19,7 +19,6 @@
 USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
-AMD=${AMD:-false}
 
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
@@ -34,6 +33,7 @@ navigate() {
 }
 # Function to clone repo and install dependencies
 install_dependencies() {
+    echo "Cloning the Triton repos (if needed)..."
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ ! -d "/opt/triton-cpu" ]; then
             echo "/opt/triton-cpu not found. Cloning repository..."
