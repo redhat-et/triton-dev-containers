@@ -72,4 +72,6 @@ triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		volume_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined  --env HIP_VISIBLE_DEVICES=0 -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;
+	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined \
+	--group-add=video --ipc=host --cap-add=SYS_PTRACE --shm-size 8G \
+	--env HIP_VISIBLE_DEVICES=0 -ti $$volume_arg -v ${HOME}/.gitconfig:/etc/gitconfig $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;
