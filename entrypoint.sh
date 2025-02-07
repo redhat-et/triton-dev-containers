@@ -108,6 +108,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         "TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
         "INSTALL_CUDNN=$INSTALL_CUDNN"
         "CUSTOM_LLVM=$CUSTOM_LLVM"
+        "AMD=$AMD"
     )
 
     export_cmd=""
