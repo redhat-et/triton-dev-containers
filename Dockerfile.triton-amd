@@ -80,12 +80,6 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     llvm clang clang-libs lld && \
     dnf clean all && rm -rf /var/cache/yum
 
-# Add Triton repository and environment configuration
-WORKDIR /opt
-RUN git clone https://github.com/triton-lang/triton.git triton; \
-    echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc; \
-    echo "export MAX_JOBS=$(nproc --all)" >> ~/.bashrc
-
 # LLVM Integration Stages
 FROM base AS llvm-local-true
 COPY --from=llvm-build /llvm-project/ /llvm-project/
