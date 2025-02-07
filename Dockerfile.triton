@@ -13,7 +13,6 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-
 ARG CUSTOM_LLVM=false
 
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
@@ -23,6 +22,7 @@ USER 0
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf update -y && \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
+        dnf clean all && rm -rf /var/cache/dnf && \
         git clone https://github.com/llvm/llvm-project && \
         cd llvm-project && \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
@@ -35,12 +35,12 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
     fi
 
-FROM registry.access.redhat.com/ubi9/ubi:latest AS gosu
-
+# gosu Installation Stage
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS gosu
 ENV GOSU_VERSION=1.17
-RUN dnf update -y && \
-    dnf -y install wget && \
-    dnf clean all
+RUN microdnf update -y && \
+    microdnf install -y wget && \
+    microdnf clean all && rm -rf /var/cache/dnf
 RUN set -eux; \
     rpmArch="$(rpm --query --queryformat='%{ARCH}' rpm)"; \
     case "$rpmArch" in \
@@ -53,8 +53,8 @@ RUN set -eux; \
         *) echo >&2 "error: unknown/unsupported architecture '$rpmArch'"; exit 1 ;; \
     esac; \
     wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
-    wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
-    chmod +x /usr/local/bin/gosu;
+    chmod +x /usr/local/bin/gosu && \
+    rm -rf /var/cache/dnf /tmp/*
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
