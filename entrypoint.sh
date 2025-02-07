@@ -20,6 +20,12 @@ USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 
+rocm_setup(){
+    if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
+        echo "Installing ROCm dependencies..."
+        dnf install -y amd-smi-lib amd-smi miopen-hip openmp-extras-runtime rocm-core rocm-hip-libraries rocminfo
+    fi
+}
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ -d "/opt/triton-cpu" ]; then
@@ -91,7 +97,7 @@ install_dependencies() {
     fi
 }
 
-# Check if the USER environment variable is set and not empty
+rocm_setup
 # Check if the USER environment variable is set and not empty
 if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
