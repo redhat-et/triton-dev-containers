@@ -23,7 +23,14 @@ GROUP_ID=${USER_GID:-1000}
 rocm_setup(){
     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
         echo "Installing ROCm dependencies..."
-        dnf install -y amd-smi-lib amd-smi miopen-hip openmp-extras-runtime rocm-core rocm-hip-libraries rocminfo
+        dnf install -y --nodocs --setopt=install_weak_deps=False -y amd-smi-lib \
+        amd-smi \
+        miopen-hip \
+        openmp-extras-runtime \
+        rocm-core \
+        rocm-hip-libraries \
+        rocminfo
+
     fi
 }
 navigate() {
