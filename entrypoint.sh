@@ -30,7 +30,6 @@ rocm_setup(){
         rocm-core \
         rocm-hip-libraries \
         rocminfo
-
     fi
 }
 navigate() {
@@ -64,32 +63,44 @@ install_dependencies() {
     git submodule init
     git submodule update
 
-    echo "Installing Python dependencies..."
+    echo "#############################################################################"
+    echo "##################### Installing Python dependencies... #####################"
+    echo "#############################################################################"
     pip install --upgrade pip
 
     if [ -n "$INSTALL_CUDNN" ] && [ "$INSTALL_CUDNN" = "true" ]; then
-        echo "Installing CUDA dependencies..."
+        echo "###########################################################################"
+        echo "##################### Installing CUDA dependencies... #####################"
+        echo "###########################################################################"
         python3 -m pip install nvidia-cudnn-cu12;
     fi
 
     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
-        echo "Installing ROCm dependencies..."
+        echo "###########################################################################"
+        echo "##################### Installing ROCm dependencies... #####################"
+        echo "###########################################################################"
         pip install --no-cache-dir torch==2.5.0 --index-url https://download.pytorch.org/whl/rocm6.2
         pip install --no-cache-dir pyyaml ctypeslib2
     else
         pip install torch
     fi
 
-    echo "Installing Triton dependencies..."
+    echo "#############################################################################"
+    echo "##################### Installing Triton dependencies... #####################"
+    echo "#############################################################################"
     pip install numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
 
-    echo "Installing pre-commit dependencies..."
+    echo "###############################################################################"
+    echo "#####################Installing pre-commit dependencies...#####################"
+    echo "###############################################################################"
     pip install pre-commit
 
     pre-commit install
 
     if [ -n "$CUSTOM_LLVM" ] && [ "$CUSTOM_LLVM" = "true" ]; then
-        echo "CUSTOM LLVM BUILD..."
+        echo "################################################################"
+        echo "##################### CUSTOM LLVM BUILD... #####################"
+        echo "################################################################"
         echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
         echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
         echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
@@ -104,10 +115,6 @@ install_dependencies() {
             export var
         done
     fi
-
-    echo "Building Triton..."
-    pip install -e python
-    pip install -e './python[tutorials]'
 }
 
 rocm_setup

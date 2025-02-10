@@ -76,7 +76,7 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "baseurl=https://repo.radeon.com/rocm/rhel9/$ROCM_VERSION/main" >> /etc/yum.repos.d/rocm.repo && \
     echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
     echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
-    dnf install -y llvm clang clang-libs lld && \
+""    dnf install -y llvm clang clang-libs lld && \
     dnf clean all && rm -rf /var/cache/yum
 
 # LLVM Integration Stages
@@ -102,5 +102,6 @@ RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
+COPY triton-gpu-check.py triton-gpu-check.py
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
