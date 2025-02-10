@@ -82,7 +82,7 @@ install_dependencies() {
         echo "###########################################################################"
         echo "##################### Installing ROCm dependencies... #####################"
         echo "###########################################################################"
-        pip install --no-cache-dir torch==2.5.1+rocm"${ROCM_VERSION}" --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
+        pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
     else
         pip install torch
     fi
@@ -147,12 +147,10 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     done
 
     echo "Switching to user: $USER to install dependencies."
-    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); navigate && install_dependencies"
+    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies); install_dependencies"
 
-    navigate  # Ensure we end in the correct directory
     exec gosu "$USER" "$@"
 else
     install_dependencies
-    navigate  # Ensure we end in the correct directory
     exec "$@"
 fi
