@@ -77,7 +77,7 @@ triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	fi; \
 	$(CTR_CMD) run -e USERNAME=${USER} -it $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
 
-triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
+triton-amd-run: image-builder-check ## Run the triton ROCm devcontainer image
 	@if [ "${triton_path}" != "${source_dir}" ]; then \
 		volume_arg="-v ${triton_path}:/opt/triton"; \
 	else \
@@ -88,6 +88,12 @@ triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		gitconfig_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined \
-	--group-add=video --cap-add=SYS_PTRACE --env HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0} \
+	kfd_group=$$(stat -c "%G" /dev/kfd); \
+	if [ "$$kfd_group" != "UNKNOWN" ]; then \
+		group_add_arg="--group-add=$$kfd_group"; \
+	else \
+		group_add_arg=""; \
+	fi; \
+	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined $$group_add_arg \
+	--cap-add=SYS_PTRACE --env HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0} \
 	-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;

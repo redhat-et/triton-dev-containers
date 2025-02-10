@@ -113,10 +113,6 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     if ! id -u "$USER" >/dev/null 2>&1; then
         echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
         ./user.sh -u "$USER" -g "$USER_ID"
-        if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
-            groupmod -g "$GROUP_ID" video || groupadd -g "$GROUP_ID" video
-            usermod -aG video "$USER"
-        fi
     fi
 
     # Define environment variables to export
