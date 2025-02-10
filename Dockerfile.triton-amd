@@ -16,7 +16,6 @@
 
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
-ARG HIP_VISIBLE_DEVICES=0
 
 # LLVM Build Stage
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
@@ -79,10 +78,12 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
     dnf install -y llvm clang clang-libs lld && \
     dnf install -y --nodocs --setopt=install_weak_deps=False \
+        amd-smi-lib \
+        amd-smi \
+        miopen-hip \
         rocm-core \
-        rocminfo \
-        hip-runtime-amd \
-        miopen-hip && \
+        rocm-hip-libraries \
+        rocminfo && \
     dnf clean all && rm -rf /var/cache/yum
 
 # LLVM Integration Stages
@@ -95,7 +96,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
 ARG ROCM_VERSION=6.2
-ARG HIP_VISIBLE_DEVICES=0
+ARG HIP_DEVICES=0
 ARG USERNAME=1001
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
@@ -103,8 +104,7 @@ ENV PYTHON_VERSION=3.11 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
     AMD=true \
-    ROCM_VERSION=$ROCM_VERSION \
-    HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+    ROCM_VERSION=$ROCM_VERSION
 
 WORKDIR /opt
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc

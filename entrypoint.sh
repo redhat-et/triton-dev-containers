@@ -20,19 +20,6 @@ USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 
-# rocm_setup(){
-#     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
-#         echo "#############################################################################"
-#         echo "###################### Installing ROCm dependencies... ######################"
-#         echo "#############################################################################"
-#         dnf install -y --nodocs --setopt=install_weak_deps=False \
-#             rocm-core \
-#             rocminfo \
-#             hip-runtime-amd \
-#             miopen-hip \
-
-#     fi
-# }
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ -d "/opt/triton-cpu" ]; then
@@ -120,7 +107,6 @@ install_dependencies() {
     fi
 }
 
-# rocm_setup
 # Check if the USER environment variable is set and not empty
 if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
@@ -139,8 +125,12 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         "CUSTOM_LLVM=$CUSTOM_LLVM"
         "AMD=$AMD"
         "ROCM_VERSION=$ROCM_VERSION"
-        "HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES"
     )
+
+    # Only add HIP_VISIBLE_DEVICES if it's explicitly set
+    if [ -n "$HIP_VISIBLE_DEVICES" ]; then
+        export_vars+=("HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES")
+    fi
 
     export_cmd=""
     for var in "${export_vars[@]}"; do
