@@ -76,13 +76,15 @@ install_dependencies() {
         echo "Installing ROCm dependencies..."
         pip install --no-cache-dir torch==2.5.0 --index-url https://download.pytorch.org/whl/rocm6.2
         pip install --no-cache-dir pyyaml ctypeslib2
+    else
+        pip install torch
     fi
+
+    echo "Installing Triton dependencies..."
+    pip install numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
 
     echo "Installing pre-commit dependencies..."
     pip install pre-commit
-
-    echo "Installing Triton dependencies..."
-    pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
 
     pre-commit install
 
@@ -102,6 +104,10 @@ install_dependencies() {
             export var
         done
     fi
+
+    echo "Building Triton..."
+    pip install -e python
+    pip install -e './python[tutorials]'
 }
 
 rocm_setup
