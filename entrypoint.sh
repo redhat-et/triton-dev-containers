@@ -139,6 +139,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         "CUSTOM_LLVM=$CUSTOM_LLVM"
         "AMD=$AMD"
         "ROCM_VERSION=$ROCM_VERSION"
+        "HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES"
     )
 
     export_cmd=""
@@ -147,10 +148,11 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     done
 
     echo "Switching to user: $USER to install dependencies."
-    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies); install_dependencies"
-
+    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies && navigate"
+    navigate
     exec gosu "$USER" "$@"
 else
     install_dependencies
+    navigate
     exec "$@"
 fi
