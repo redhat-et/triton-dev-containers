@@ -96,6 +96,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 
 # Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
+ARG ROCM_VERSION=6.2
 ARG USERNAME=1001
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
@@ -111,6 +112,6 @@ RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
-COPY triton-gpu-check.py triton-gpu-check.py
+COPY hack/triton-gpu-check.py triton-gpu-check.py
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
