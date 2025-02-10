@@ -16,6 +16,7 @@
 
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
+ARG HIP_VISIBLE_DEVICES=0
 
 # LLVM Build Stage
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
@@ -60,6 +61,7 @@ RUN set -eux; \
 
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-311 AS base
+ARG HIP_VISIBLE_DEVICES=0
 ARG ROCM_VERSION=6.2
 USER 0
 
@@ -68,7 +70,8 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8 \
     ROCM_PATH=/opt/rocm \
     LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
-    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
+    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH \
+    HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
 
 # Install the ROCm rpms
 RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
@@ -77,6 +80,11 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
     echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
     dnf install -y llvm clang clang-libs lld && \
+    dnf install -y --nodocs --setopt=install_weak_deps=False \
+        rocm-core \
+        rocminfo \
+        hip-runtime-amd \
+        miopen-hip && \
     dnf clean all && rm -rf /var/cache/yum
 
 # LLVM Integration Stages
@@ -94,7 +102,8 @@ ARG USER_GID=$USER_UID
 ENV PYTHON_VERSION=3.11 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
-    AMD=true
+    AMD=true \
+    ROCM_VERSION=$ROCM_VERSION
 
 WORKDIR /opt
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
