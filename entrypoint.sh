@@ -20,18 +20,19 @@ USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 
-rocm_setup(){
-    if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
-        echo "Installing ROCm dependencies..."
-        dnf install -y --nodocs --setopt=install_weak_deps=False -y amd-smi-lib \
-        amd-smi \
-        miopen-hip \
-        openmp-extras-runtime \
-        rocm-core \
-        rocm-hip-libraries \
-        rocminfo
-    fi
-}
+# rocm_setup(){
+#     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
+#         echo "#############################################################################"
+#         echo "###################### Installing ROCm dependencies... ######################"
+#         echo "#############################################################################"
+#         dnf install -y --nodocs --setopt=install_weak_deps=False \
+#             rocm-core \
+#             rocminfo \
+#             hip-runtime-amd \
+#             miopen-hip \
+
+#     fi
+# }
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ -d "/opt/triton-cpu" ]; then
@@ -45,7 +46,9 @@ navigate() {
 }
 # Function to clone repo and install dependencies
 install_dependencies() {
-    echo "Cloning the Triton repos (if needed)..."
+    echo "#############################################################################"
+    echo "################### Cloning the Triton repos (if needed)... #################"
+    echo "#############################################################################"
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ ! -d "/opt/triton-cpu" ]; then
             echo "/opt/triton-cpu not found. Cloning repository..."
@@ -79,8 +82,7 @@ install_dependencies() {
         echo "###########################################################################"
         echo "##################### Installing ROCm dependencies... #####################"
         echo "###########################################################################"
-        pip install --no-cache-dir torch==2.5.0 --index-url https://download.pytorch.org/whl/rocm6.2
-        pip install --no-cache-dir pyyaml ctypeslib2
+        pip install --no-cache-dir torch==2.5.1+rocm"${ROCM_VERSION}" --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
     else
         pip install torch
     fi
@@ -88,7 +90,8 @@ install_dependencies() {
     echo "#############################################################################"
     echo "##################### Installing Triton dependencies... #####################"
     echo "#############################################################################"
-    pip install numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
+    pip install tabulate scipy ninja cmake wheel pybind11
+    pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
     echo "###############################################################################"
     echo "#####################Installing pre-commit dependencies...#####################"
@@ -117,7 +120,7 @@ install_dependencies() {
     fi
 }
 
-rocm_setup
+# rocm_setup
 # Check if the USER environment variable is set and not empty
 if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
@@ -135,6 +138,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         "INSTALL_CUDNN=$INSTALL_CUDNN"
         "CUSTOM_LLVM=$CUSTOM_LLVM"
         "AMD=$AMD"
+        "ROCM_VERSION=$ROCM_VERSION"
     )
 
     export_cmd=""
