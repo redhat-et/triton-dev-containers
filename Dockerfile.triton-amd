@@ -61,7 +61,6 @@ RUN set -eux; \
 
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-311 AS base
-ARG HIP_VISIBLE_DEVICES=0
 ARG ROCM_VERSION=6.2
 USER 0
 
@@ -70,8 +69,7 @@ ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8 \
     ROCM_PATH=/opt/rocm \
     LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
-    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH \
-    HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
 
 # Install the ROCm rpms
 RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
@@ -97,6 +95,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
 ARG ROCM_VERSION=6.2
+ARG HIP_VISIBLE_DEVICES=0
 ARG USERNAME=1001
 ARG USER_UID=1001
 ARG USER_GID=$USER_UID
@@ -104,7 +103,8 @@ ENV PYTHON_VERSION=3.11 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
     AMD=true \
-    ROCM_VERSION=$ROCM_VERSION
+    ROCM_VERSION=$ROCM_VERSION \
+    HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
 
 WORKDIR /opt
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
