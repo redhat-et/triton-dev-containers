@@ -113,6 +113,10 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     if ! id -u "$USER" >/dev/null 2>&1; then
         echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
         ./user.sh -u "$USER" -g "$USER_ID"
+        if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
+            groupmod -g "$GROUP_ID" video || groupadd -g "$GROUP_ID" video
+            usermod -aG video "$USER"
+        fi
     fi
 
     # Define environment variables to export
@@ -138,7 +142,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     done
 
     echo "Switching to user: $USER to install dependencies."
-    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies && navigate"
+    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
     navigate
     exec gosu "$USER" "$@"
 else
