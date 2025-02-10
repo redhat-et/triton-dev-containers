@@ -62,7 +62,7 @@ RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
     echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
-    echo "export LLVM_INCLUDE_DIRS=/llvm-project/build /include" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_LIBRARY_DIR=/llvm-project/build /lib" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_SYSPATH=/llvm-project/build " >> "${HOME}/.bashrc"; \
+    echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
+    echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
+    echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc"; \
 fi

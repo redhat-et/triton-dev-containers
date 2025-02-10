@@ -33,6 +33,9 @@ navigate() {
 }
 # Function to clone repo and install dependencies
 install_dependencies() {
+    echo "#############################################################################"
+    echo "################### Cloning the Triton repos (if needed)... #################"
+    echo "#############################################################################"
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ ! -d "/opt/triton-cpu" ]; then
             echo "/opt/triton-cpu not found. Cloning repository..."
@@ -50,21 +53,58 @@ install_dependencies() {
     git submodule init
     git submodule update
 
-    echo "Installing Python dependencies..."
+    echo "#############################################################################"
+    echo "##################### Installing Python dependencies... #####################"
+    echo "#############################################################################"
     pip install --upgrade pip
 
     if [ -n "$INSTALL_CUDNN" ] && [ "$INSTALL_CUDNN" = "true" ]; then
-        echo "Installing CUDA dependencies..."
+        echo "###########################################################################"
+        echo "##################### Installing CUDA dependencies... #####################"
+        echo "###########################################################################"
         python3 -m pip install nvidia-cudnn-cu12;
     fi
 
-    echo "Installing pre-commit dependencies..."
+    if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
+        echo "###########################################################################"
+        echo "##################### Installing ROCm dependencies... #####################"
+        echo "###########################################################################"
+        pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
+    else
+        pip install torch
+    fi
+
+    echo "#############################################################################"
+    echo "##################### Installing Triton dependencies... #####################"
+    echo "#############################################################################"
+    pip install tabulate scipy ninja cmake wheel pybind11
+    pip install numpy pyyaml ctypeslib2 matplotlib pandas
+
+    echo "###############################################################################"
+    echo "#####################Installing pre-commit dependencies...#####################"
+    echo "###############################################################################"
     pip install pre-commit
 
-    echo "Installing Triton dependencies..."
-    pip install torch numpy matplotlib pandas tabulate scipy ninja cmake wheel pybind11
-
     pre-commit install
+
+    if [ -n "$CUSTOM_LLVM" ] && [ "$CUSTOM_LLVM" = "true" ]; then
+        echo "################################################################"
+        echo "##################### CUSTOM LLVM BUILD... #####################"
+        echo "################################################################"
+        echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
+        echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
+        echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
+        echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc";
+        declare -a llvm_vars=(
+            "LLVM_BUILD_DIR=/llvm-project/build"
+            "LLVM_INCLUDE_DIRS=/llvm-project/build/include"
+            "LLVM_LIBRARY_DIR=/llvm-project/build/lib"
+            "TRITON_CPU_BACKEND=/llvm-project/build"
+        )
+        for var in "${llvm_vars[@]}"; do
+            export var
+        done
+    fi
 }
 
 # Check if the USER environment variable is set and not empty
@@ -75,13 +115,22 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         ./user.sh -u "$USER" -g "$USER_ID"
     fi
 
-   export_vars=(
+    # Define environment variables to export
+    declare -a export_vars=(
         "USERNAME=$USER"
         "USER_UID=$USER_ID"
         "USER_GID=$GROUP_ID"
         "TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
         "INSTALL_CUDNN=$INSTALL_CUDNN"
+        "CUSTOM_LLVM=$CUSTOM_LLVM"
+        "AMD=$AMD"
+        "ROCM_VERSION=$ROCM_VERSION"
     )
+
+    # Only add HIP_VISIBLE_DEVICES if it's explicitly set
+    if [ -n "$HIP_VISIBLE_DEVICES" ]; then
+        export_vars+=("HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES")
+    fi
 
     export_cmd=""
     for var in "${export_vars[@]}"; do
@@ -89,12 +138,11 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     done
 
     echo "Switching to user: $USER to install dependencies."
-    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); navigate && install_dependencies"
-
-    navigate  # Ensure we end in the correct directory
+    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
+    navigate
     exec gosu "$USER" "$@"
 else
     install_dependencies
-    navigate  # Ensure we end in the correct directory
+    navigate
     exec "$@"
 fi

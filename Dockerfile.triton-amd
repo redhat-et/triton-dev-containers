@@ -15,23 +15,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUSTOM_LLVM=false
+ARG ROCM_VERSION=6.2
 
+# LLVM Build Stage
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
 ARG CUSTOM_LLVM
 USER 0
-# Conditionally execute the build based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf update -y && \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
-        dnf clean all && rm -rf /var/cache/dnf && \
         git clone https://github.com/llvm/llvm-project && \
         cd llvm-project && \
-        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton-cpu/refs/heads/main/cmake/llvm-hash.txt) &&\
+        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) && \
         git checkout $COMMIT && \
-        mkdir build && \
-        cd build && \
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
-        ninja; \
+        mkdir build && cd build && \
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+              -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
+        ninja && \
+        dnf clean all && rm -rf /var/cache/dnf /tmp/*; \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
     fi
@@ -57,34 +58,53 @@ RUN set -eux; \
     chmod +x /usr/local/bin/gosu && \
     rm -rf /var/cache/dnf /tmp/*
 
-FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG CUSTOM_LLVM
-
+# Base Stage with ROCm Installation
+FROM registry.access.redhat.com/ubi9/python-311 AS base
+ARG ROCM_VERSION=6.2
 USER 0
 
-RUN dnf update -y && \
-    dnf -y install clang cmake lld ninja-build \
-    openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
-    dnf clean all && rm -rf /var/cache/dnf
+# Set environment variables for ROCm
+ENV LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8 \
+    ROCM_PATH=/opt/rocm \
+    LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
+    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
 
-# Stage for llvm-local-true
+# Install the ROCm rpms
+RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
+    echo "name=ROCm" >> /etc/yum.repos.d/rocm.repo && \
+    echo "baseurl=https://repo.radeon.com/rocm/rhel9/$ROCM_VERSION/main" >> /etc/yum.repos.d/rocm.repo && \
+    echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
+    echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
+    dnf install -y llvm clang clang-libs lld && \
+    dnf install -y --nodocs --setopt=install_weak_deps=False \
+        amd-smi-lib \
+        amd-smi \
+        miopen-hip \
+        rocm-core \
+        rocm-hip-libraries \
+        rocminfo && \
+    dnf clean all && rm -rf /var/cache/yum
+
+# LLVM Integration Stages
 FROM base AS llvm-local-true
 COPY --from=llvm-build /llvm-project/ /llvm-project/
 
-# Stage for llvm-local-false
 FROM base AS llvm-local-false
 ENV TRITON_OFFLINE_BUILD=NO
 
-# Use intermediate stage selection
+# Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
+ARG ROCM_VERSION=6.2
+ARG HIP_DEVICES=0
 ARG USERNAME=1001
-ARG USER_UID=1000
+ARG USER_UID=1001
 ARG USER_GID=$USER_UID
-
-ENV PYTHON_VERSION=3.12 \
+ENV PYTHON_VERSION=3.11 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
-    TRITON_CPU_BACKEND=1
+    AMD=true \
+    ROCM_VERSION=$ROCM_VERSION
 
 WORKDIR /opt
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
@@ -92,5 +112,6 @@ RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
+COPY hack/triton-gpu-check.py triton-gpu-check.py
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
