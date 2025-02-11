@@ -76,9 +76,6 @@ ENV TRITON_OFFLINE_BUILD=NO
 
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM} AS final
-ARG USERNAME=1001
-ARG USER_UID=1001
-ARG USER_GID=$USER_UID
 
 ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
