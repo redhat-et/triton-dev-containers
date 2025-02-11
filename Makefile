@@ -41,15 +41,15 @@ image-builder-check:
 all: triton-image
 
 triton-image: image-builder-check ## Build the triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USERNAME} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
     --build-arg INSTALL_CUDNN=true  -f Dockerfile.triton .
 
 triton-cpu-image: image-builder-check ## Build the triton-cpu devcontainer image
-	$(CTR_CMD) build --no-cache -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USERNAME} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
+	$(CTR_CMD) build --no-cache -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
     -f Dockerfile.triton-cpu .
 
 triton-amd-image: image-builder-check ## Build the triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USERNAME} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
     -f Dockerfile.triton-amd .
 
 triton-run: image-builder-check ## Run the triton devcontainer image
@@ -63,7 +63,7 @@ triton-run: image-builder-check ## Run the triton devcontainer image
 	else \
 		gitconfig_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} --runtime=nvidia --gpus=all -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
+	$(CTR_CMD) run -e USERNAME=${USER} -e USER_UID=`id -u ${USER}` -e USER_GID=`id -u ${USER}` --runtime=nvidia --gpus=all -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
 
 triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
@@ -76,7 +76,7 @@ triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		gitconfig_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} -it $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
+	$(CTR_CMD) run -e USERNAME=${USER} -e USER_UID=`id -u ${USER}` -e USER_GID=`id -u ${USER}` -it $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) bash;
 
 triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
 	@if [ "${triton_path}" != "${source_dir}" ]; then \
