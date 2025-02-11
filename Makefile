@@ -50,7 +50,7 @@ triton-cpu-image: image-builder-check ## Build the triton-cpu devcontainer image
 
 triton-amd-image: image-builder-check ## Build the triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) --build-arg USERNAME=${USERNAME} --build-arg CUSTOM_LLVM=${CUSTOM_LLVM}\
-    --build-arg INSTALL_CUDNN=true  -f Dockerfile.triton-amd .
+    -f Dockerfile.triton-amd .
 
 triton-run: image-builder-check ## Run the triton devcontainer image
 	@if [ "${triton_path}" != "${source_dir}" ]; then \
