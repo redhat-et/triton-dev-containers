@@ -6,18 +6,19 @@ set -euo pipefail
 
 username=""
 userid=""
+usergid=""
 
 usage() {
   cat <<EOF >&2
 Usage: $0
    -u | --user <username>
-   -g | --gid <userid>
+   -g | --gid <usergid>
 EOF
   exit 1
 }
 
 # Parse command-line arguments
-args=$(getopt -o u:g: --long user:,gid: -n "$0" -- "$@") || usage
+args=$(getopt -o u:g:i: --long user:,gid:,id: -n "$0" -- "$@") || usage
 
 eval set -- "$args"
 while [ $# -gt 0 ]; do
@@ -30,6 +31,10 @@ while [ $# -gt 0 ]; do
       shift 2
       ;;
     -g | --gid)
+      usergid="$2"
+      shift 2
+      ;;
+    -i | --id)
       userid="$2"
       shift 2
       ;;
@@ -45,14 +50,14 @@ while [ $# -gt 0 ]; do
 done
 
 # Validate required parameters
-if [ -z "$username" ] || [ -z "$userid" ]; then
-  echo "Error: --user and --gid are required." >&2
+if [ -z "$username" ] || [ -z "$usergid" ]  || [ -z "$userid" ]; then
+  echo "Error: --user, --id, and --gid are required." >&2
   usage
 fi
 
 USER_NAME="$username"
 USER_UID="$userid"
-USER_GID="$USER_UID"
+USER_GID="$usergid"
 HOME_DIR="/home/$USER_NAME"
 
 # Exit if the user is root
