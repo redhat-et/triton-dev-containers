@@ -1,5 +1,5 @@
 {
-    "name": "Triton",
+    "name": "Triton-CUDA",
     "build": {
       "dockerfile": "Dockerfile",
       "args": {

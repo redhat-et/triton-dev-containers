@@ -14,7 +14,7 @@ OR
 In your triton directory:
 
 ```sh
-git clone -n --depth=1 --filter=tree:0 https://github.com/maryamtahhan/triton-dev-container/ .devcontainer
+git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
 cd .devcontainer
 git sparse-checkout set --no-cone .devcontainer/triton
 git checkout
