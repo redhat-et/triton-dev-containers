@@ -112,7 +112,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
     if ! id -u "$USER" >/dev/null 2>&1; then
         echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
-        ./user.sh -u "$USER" -g "$USER_ID"
+        ./user.sh -u "$USER_ID" -g "$GROUP_ID"
     fi
 
     # Define environment variables to export

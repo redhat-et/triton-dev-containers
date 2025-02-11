@@ -31,6 +31,7 @@ IMAGE_NAME ?= nvidia
 CPU_IMAGE_NAME ?= cpu
 AMD_IMAGE_NAME ?= amd
 TRITON_TAG ?= latest
+HIP_DEVICES:= $(or $(HIP_VISIBLE_DEVICES), 0)
 export CTR_CMD?=$(or $(shell command -v podman), $(shell command -v docker))
 
 ##@ Container build.
@@ -88,6 +89,6 @@ triton-amd-run: image-builder-check ## Run the triton-cpu devcontainer image
 	else \
 		gitconfig_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined \
-	--group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0} \
+	$(CTR_CMD) run -e USERNAME=${USER} -e USER_UID=`id -u ${USER}` -e USER_GID=`id -u ${USER}` --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined \
+	--group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=${HIP_DEVICES} \
 	-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) bash;
