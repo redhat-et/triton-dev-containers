@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash -e
 #
 # Copyright (C) 2024-2025 Red Hat, Inc.
 #
@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-
+set -euo pipefail
 USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
@@ -112,7 +112,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
     # Create user if it doesn't exist
     if ! id -u "$USER" >/dev/null 2>&1; then
         echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
-        ./user.sh -u "$USER_ID" -g "$GROUP_ID"
+        ./user.sh -u "$USER" -i "$USER_ID" -g "$GROUP_ID"
     fi
 
     # Define environment variables to export
@@ -120,14 +120,28 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         "USERNAME=$USER"
         "USER_UID=$USER_ID"
         "USER_GID=$GROUP_ID"
-        "TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
-        "INSTALL_CUDNN=$INSTALL_CUDNN"
-        "CUSTOM_LLVM=$CUSTOM_LLVM"
-        "AMD=$AMD"
-        "ROCM_VERSION=$ROCM_VERSION"
     )
 
-    # Only add HIP_VISIBLE_DEVICES if it's explicitly set
+    if [ -n "$CUSTOM_LLVM" ]; then
+        export_vars+=("CUSTOM_LLVM=$CUSTOM_LLVM")
+    fi
+
+    if [ -n "$TRITON_CPU_BACKEND" ]; then
+        export_vars+=("TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND")
+    fi
+
+    if [ -n "$INSTALL_CUDNN" ]; then
+        export_vars+=("INSTALL_CUDNN=$INSTALL_CUDNN")
+    fi
+
+    if [ -n "$AMD" ]; then
+        export_vars+=("AMD=$AMD")
+    fi
+
+    if [ -n "$ROCM_VERSION" ]; then
+        export_vars+=("ROCM_VERSION=$ROCM_VERSION")
+    fi
+
     if [ -n "$HIP_VISIBLE_DEVICES" ]; then
         export_vars+=("HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES")
     fi
