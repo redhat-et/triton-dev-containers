@@ -159,6 +159,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
 
     echo "Switching to user: $USER to install dependencies."
     runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
+    runuser -u "$USER" -- python triton-gpu-check.py
     navigate
     exec gosu "$USER" "$@"
 else
