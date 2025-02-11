@@ -13,6 +13,7 @@ usage() {
 Usage: $0
    -u | --user <username>
    -g | --gid <usergid>
+   -i | --id <userid>
 EOF
   exit 1
 }
@@ -50,7 +51,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Validate required parameters
-if [ -z "$username" ] || [ -z "$usergid" ]  || [ -z "$userid" ]; then
+if [ -z "$username" ] || [ -z "$usergid" ] || [ -z "$userid" ]; then
   echo "Error: --user, --id, and --gid are required." >&2
   usage
 fi
@@ -59,16 +60,25 @@ USER_NAME="$username"
 USER_UID="$userid"
 USER_GID="$usergid"
 HOME_DIR="/home/$USER_NAME"
+DEFAULT_UID=1000
 
 # Exit if the user is root
 if [ "$USER_NAME" = "root" ]; then
   exit 0
 fi
 
+# Create group if it doesn't exist
 if ! getent group "$USER_NAME" >/dev/null; then
   groupadd --gid "$USER_GID" "$USER_NAME"
 fi
 
+# Check if the UID is in use
+if getent passwd "$USER_UID" >/dev/null; then
+  echo "Warning: UID $USER_UID is already in use. Creating the user with UID $DEFAULT_UID instead." >&2
+  USER_UID=$DEFAULT_UID
+fi
+
+# Create user if it doesn't exist
 if ! getent passwd "$USER_NAME" >/dev/null; then
   useradd --uid "$USER_UID" --gid "$USER_GID" -m "$USER_NAME"
 fi
@@ -79,7 +89,7 @@ if [ ! -d "${HOME_DIR}" ]; then
 fi
 
 # Add current (arbitrary) user to /etc/passwd and /etc/group
-if ! whoami > /dev/null 2>&1; then
+if ! whoami >/dev/null 2>&1; then
   if [ -w /etc/passwd ]; then
     echo "update passwd file"
     echo "${USER_NAME:-user}:x:$(id -u):0:${USER_NAME:-user} user:${HOME}:/bin/bash" >> /etc/passwd
