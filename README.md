@@ -32,7 +32,7 @@ This repo provides 2 different flavours of development containers:
 ## Building the triton vanilla container
 
 ```sh
- make triton-build
+ make triton-image
 ```
 
 ## Running the triton vanilla container
@@ -47,7 +47,7 @@ at container startup time.
 ## Building the triton-cpu vanilla container
 
 ```sh
- make triton-cpu-build
+ make triton-cpu-image
 ```
 
 ## Running the triton-cpu vanilla container
@@ -58,6 +58,24 @@ at container startup time.
 
 > **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
 at container startup time.
+
+## Building the triton-amd vanilla container
+
+```sh
+ make triton-amd-image
+```
+
+## Running the triton-amd vanilla container
+
+```sh
+ make triton-amd-run [triton_path=<path-to-triton-on-host>]
+```
+
+> **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
+at container startup time.
+
+> **_NOTE_**: it's also advised that you commit the image after it's completed initialization
+`[podman|docker] commit <container_id> quay.io/triton-dev-containers/amd:latest`
 
 ## Using .devcontainers with VSCODE
 
