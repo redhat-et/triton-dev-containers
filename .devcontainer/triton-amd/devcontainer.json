@@ -6,7 +6,7 @@
       // root (not recommended)
       "USERNAME": "${localEnv:USER}",
       "USER_UID": "${localEnv:USER_UID}",
-      "USER_GID": "${localEnv:USER}",
+      "USER_GID": "${localEnv:USER_GID}",
       "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}",
       // Uncomment CUSTOM_LLVM to enable specific LLVM build
       //"CUSTOM_LLVM": "true"
