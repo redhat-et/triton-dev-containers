@@ -5,8 +5,8 @@
     "args": {
       // root (not recommended)
       "USERNAME": "${localEnv:USER}",
-      "USER_UID": 1000,
-      "USER_GID": 1000,
+      "USER_UID": "${localEnv:USER_UID}",
+      "USER_GID": "${localEnv:USER_GID}",
       "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}",
       // Uncomment CUSTOM_LLVM to enable specific LLVM build
       //"CUSTOM_LLVM": "true"
@@ -31,7 +31,7 @@
     }
   },
   "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/triton-amd/postStartCommand.sh",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached,Z",
   "workspaceFolder": "/workspace",
   "hostRequirements": {
     "cpus": 8
@@ -41,8 +41,11 @@
     "--device=/dev/dri",
     "--security-opt",
     "seccomp=unconfined",
+    "--security-opt=label=disable",
     "--group-add=video",
     "--cap-add=SYS_PTRACE",
-    "--ipc=host"
-  ]
+    "--ipc=host",
+    "--userns=keep-id:uid=1000,gid=1000"
+  ],
+  "updateRemoteUserUID": true
 }

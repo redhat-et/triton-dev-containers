@@ -59,6 +59,12 @@ rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 > **_NOTE_**: If you are using an NVIDIA GPU, you also need to complete the steps
   to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
+```sh
+echo "export USER_UID=`id -u`" >> "${HOME}/.bashrc";
+echo "export USER_GID=`id -g`" >> "${HOME}/.bashrc";
+source "${HOME}/.bashrc"
+```
+
 ## Basic Workflow
 
 1. Dev Container Configuration: `.devcontainer/triton/devcontainer.json`
