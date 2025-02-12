@@ -65,7 +65,7 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
 COPY user.sh user.sh
 # Create the user
 RUN ./user.sh -u $USERNAME -g $USER_GID -i $USER_UID
-RUN chown "$USERNAME:$USER_GID" -R /workspace
+
 # Set the user
 USER $USERNAME
 
@@ -92,10 +92,11 @@ ENV TRITON_OFFLINE_BUILD=NO
 FROM llvm-local-${CUSTOM_LLVM}
 
 # Install dependencies
-RUN pip install --upgrade pip setuptools
-RUN pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas pre-commit
+RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools
+RUN pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas
 RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
-
+RUN pip install pre-commit
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \

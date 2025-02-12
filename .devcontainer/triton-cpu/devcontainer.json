@@ -5,8 +5,8 @@
       "args": {
         // root (not recommended)
         "USERNAME": "${localEnv:USER}",
-        "USER_UID": 1000,
-        "USER_GID": 1000
+        "USER_UID": "${localEnv:USER_UID}",
+        "USER_GID": "${localEnv:USER_GID}",
       }
     },
     "remoteUser": "${localEnv:USER}",
@@ -34,5 +34,10 @@
     "hostRequirements": {
       "cpus": 4,
       "gpu": false
-    }
+    },
+    "runArgs": [
+      "--userns=keep-id:uid=1000,gid=1000",
+      "--security-opt=label=disable"
+    ],
+    "updateRemoteUserUID": true
   }
