@@ -61,6 +61,7 @@ USER_UID="$userid"
 USER_GID="$usergid"
 HOME_DIR="/home/$USER_NAME"
 DEFAULT_UID=1000
+WORK_DIR="/workspace"
 
 # Exit if the user is root
 if [ "$USER_NAME" = "root" ]; then
@@ -86,6 +87,11 @@ fi
 # Ensure $HOME exists when starting
 if [ ! -d "${HOME_DIR}" ]; then
   mkdir -p "${HOME_DIR}"
+fi
+
+# Ensure $WORK_DIR exists when starting
+if [ ! -d "${WORK_DIR}" ]; then
+  mkdir -p "${WORK_DIR}"
 fi
 
 # Add current (arbitrary) user to /etc/passwd and /etc/group

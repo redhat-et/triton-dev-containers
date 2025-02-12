@@ -1,3 +1,19 @@
+# Copyright (C) 2024-2025 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
 ARG HIP_VISIBLE_DEVICES=0
@@ -30,9 +46,6 @@ ARG ROCM_VERSION=6.2
 ARG HIP_VISIBLE_DEVICES=0
 
 USER 0
-COPY user.sh user.sh
-# Create the user
-RUN ./user.sh -u $USERNAME -g $USER_GID -i $USER_UID
 
 RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "name=ROCm" >> /etc/yum.repos.d/rocm.repo && \
@@ -48,6 +61,11 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
         rocm-hip-libraries \
         rocminfo && \
     dnf clean all && rm -rf /var/cache/yum
+
+COPY user.sh user.sh
+# Create the user
+RUN ./user.sh -u $USERNAME -g $USER_GID -i $USER_UID
+RUN chown "$USERNAME:$USER_GID" -R /workspace
 # Set the user
 USER $USERNAME
 
@@ -73,13 +91,11 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM}
 
-WORKDIR /opt
 # Install dependencies
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas
+RUN pip install --upgrade pip setuptools
+RUN pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas pre-commit
 RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
-RUN pip install pre-commit
+
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
