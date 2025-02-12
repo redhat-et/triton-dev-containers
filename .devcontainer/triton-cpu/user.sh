@@ -100,5 +100,6 @@ fi
 # Fix up permissions
 chown "$USER_NAME:$USER_GID" -R "/home/$USER_NAME"
 chown "$USER_NAME:$USER_GID" -R /opt
+chown "$USER_NAME:$USER_GID" -R /workspace
 mkdir -p "/run/user/$USER_UID"
 chown "$USER_NAME:$USER_GID" "/run/user/$USER_UID"
