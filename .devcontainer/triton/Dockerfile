@@ -50,6 +50,7 @@ ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1
 
+WORKDIR /opt
 # Install dependencies
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools
