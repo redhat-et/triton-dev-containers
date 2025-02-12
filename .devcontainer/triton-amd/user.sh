@@ -68,7 +68,8 @@ if [ "$USER_NAME" = "root" ]; then
 fi
 
 # Create group if it doesn't exist
-if ! getent group "$USER_NAME" >/dev/null; then
+if ! getent group "$USER_GID" >/dev/null; then
+  echo "Group with GID $USER_GID doesn't exist. Creating group $USER_NAME with GID $USER_GID."
   groupadd --gid "$USER_GID" "$USER_NAME"
 fi
 
