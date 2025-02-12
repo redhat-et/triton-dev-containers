@@ -11,14 +11,38 @@ Copy the `.devcontainer` folder to your triton directory.
 
 OR
 
-In your triton directory:
+In your triton repo directory:
+
+For CUDA support:
 
 ```sh
-git clone -n --depth=1 --filter=tree:0 https://github.com/maryamtahhan/triton-dev-container/ .devcontainer
+git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
 cd .devcontainer
 git sparse-checkout set --no-cone .devcontainer/triton
 git checkout
 mv .devcontainer/triton ./
+rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
+```
+
+For ROCm support:
+
+```sh
+git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
+cd .devcontainer
+git sparse-checkout set --no-cone .devcontainer/triton-amd
+git checkout
+mv .devcontainer/triton-amd ./
+rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
+```
+
+For CPU support:
+
+```sh
+git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
+cd .devcontainer
+git sparse-checkout set --no-cone .devcontainer/triton-cpu
+git checkout
+mv .devcontainer/triton-cpu ./
 rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 ```
 
