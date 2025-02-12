@@ -21,7 +21,7 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
     fi
 
-FROM registry.access.redhat.com/ubi9/python-311 AS base
+FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG USERNAME=1001
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
@@ -51,11 +51,16 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
 # Set the user
 USER $USERNAME
 
-ENV PYTHON_VERSION=3.11 \
+ENV PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
     ROCM_VERSION=$ROCM_VERSION \
-    HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES
+    HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8 \
+    ROCM_PATH=/opt/rocm \
+    LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
+    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
@@ -68,6 +73,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM}
 
+WORKDIR /opt
 # Install dependencies
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools

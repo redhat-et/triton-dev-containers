@@ -63,13 +63,6 @@ FROM registry.access.redhat.com/ubi9/python-311 AS base
 ARG ROCM_VERSION=6.2
 USER 0
 
-# Set environment variables for ROCm
-ENV LC_ALL=C.UTF-8 \
-    LANG=C.UTF-8 \
-    ROCM_PATH=/opt/rocm \
-    LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
-    PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
-
 # Install the ROCm rpms
 RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "name=ROCm" >> /etc/yum.repos.d/rocm.repo && \
@@ -85,6 +78,13 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
         rocm-hip-libraries \
         rocminfo && \
     dnf clean all && rm -rf /var/cache/yum
+
+# Set environment variables for ROCm
+ENV LC_ALL=C.UTF-8 \
+LANG=C.UTF-8 \
+ROCM_PATH=/opt/rocm \
+LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
+PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
 
 # LLVM Integration Stages
 FROM base AS llvm-local-true
