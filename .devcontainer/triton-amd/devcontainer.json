@@ -6,7 +6,7 @@
       // root (not recommended)
       "USERNAME": "${localEnv:USER}",
       "USER_UID": "${localEnv:USER_UID}",
-      "USER_GID": "${localEnv:USER_GID}",
+      "USER_GID": "${localEnv:USER}",
       "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}",
       // Uncomment CUSTOM_LLVM to enable specific LLVM build
       //"CUSTOM_LLVM": "true"
@@ -45,7 +45,7 @@
     "--group-add=video",
     "--cap-add=SYS_PTRACE",
     "--ipc=host",
-    "--userns=keep-id:uid=1000,gid=1000"
+    "--userns=keep-id:uid=1001,gid=1001"
   ],
   "updateRemoteUserUID": true
 }
