@@ -41,7 +41,7 @@
       "--runtime=nvidia",
       "--gpus",
       "all",
-      "--userns=keep-id:uid=1000,gid=1000",
+      "--userns=keep-id:uid=1001,gid=1001",
       "--security-opt=label=disable"
     ],
     "updateRemoteUserUID": true

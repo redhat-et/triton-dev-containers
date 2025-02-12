@@ -63,6 +63,7 @@ rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 echo "export USER_UID=`id -u`" >> "${HOME}/.bashrc";
 echo "export USER_GID=`id -g`" >> "${HOME}/.bashrc";
 source "${HOME}/.bashrc"
+./setup.sh
 ```
 
 ## Basic Workflow
