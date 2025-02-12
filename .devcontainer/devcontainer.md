@@ -13,7 +13,7 @@ OR
 
 In your triton repo directory:
 
-For CUDA support:
+### For CUDA support
 
 ```sh
 git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
@@ -25,7 +25,7 @@ mv .devcontainer/setup.sh ./
 rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 ```
 
-For ROCm support:
+### For ROCm support
 
 ```sh
 git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
@@ -37,7 +37,7 @@ mv .devcontainer/setup.sh ./
 rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 ```
 
-For CPU support:
+### For CPU support
 
 ```sh
 git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
@@ -47,6 +47,15 @@ git checkout
 mv .devcontainer/triton-cpu ./
 mv .devcontainer/setup.sh ./
 rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
+```
+
+After you have run a variation of the shallow clones above you need to:
+
+```sh
+echo "export USER_UID=`id -u`" >> "${HOME}/.bashrc";
+echo "export USER_GID=`id -g`" >> "${HOME}/.bashrc";
+source "${HOME}/.bashrc"
+./setup.sh
 ```
 
 ## Prerequisites
@@ -62,12 +71,8 @@ rm -rf .devcontainer/ .git ## The checkout creates a nested .devcontainer dir.
 > **_NOTE_**: If you are using an NVIDIA GPU, you also need to complete the steps
   to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
-```sh
-echo "export USER_UID=`id -u`" >> "${HOME}/.bashrc";
-echo "export USER_GID=`id -g`" >> "${HOME}/.bashrc";
-source "${HOME}/.bashrc"
-./setup.sh
-```
+> **_NOTE_**: Please see the devcontainer podman settings below
+![settings](./gsg/images/settings.png)
 
 ## Basic Workflow
 
