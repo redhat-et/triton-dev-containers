@@ -68,10 +68,6 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM}
 
-ENV PYTHON_VERSION=3.11 \
-    PATH=$HOME/.local/bin/:$PATH \
-    PYTHONUNBUFFERED=1
-
 # Install dependencies
 RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools

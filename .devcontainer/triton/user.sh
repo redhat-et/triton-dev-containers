@@ -89,17 +89,14 @@ if [ ! -d "${HOME_DIR}" ]; then
 fi
 
 # Add current (arbitrary) user to /etc/passwd and /etc/group
-if ! whoami >/dev/null 2>&1; then
-  if [ -w /etc/passwd ]; then
-    echo "update passwd file"
-    echo "${USER_NAME:-user}:x:$(id -u):0:${USER_NAME:-user} user:${HOME}:/bin/bash" >> /etc/passwd
-    echo "${USER_NAME:-user}:x:$(id -u):" >> /etc/group
-  fi
+if [ -w /etc/passwd ]; then
+  echo "update passwd file"
+  echo "${USER_NAME:-user}:x:$(id -u):0:${USER_NAME:-user} user:${HOME}:/bin/bash" >> /etc/passwd
+  echo "${USER_NAME:-user}:x:$(id -u):" >> /etc/group
 fi
 
 # Fix up permissions
 chown "$USER_NAME:$USER_GID" -R "/home/$USER_NAME"
 chown "$USER_NAME:$USER_GID" -R /opt
-chown "$USER_NAME:$USER_GID" -R /workspace
 mkdir -p "/run/user/$USER_UID"
 chown "$USER_NAME:$USER_GID" "/run/user/$USER_UID"
