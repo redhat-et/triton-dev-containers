@@ -90,27 +90,27 @@ jobs:
           subject-digest: ${{ steps.build-push-image.outputs.digest }}
           push-to-registry: true
 
-      # - name: Generate SBOM
-      #   if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-      #   uses: anchore/sbom-action@v0.17.9
-      #   with:
-      #     image: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
-      #     artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
-      #     output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+      - name: Generate SBOM
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: anchore/sbom-action@v0.17.9
+        with:
+          image: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
+          artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
+          output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
 
-      # - name: Save Triton image SBOM as artifact
-      #   if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-      #   uses: actions/upload-artifact@v4.5.0
-      #   with:
-      #     name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
-      #     path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
-      #     retention-days: 1
+      - name: Save Triton image SBOM as artifact
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@v4.5.0
+        with:
+          name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          retention-days: 1
 
-      # - name: Generate SBOM attestation
-      #   if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-      #   uses: actions/attest-sbom@v2
-      #   with:
-      #     subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
-      #     subject-digest: ${{ steps.build-push-image.outputs.digest }}
-      #     sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
-      #     push-to-registry: true
+      - name: Generate SBOM attestation
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-push-image.outputs.digest }}
+          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          push-to-registry: true
