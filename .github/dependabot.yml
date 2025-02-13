@@ -15,4 +15,5 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
+      day: monday
       interval: "weekly"
