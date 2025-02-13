@@ -83,8 +83,6 @@ ENV PYTHON_VERSION=3.12 \
     INSTALL_CUDNN=true
 
 WORKDIR /opt
-RUN git clone https://github.com/triton-lang/triton.git triton
-WORKDIR /opt/triton
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
