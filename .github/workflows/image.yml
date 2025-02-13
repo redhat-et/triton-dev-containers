@@ -95,15 +95,15 @@ jobs:
         uses: anchore/sbom-action@v0.17.9
         with:
           image: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
-          artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
-          output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
+          output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
 
       - name: Save Triton image SBOM as artifact
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4.5.0
         with:
-          name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
-          path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
+          path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
           retention-days: 1
 
       - name: Generate SBOM attestation
@@ -112,5 +112,5 @@ jobs:
         with:
           subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
           subject-digest: ${{ steps.build-push-image.outputs.digest }}
-          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
           push-to-registry: true
