@@ -93,7 +93,7 @@ jobs:
         uses: anchore/sbom-action@v0.18.0
         with:
           image: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
-          artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
+          artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
           output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.cyclonedx.json
 
       - name: Save Triton-amd image SBOM as artifact
