@@ -81,6 +81,11 @@ at container startup time.
 
 Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)
 
+## Demos
+
+- [Triton devcontainer vscode demo](https://www.youtube.com/watch?v=ZrCVtV2Bw3s)
+- [Triton devcontainer demo](https://www.youtube.com/watch?v=kEbN6-pk3sI)
+
 ## A Container First approach to Triton development
 
 The Triton project from OpenAI is at the forefront of a groundbreaking movement
