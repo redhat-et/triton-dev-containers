@@ -11,6 +11,8 @@ on: # yamllint disable-line rule:truthy
     paths:
       - .github/workflows/cpu-image.yml
       - Dockerfile.triton-cpu
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
 
 jobs:
