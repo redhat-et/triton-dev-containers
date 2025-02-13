@@ -96,6 +96,15 @@ jobs:
           artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
           output-file: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
 
+      - name: Generate SBOM attestation
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-push-image.outputs.digest }}
+          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
+          push-to-registry: true
+
       - name: Compress SBOM
         run: gzip ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
 
@@ -106,12 +115,3 @@ jobs:
           name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json.gz
           path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json.gz
           retention-days: 1
-
-      - name: Generate SBOM attestation
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        uses: actions/attest-sbom@v2
-        with:
-          subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
-          subject-digest: ${{ steps.build-push-image.outputs.digest }}
-          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
-          push-to-registry: true
