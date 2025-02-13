@@ -83,6 +83,7 @@ install_dependencies() {
     echo "#############################################################################"
     echo "##################### Installing Triton dependencies... #####################"
     echo "#############################################################################"
+    pip install --no-cache-dir -r python/requirements.txt
     pip install tabulate scipy ninja cmake wheel pybind11
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
