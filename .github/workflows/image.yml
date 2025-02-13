@@ -115,5 +115,5 @@ jobs:
         with:
           subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
           subject-digest: ${{ steps.build-push-image.outputs.digest }}
-          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json.gz
+          sbom-path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
           push-to-registry: true
