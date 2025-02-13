@@ -92,7 +92,7 @@ jobs:
 
       - name: Generate SBOM
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        uses: anchore/sbom-action@v0.17.9
+        uses: anchore/sbom-action@v0.18.0
         with:
           image: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
           artifact-name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.json
@@ -100,7 +100,7 @@ jobs:
 
       - name: Save Triton image SBOM as artifact
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
           path: ./sbom-${{ matrix.IMAGE_NAME }}-${{ matrix.LABEL }}.spdx.json
