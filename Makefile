@@ -63,7 +63,7 @@ triton-run: image-builder-check ## Run the triton devcontainer image
 	else \
 		gitconfig_arg=""; \
 	fi; \
-	if ls /etc/cdi/nvidia* >/dev/null 2>&1; then \
+	if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
 		gpu_arg="--device nvidia.com/gpu=all"; \
 	else \
 		gpu_arg="--runtime=nvidia --gpus=all"; \
