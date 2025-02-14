@@ -7,7 +7,9 @@ on: # yamllint disable-line rule:truthy
         required: true
         type: string
     secrets:
-      registry-token:
+      qt_username:
+        required: true
+      qt_password:
         required: true
 
 jobs:
