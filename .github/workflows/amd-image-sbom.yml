@@ -1,0 +1,61 @@
+name: amd-image-sbom
+
+on: # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+    secrets:
+      registry-token:
+        required: true
+
+jobs:
+  amd-image-sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@main
+
+      - name: Login to Quay
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io/triton-dev-containers
+          username: ${{ secrets.qt_username }}
+          password: ${{ secrets.qt_password }}
+
+      - name: Generate SBOM
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: anchore/sbom-action@v0.18.0
+        with:
+          image: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
+          artifact-name: sbom-amd-${{ inputs.image-tag }}.json
+          output-file: ./sbom-amd-${{ inputs.image-tag }}.spdx.json
+
+      - name: Generate SBOM attestation with Cosign
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          cosign attest -y --predicate ./sbom-amd-${{ inputs.image-tag }}.spdx.json quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
+
+      - name: Compress SBOM
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        run: gzip ./sbom-amd-${{ inputs.image-tag }}.spdx.json
+
+      - name: Save SBOM as artifact
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
+          path: ./sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
+          retention-days: 1
