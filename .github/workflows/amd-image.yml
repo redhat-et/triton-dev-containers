@@ -90,4 +90,5 @@ jobs:
     with:
       image-tag: "latest"
     secrets:
-      registry-token: ${{ secrets.GITHUB_TOKEN }}
+      qt_username: ${{ secrets.qt_username }}
+      qt_password: ${{ secrets.qt_password }}
