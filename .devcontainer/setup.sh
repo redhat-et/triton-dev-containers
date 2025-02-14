@@ -20,5 +20,11 @@ GID_VAL=$(id -g)
 for var in "${files[@]}"; do
     if [ -f "$var" ]; then
         sed -i "s/\"--userns=keep-id:uid=[0-9]\+,gid=[0-9]\+\"/\"--userns=keep-id:uid=$UID_VAL,gid=$GID_VAL\"/" "$var"
+
+        # Update devcontainer.json with the correct gpu flags if CDI is available
+        if is_nvidia_cdi_available; then
+            sed -i "/--runtime=nvidia/d" "$var"
+            sed -i "s/\"--gpus all\"/\"--device nvidia.com/gpu=all\"/" "$var"
+        fi
     fi
 done
