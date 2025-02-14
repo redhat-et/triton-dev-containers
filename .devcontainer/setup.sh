@@ -16,6 +16,14 @@ declare -a files=(
 UID_VAL=$(id -u)
 GID_VAL=$(id -g)
 
+# Function to detect NVIDIA CDI
+is_nvidia_cdi_available() {
+    if command -v nvidia-ctk &> /dev/null && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then
+        return 0
+    fi
+    return 1
+}
+
 # Update devcontainer.json with the correct UID and GID
 for var in "${files[@]}"; do
     if [ -f "$var" ]; then
