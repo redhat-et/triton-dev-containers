@@ -36,12 +36,12 @@ jobs:
           username: ${{ secrets.qt_username }}
           password: ${{ secrets.qt_password }}
 
-      - name: Generate SBOM
-        uses: anchore/sbom-action@v0.18.0
+      - name: Generate SBOM with Trivy
+        uses: aquasecurity/trivy-action@0.29.0
         with:
-          image: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
-          artifact-name: sbom-amd-${{ inputs.image-tag }}.json
-          output-file: ./sbom-amd-${{ inputs.image-tag }}.spdx.json
+          image-ref: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
+          format: spdx-json
+          output: ./sbom-amd-${{ inputs.image-tag }}.json
 
       - name: Generate SBOM attestation with Cosign
         run: |
