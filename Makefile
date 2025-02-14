@@ -63,7 +63,12 @@ triton-run: image-builder-check ## Run the triton devcontainer image
 	else \
 		gitconfig_arg=""; \
 	fi; \
-	$(CTR_CMD) run -e USERNAME=${USER} -e USER_UID=`id -u ${USER}` -e USER_GID=`id -u ${USER}` --runtime=nvidia --gpus=all -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
+	if ls /etc/cdi/nvidia* >/dev/null 2>&1; then \
+		gpu_arg="--device nvidia.com/gpu=all"; \
+	else \
+		gpu_arg="--runtime=nvidia --gpus=all"; \
+	fi; \
+	$(CTR_CMD) run -e USERNAME=${USER} -e USER_UID=`id -u ${USER}` -e USER_GID=`id -u ${USER}` $$gpu_arg -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) bash;
 
 triton-cpu-run: image-builder-check ## Run the triton-cpu devcontainer image
 	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
