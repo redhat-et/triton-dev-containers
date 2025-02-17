@@ -7,10 +7,14 @@ on: # yamllint disable-line rule:truthy
     paths:
       - .github/workflows/image.yml
       - Dockerfile.triton
+      - entrypoint.sh
+      - users.sh
   pull_request:
     paths:
       - .github/workflows/image.yml
       - Dockerfile.triton
+      - entrypoint.sh
+      - users.sh
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:

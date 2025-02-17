@@ -57,12 +57,25 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM} AS final
 
-ENV PYTHON_VERSION=3.12 \
-    PATH=$HOME/.local/bin/:$PATH \
+# Create the /workspace directory and set permissions
+RUN mkdir -p /workspace && \
+    python -m venv /workspace && \
+    echo "unset BASH_ENV PROMPT_COMMAND ENV" >> /workspace/bin/activate && \
+    chmod -R 777 /workspace
+ENV BASH_ENV=/workspace/bin/activate \
+    ENV=/workspace/bin/activate \
+    PROMPT_COMMAND=". /workspace/bin/activate" \
+    PYTHON_VERSION=3.12 \
+    PATH=/workspace/bin:$PATH \
     PYTHONUNBUFFERED=1 \
-    TRITON_CPU_BACKEND=1
+    TRITON_CPU_BACKEND=1 \
+    PIP_PREFIX=/workspace \
+    PYTHONPATH=/workspace/lib/python$PYTHON_VERSION/site-packages \
+    XDG_CACHE_HOME=/workspace \
+    TRITON_CACHE_DIR=/workspace/.triton/cache \
+    TRITON_HOME=/workspace/
 
-WORKDIR /opt
+WORKDIR /workspace
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
