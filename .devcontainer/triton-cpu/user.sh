@@ -67,6 +67,22 @@ if [ "$USER_NAME" = "root" ]; then
   exit 0
 fi
 
+# Get current max UID and GID from /etc/login.defs
+current_max_uid=$(grep "^UID_MAX" /etc/login.defs | awk '{print $2}')
+current_max_gid=$(grep "^GID_MAX" /etc/login.defs | awk '{print $2}')
+
+# Check and update MAX_UID if necessary
+if [ "$USER_UID" -gt "$current_max_uid" ]; then
+    echo "Updating UID_MAX from $current_max_uid to $USER_UID"
+    sed -i "s/^UID_MAX.*/UID_MAX $USER_UID/" /etc/login.defs
+fi
+
+# Check and update MAX_GID if necessary
+if [ "$USER_GID" -gt "$current_max_gid" ]; then
+    echo "Updating GID_MAX from $current_max_gid to $USER_GID"
+    sed -i "s/^GID_MAX.*/GID_MAX $USER_GID/" /etc/login.defs
+fi
+
 # Create group if it doesn't exist
 if ! getent group "$USER_GID" >/dev/null; then
   echo "Group with GID $USER_GID doesn't exist. Creating group $USER_NAME with GID $USER_GID."

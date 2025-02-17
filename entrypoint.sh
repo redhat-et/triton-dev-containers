@@ -16,48 +16,58 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
-USER=${USERNAME:-triton}
-USER_ID=${USER_UID:-1000}
-GROUP_ID=${USER_GID:-1000}
-CUSTOM_LLVM=${CUSTOM_LLVM:-}
-AMD=${AMD:-}
-TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
-ROCM_VERSION=${ROCM_VERSION:-}
-HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
-INSTALL_CUDNN=${INSTALL_CUDNN:-}
+
+readonly USER=${USERNAME:-triton}
+readonly USER_ID=${USER_UID:-1000}
+readonly GROUP_ID=${USER_GID:-1000}
+readonly CUSTOM_LLVM=${CUSTOM_LLVM:-}
+readonly AMD=${AMD:-}
+readonly TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
+readonly ROCM_VERSION=${ROCM_VERSION:-}
+readonly HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
+readonly INSTALL_CUDNN=${INSTALL_CUDNN:-}
+readonly CREATE_USER=${CREATE_USER:-false}
+CLONED=0
+export_cmd=""
 
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
-        if [ -d "/opt/triton-cpu" ]; then
-            cd /opt/triton-cpu || exit 1
+        if [ -d "/workspace/triton-cpu" ]; then
+            cd "/workspace/triton-cpu" || exit 1
+            export TRITON_DIR="/workspace/triton-cpu"
         fi
     else
-        if [ -d "/opt/triton" ]; then
-            cd /opt/triton || exit 1
+        if [ -d "/workspace/triton" ]; then
+            cd "/workspace/triton" || exit 1
+            export TRITON_DIR="/workspace/triton"
         fi
     fi
 }
-# Function to clone repo and install dependencies
+
 install_dependencies() {
     echo "#############################################################################"
     echo "################### Cloning the Triton repos (if needed)... #################"
     echo "#############################################################################"
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
-        if [ ! -d "/opt/triton-cpu" ]; then
-            echo "/opt/triton-cpu not found. Cloning repository..."
-            git clone https://github.com/triton-lang/triton-cpu.git /opt/triton-cpu
+        if [ ! -d "/workspace/triton-cpu" ]; then
+            echo "/workspace/triton-cpu not found. Cloning repository..."
+            git clone https://github.com/triton-lang/triton-cpu.git "/workspace/triton-cpu"
+            CLONED=1
         fi
     else
-        if [ ! -d "/opt/triton" ]; then
-            echo "/opt/triton not found. Cloning repository..."
-            git clone https://github.com/triton-lang/triton.git /opt/triton
+        if [ ! -d "/workspace/triton" ]; then
+            echo "/workspace/triton not found. Cloning repository..."
+            git clone https://github.com/triton-lang/triton.git "/workspace/triton"
+            CLONED=1
         fi
     fi
 
     navigate
 
-    git submodule init
-    git submodule update
+    if [ "$CLONED" -eq 1 ]; then
+        git submodule init
+        git submodule update
+    fi
 
     echo "#############################################################################"
     echo "##################### Installing Python dependencies... #####################"
@@ -83,16 +93,20 @@ install_dependencies() {
     echo "#############################################################################"
     echo "##################### Installing Triton dependencies... #####################"
     echo "#############################################################################"
-    pip install --no-cache-dir -r python/requirements.txt
+    if [ -f "${TRITON_DIR}/python/requirements.txt" ]; then
+        pip install --no-cache-dir -r "${TRITON_DIR}/python/requirements.txt"
+    fi
     pip install tabulate scipy ninja cmake wheel pybind11
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
-    echo "###############################################################################"
-    echo "#####################Installing pre-commit dependencies...#####################"
-    echo "###############################################################################"
-    pip install pre-commit
+    if [ "$CLONED" -eq 1 ]; then
+        echo "###############################################################################"
+        echo "#####################Installing pre-commit dependencies...#####################"
+        echo "###############################################################################"
+        pip install pre-commit
 
-    pre-commit install
+        pre-commit install
+    fi
 
     if [ -n "$CUSTOM_LLVM" ] && [ "$CUSTOM_LLVM" = "true" ]; then
         echo "################################################################"
@@ -114,14 +128,29 @@ install_dependencies() {
     fi
 }
 
-# Check if the USER environment variable is set and not empty
-if [ -n "$USER" ] && [ "$USER" != "root" ]; then
-    # Create user if it doesn't exist
-    if ! id -u "$USER" >/dev/null 2>&1; then
-        echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
-        ./user.sh -u "$USER" -i "$USER_ID" -g "$GROUP_ID"
+# Function to update MAX_UID and MAX_GID in /etc/login.defs
+update_max_uid_gid() {
+    local current_max_uid
+    local current_max_gid
+
+    # Get current max UID and GID from /etc/login.defs
+    current_max_uid=$(grep "^UID_MAX" /etc/login.defs | awk '{print $2}')
+    current_max_gid=$(grep "^GID_MAX" /etc/login.defs | awk '{print $2}')
+
+    # Check and update MAX_UID if necessary
+    if [ "$USER_ID" -gt "$current_max_uid" ]; then
+        echo "Updating UID_MAX from $current_max_uid to $USER_ID"
+        sed -i "s/^UID_MAX.*/UID_MAX $USER_ID/" /etc/login.defs
     fi
 
+    # Check and update MAX_GID if necessary
+    if [ "$GROUP_ID" -gt "$current_max_gid" ]; then
+        echo "Updating GID_MAX from $current_max_gid to $GROUP_ID"
+        sed -i "s/^GID_MAX.*/GID_MAX $GROUP_ID/" /etc/login.defs
+    fi
+}
+
+export_vars() {
     # Define environment variables to export
     declare -a export_vars=(
         "USERNAME=$USER"
@@ -133,7 +162,7 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         export_vars+=("CUSTOM_LLVM=$CUSTOM_LLVM")
     fi
 
-    if [ -n "$TRITON_CPU_BACKEND" ]; then
+    if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         export_vars+=("TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND")
     fi
 
@@ -153,16 +182,29 @@ if [ -n "$USER" ] && [ "$USER" != "root" ]; then
         export_vars+=("HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES")
     fi
 
-    export_cmd=""
     for var in "${export_vars[@]}"; do
         export_cmd+="export $var; "
     done
+}
 
-    echo "Switching to user: $USER to install dependencies."
-    runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
-    runuser -u "$USER" -- python triton-gpu-check.py
-    navigate
-    exec gosu "$USER" "$@"
+# Check if the USER environment variable is set and not empty
+if [ -n "$CREATE_USER" ] && [ "$CREATE_USER" = "true" ]; then
+    if [ -n "$USER" ] && [ "$USER" != "root" ] ; then
+        update_max_uid_gid
+        # Create user if it doesn't exist
+        if ! id -u "$USER" >/dev/null 2>&1; then
+            echo "Creating user $USER with UID $USER_ID and GID $GROUP_ID"
+            ./user.sh -u "$USER" -i "$USER_ID" -g "$GROUP_ID"
+        fi
+
+        export_vars
+
+        echo "Switching to user: $USER to install dependencies."
+        runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
+        runuser -u "$USER" -- python triton-gpu-check.py
+        navigate
+        exec gosu "$USER" "$@"
+    fi
 else
     install_dependencies
     navigate
