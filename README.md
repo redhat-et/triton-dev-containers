@@ -44,6 +44,10 @@ This repo provides 2 different flavours of development containers:
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
 at container startup time.
 
+> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
+and `git submodule update` on the mounted repo if you haven't already run these
+commands.
+
 ## Building the triton-cpu vanilla container
 
 ```sh
@@ -58,6 +62,10 @@ at container startup time.
 
 > **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
 at container startup time.
+
+> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
+and `git submodule update` on the mounted repo if you haven't already run these
+commands.
 
 ## Building the triton-amd vanilla container
 
@@ -76,6 +84,10 @@ at container startup time.
 
 > **_NOTE_**: it's also advised that you commit the image after it's completed initialization
 `[podman|docker] commit <container_id> quay.io/triton-dev-containers/amd:latest`
+
+> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
+and `git submodule update` on the mounted repo if you haven't already run these
+commands.
 
 ## Using .devcontainers with VSCODE
 
