@@ -57,7 +57,6 @@ ENV TRITON_OFFLINE_BUILD=NO
 FROM llvm-local-${CUSTOM_LLVM} AS final
 
 # Create the /workspace directory and set permissions
-# Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
     python -m venv /workspace && \
     echo "unset BASH_ENV PROMPT_COMMAND ENV" >> /workspace/bin/activate && \
