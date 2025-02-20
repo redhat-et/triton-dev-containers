@@ -67,9 +67,10 @@ if [ "$USER_NAME" = "root" ]; then
   exit 0
 fi
 
-# Get current max UID and GID from /etc/login.defs
 current_max_uid=$(grep "^UID_MAX" /etc/login.defs | awk '{print $2}')
 current_max_gid=$(grep "^GID_MAX" /etc/login.defs | awk '{print $2}')
+current_min_uid=$(grep "^UID_MIN" /etc/login.defs | awk '{print $2}')
+current_min_gid=$(grep "^GID_MIN" /etc/login.defs | awk '{print $2}')
 
 # Check and update MAX_UID if necessary
 if [ "$USER_UID" -gt "$current_max_uid" ]; then
@@ -81,6 +82,18 @@ fi
 if [ "$USER_GID" -gt "$current_max_gid" ]; then
     echo "Updating GID_MAX from $current_max_gid to $USER_GID"
     sed -i "s/^GID_MAX.*/GID_MAX $USER_GID/" /etc/login.defs
+fi
+
+# Check and update MIN_UID if necessary
+if [ "$USER_UID" -lt "$current_min_uid" ]; then
+    echo "Updating UID_MIN from $current_min_uid to $USER_UID"
+    sed -i "s/^UID_MIN.*/UID_MIN $USER_UID/" /etc/login.defs
+fi
+
+# Check and update MIN_GID if necessary
+if [ "$USER_GID" -lt "$current_min_gid" ]; then
+    echo "Updating GID_MIN from $current_min_gid to $USER_GID"
+    sed -i "s/^GID_MIN.*/GID_MIN $USER_GID/" /etc/login.defs
 fi
 
 # Create group if it doesn't exist
