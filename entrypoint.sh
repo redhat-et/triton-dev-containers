@@ -17,16 +17,16 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-readonly USER=${USERNAME:-triton}
-readonly USER_ID=${USER_UID:-1000}
-readonly GROUP_ID=${USER_GID:-1000}
-readonly CUSTOM_LLVM=${CUSTOM_LLVM:-}
-readonly AMD=${AMD:-}
-readonly TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
-readonly ROCM_VERSION=${ROCM_VERSION:-}
-readonly HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
-readonly INSTALL_CUDNN=${INSTALL_CUDNN:-}
-readonly CREATE_USER=${CREATE_USER:-false}
+USER=${USERNAME:-triton}
+USER_ID=${USER_UID:-1000}
+GROUP_ID=${USER_GID:-1000}
+CUSTOM_LLVM=${CUSTOM_LLVM:-}
+AMD=${AMD:-}
+TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
+ROCM_VERSION=${ROCM_VERSION:-}
+HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
+INSTALL_CUDNN=${INSTALL_CUDNN:-}
+CREATE_USER=${CREATE_USER:-false}
 CLONED=0
 export_cmd=""
 
@@ -64,7 +64,7 @@ install_dependencies() {
 
     navigate
 
-    if [ "$CLONED" -eq 1 ]; then
+    if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
         git submodule init
         git submodule update
     fi
@@ -99,7 +99,7 @@ install_dependencies() {
     pip install tabulate scipy ninja cmake wheel pybind11
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
-    if [ "$CLONED" -eq 1 ]; then
+    if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
         echo "###############################################################################"
         echo "#####################Installing pre-commit dependencies...#####################"
         echo "###############################################################################"
@@ -120,7 +120,7 @@ install_dependencies() {
             "LLVM_BUILD_DIR=/llvm-project/build"
             "LLVM_INCLUDE_DIRS=/llvm-project/build/include"
             "LLVM_LIBRARY_DIR=/llvm-project/build/lib"
-            "TRITON_CPU_BACKEND=/llvm-project/build"
+            "LLVM_SYSPATH=/llvm-project/build"
         )
         for var in "${llvm_vars[@]}"; do
             export var
@@ -178,7 +178,7 @@ export_vars() {
         export_vars+=("CUSTOM_LLVM=$CUSTOM_LLVM")
     fi
 
-    if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
+    if [ -n "$TRITON_CPU_BACKEND" ]; then
         export_vars+=("TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND")
     fi
 
