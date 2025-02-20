@@ -20,9 +20,8 @@ mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
 source_dir :=$(shell dirname "$(mkfile_path)")
 triton_path ?=$(source_dir)
 gitconfig_path ?="$(HOME)/.gitconfig"
-create_user ?=false
+create_user ?=true
 USERNAME ?=triton
-NPROC := $(shell nproc)
 CUSTOM_LLVM ?=false
 IMAGE_REPO ?=quay.io/triton-dev-containers
 IMAGE_NAME ?=nvidia
@@ -32,6 +31,7 @@ TRITON_TAG ?= latest
 HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
 STRIPPED_CMD := $(shell basename $(CTR_CMD))
+OS := $(shell uname -s)
 
 ##@ Container Build
 .PHONY: image-builder-check
@@ -44,30 +44,40 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image
 
+.PHONY: gosu
+gosu-image: image-builder-check ## Build the Triton devcontainer image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:$(TRITON_TAG) -f Dockerfile.gosu .
+
 .PHONY: triton-image
-triton-image: image-builder-check ## Build the Triton devcontainer image
+triton-image: image-builder-check gosu-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
-		--build-arg INSTALL_CUDNN=true -f Dockerfile.triton .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton .
 
 .PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check ## Build the Triton CPU devcontainer image
+triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU devcontainer image
 	$(CTR_CMD) build --no-cache -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
-triton-amd-image: image-builder-check ## Build the Triton AMD devcontainer image
+triton-amd-image: image-builder-check gosu-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-amd .
 
 ##@ Container Run
-
+# If you are on an OS that has the user in /etc/passwd then we can pass
+# the user from the host to the pod. Otherwise we default to create the
+# user inside the container.
+# With podman if you aren't creating the user you need to explicitly pass
+# the user as --user $(USER) to start the container as that user.
 define run_container
 	echo "Running container image: $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) with $(CTR_CMD)"
 	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
 		volume_arg="-v $(triton_path):/workspace/$(strip $(2))"; \
 	else \
 		volume_arg=""; \
+	fi; \
+	if [ "$(OS)" != "Darwin" ] && ! getent passwd $(USER) > /dev/null && [ "$(create_user)" = "false" ]; then \
+		volume_arg+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro"; \
 	fi; \
 	if [ -f "$(gitconfig_path)" ]; then \
 		gitconfig_arg="-v $(gitconfig_path):/etc/gitconfig"; \
@@ -78,22 +88,20 @@ define run_container
 		gpu_args="--device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=$(HIP_DEVICES)"; \
 	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ]; then \
 		if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
-			gpu_args="--device nvidia.com/gpu=all"; \
+			gpu_args="--device nvidia.com/gpu=all --env INSTALL_CUDNN=true"; \
 		else \
-			gpu_args="--runtime=nvidia --gpus=all"; \
+			gpu_args="--runtime=nvidia --gpus=all --env INSTALL_CUDNN=true"; \
 		fi; \
 	fi; \
 	if [ "$(create_user)" = "true" ]; then \
-		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USERNAME) \
-		-e USER_UID=`id -u $(USERNAME)` -e USER_GID=`id -g $(USERNAME)` $$gpu_args \
+		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
+		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
-		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e CREATE_USER=$(create_user) \
-		-v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro $$gpu_args \
+		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) -e CREATE_USER=$(create_user) \
-		--userns=keep-id $$gpu_args -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
+		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) --userns=keep-id $$gpu_args  \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef

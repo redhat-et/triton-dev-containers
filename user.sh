@@ -68,8 +68,11 @@ if [ "$USER_NAME" = "root" ]; then
 fi
 
 # Create group if it doesn't exist
-if ! getent group "$USER_NAME" >/dev/null; then
+if ! getent group "$USER_GID" >/dev/null; then
   groupadd --gid "$USER_GID" "$USER_NAME"
+else # modify the name
+  gname=$(getent group "$USER_GID" | cut -d: -f1)
+  groupmod -g "$USER_GID"  -n "$USER_NAME" "$gname"
 fi
 
 # Check if the UID is in use

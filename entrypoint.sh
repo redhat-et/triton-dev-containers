@@ -132,10 +132,14 @@ install_dependencies() {
 update_max_uid_gid() {
     local current_max_uid
     local current_max_gid
+    local current_min_uid
+    local current_min_gid
 
     # Get current max UID and GID from /etc/login.defs
     current_max_uid=$(grep "^UID_MAX" /etc/login.defs | awk '{print $2}')
     current_max_gid=$(grep "^GID_MAX" /etc/login.defs | awk '{print $2}')
+    current_min_uid=$(grep "^UID_MIN" /etc/login.defs | awk '{print $2}')
+    current_min_gid=$(grep "^GID_MIN" /etc/login.defs | awk '{print $2}')
 
     # Check and update MAX_UID if necessary
     if [ "$USER_ID" -gt "$current_max_uid" ]; then
@@ -147,6 +151,18 @@ update_max_uid_gid() {
     if [ "$GROUP_ID" -gt "$current_max_gid" ]; then
         echo "Updating GID_MAX from $current_max_gid to $GROUP_ID"
         sed -i "s/^GID_MAX.*/GID_MAX $GROUP_ID/" /etc/login.defs
+    fi
+
+    # Check and update MIN_UID if necessary
+    if [ "$USER_ID" -lt "$current_min_uid" ]; then
+        echo "Updating UID_MIN from $current_min_uid to $USER_ID"
+        sed -i "s/^UID_MIN.*/UID_MIN $USER_ID/" /etc/login.defs
+    fi
+
+    # Check and update MIN_GID if necessary
+    if [ "$GROUP_ID" -lt "$current_min_gid" ]; then
+        echo "Updating GID_MIN from $current_min_gid to $GROUP_ID"
+        sed -i "s/^GID_MIN.*/GID_MIN $GROUP_ID/" /etc/login.defs
     fi
 }
 
@@ -201,7 +217,6 @@ if [ -n "$CREATE_USER" ] && [ "$CREATE_USER" = "true" ]; then
 
         echo "Switching to user: $USER to install dependencies."
         runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
-        runuser -u "$USER" -- python triton-gpu-check.py
         navigate
         exec gosu "$USER" "$@"
     fi
