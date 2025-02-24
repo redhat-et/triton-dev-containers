@@ -1,5 +1,19 @@
 # Triton Dev Containers
 
+## TL;DR
+
+- **What this repo provides**: Preconfigured development containers
+for building and running Triton and Triton-cpu.
+- **Who it's for**: Developers working on Triton.
+- **Why use it**: Provides isolated, reproducible environments for
+development.
+- **How to use it**: Mount your Triton directory into the available
+containers and start working.
+
+---
+
+## Details
+
 This repository provides development containers preconfigured with
 all the necessary tools to build and run Triton and Triton-cpu.
 By mounting your Triton directory from the host into the container,
@@ -10,16 +24,16 @@ the VSCode development container extension. The goal of this repo
 is to provide consistent and reproducible development environments
 for Triton.
 
-## Available Containers
+### Available Containers
 
-This repository offers two types of development containers:
+- This repository offers two types of development containers:
 
 1. **Vanilla Containers** – Containers where a development directory
   can be mounted.
 2. **VSCode DevContainers** – Configured for use with Visual Studio
   Code via the Dev Containers Extension.
 
-## Prerequisites
+### Prerequisites
 
 Before using these containers, ensure you have the following installed:
 
@@ -35,20 +49,21 @@ Before using these containers, ensure you have the following installed:
 > **Note:** If using an AMD GPU, install the
 [ROCm Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html).
 
-## Supported Hardware
+### Supported Hardware
 
 - NVIDIA GPUs
 - AMD GPUs
 - CPUs
 
-## Using Vanilla Containers
+### Using Vanilla Containers
 
-### Building the Triton NVIDIA Vanilla Container
+#### Building the Triton NVIDIA Vanilla Container
 
 ```sh
 make triton-image
+```
 
-## Running the triton NVIDIA vanilla container
+#### Running the triton NVIDIA vanilla container
 
 ```sh
  make triton-run [triton_path=<path-to-triton-on-host>]
@@ -61,13 +76,13 @@ at container startup time.
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
 
-### Building the triton-cpu vanilla container
+#### Building the triton-cpu vanilla container
 
 ```sh
  make triton-cpu-image
 ```
 
-### Running the triton-cpu vanilla container
+#### Running the triton-cpu vanilla container
 
 ```sh
  make triton-cpu-run [triton_path=<path-to-triton-on-host>]
@@ -80,13 +95,13 @@ at container startup time.
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
 
-### Building the triton-amd vanilla container
+#### Building the triton-amd vanilla container
 
 ```sh
  make triton-amd-image
 ```
 
-### Running the triton-amd vanilla container
+#### Running the triton-amd vanilla container
 
 ```sh
  make triton-amd-run [triton_path=<path-to-triton-on-host>]
@@ -102,11 +117,11 @@ at container startup time.
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
 
-## Using .devcontainers with VSCODE
+### Using .devcontainers with VSCODE
 
 Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)
 
-## Demos
+### Demos
 
 To see the VSCODE devcontainers in action please check out the
 [Triton devcontainer vscode demo](https://www.youtube.com/watch?v=ZrCVtV2Bw3s)
@@ -114,12 +129,12 @@ To see the VSCODE devcontainers in action please check out the
 To see the vanilla development containers in action please checkout the
 [Triton devcontainer demo](https://www.youtube.com/watch?v=kEbN6-pk3sI)
 
-## Why Container-First Development Matters?
+### Why Container-First Development Matters?
 
 Please checkout why container-first development matters
 [here](./docs/ContainerFirstDevelopment.md).
 
-## More about the containers
+### More about the containers
 
 The container images provided by this repo are based on
 [RHEL UBI images](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image).
@@ -127,9 +142,9 @@ They support both root and non-root users. For non-root
 user support, the user is created at runtime via the container
 entrypoint script [entrypoint.sh](./entrypoint.sh).
 
-### Adding packages to the rootless development containers
+### Adding packages as a non-root user inside the development containers
 
-To add extra packages to your own rootless container, create a
+To add extra packages to the non-root user container, create a
 Dockerfile that extends one of the provided base/vanilla
 images:
 
@@ -150,7 +165,7 @@ RUN dnf update -y && \
 ### Why do the containers install some dependencies at startup time?
 
 Some dependencies are installed at runtime to optimize image size of
-the development containers.. This allows the images to remain
+the development containers. This allows the images to remain
 lightweight while still providing all necessary functionality.
 The packages installed at startup time can be found in
 [entrypoint.sh](./entrypoint.sh).
