@@ -69,14 +69,8 @@ often resulting in issues such as:
   developers down as they troubleshoot setup problems.
 - **Dependency Conflicts**
 
-A [pull request](https://github.com/triton-lang/triton/pull/5143) to add a
-[Development Container](https://containers.dev/) with all the tools needed to
-build and run the Triton project was created in late 2024, it’s hoped that this
-will be adopted by the project as it’s a good start towards enabling a
-container centric development approach for Triton. This is also being further
-developed to support development environments that are not ‘Visual Studio Code’
-centric via a github repository and a quay.io image repository to host the
-development container images.
+This repository provides a set of development containers that enable a
+container centric development approach for Triton.
 
 ## Conclusion
 
