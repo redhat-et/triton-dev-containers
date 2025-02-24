@@ -26,7 +26,7 @@ for Triton.
 
 ### Available Containers
 
-- This repository offers two types of development containers:
+This repository offers two types of development containers:
 
 1. **Vanilla Containers** – Containers where a development directory
   can be mounted.
@@ -158,7 +158,7 @@ FROM quay.io/triton-dev-containers/nvidia:latest
 USER 0
 
 RUN dnf update -y && \
-    dnf -y install <PACKAGES> && \ #### < modify this line to add your packages.
+    dnf -y install <PACKAGES> && \ #### <==== modify this line to add your packages.
     dnf clean all
 ```
 
