@@ -1,39 +1,52 @@
-# triton-dev-container
+# Triton Dev Containers
 
-This guide provides step-by-step instructions for using a container
-preconfigured with all the tools necessary to build and run Triton.
-By mounting the Triton directory from your host into the development
-container, you can continue working with your favorite IDE while keeping
-all building and running tasks isolated within the container.
+This repository provides development containers preconfigured with
+all the necessary tools to build and run Triton and Triton-cpu.
+By mounting your Triton directory from the host into the container,
+you can continue working with your preferred IDE while keeping build
+and runtime tasks isolated within the container environment. This
+repo also provides the .devcontainer files that can be used with
+the VSCode development container extension. The goal of this repo
+is to provide consistent and reproducible development environments
+for Triton.
 
-This repo provides 2 different flavours of development containers:
+## Available Containers
 
-1. Vanilla containers into which a development directory can be mounted.
+This repository offers two types of development containers:
 
-1. devcontainers for use with VSCODE.
+1. **Vanilla Containers** – Containers where a development directory
+  can be mounted.
+2. **VSCode DevContainers** – Configured for use with Visual Studio
+  Code via the Dev Containers Extension.
 
 ## Prerequisites
 
+Before using these containers, ensure you have the following installed:
+
 - **Docker** or **Podman**
-- **NVIDIA Container Toolkit for GPU Usage**
-- **AMD ROCm for GPU Usage**
+- **NVIDIA Container Toolkit** (Required for GPU usage with NVIDIA hardware)
+- **AMD ROCm** (Required for GPU usage with AMD hardware)
+- **VSCode Dev Container Extension** (Only needed for VSCode dev containers)
 
-> **_NOTE_**: If you are using an NVIDIA GPU, you also need to complete the steps
-  to install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+> **Note:** If using an NVIDIA GPU, install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
-> **_NOTE_**: NVIDIA Container Toolkit is not required for `triton-cpu`.
+> **Note:** The NVIDIA Container Toolkit is not required for `triton-cpu`.
+
+> **Note:** If using an AMD GPU, install the
+[ROCm Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html).
 
 ## Supported Hardware
 
 - NVIDIA GPUs
-- CPUs
 - AMD GPUs
+- CPUs
 
-## Building the triton NVIDIA vanilla container
+## Using Vanilla Containers
+
+### Building the Triton NVIDIA Vanilla Container
 
 ```sh
- make triton-image
-```
+make triton-image
 
 ## Running the triton NVIDIA vanilla container
 
@@ -48,13 +61,13 @@ at container startup time.
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
 
-## Building the triton-cpu vanilla container
+### Building the triton-cpu vanilla container
 
 ```sh
  make triton-cpu-image
 ```
 
-## Running the triton-cpu vanilla container
+### Running the triton-cpu vanilla container
 
 ```sh
  make triton-cpu-run [triton_path=<path-to-triton-on-host>]
@@ -67,13 +80,13 @@ at container startup time.
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
 
-## Building the triton-amd vanilla container
+### Building the triton-amd vanilla container
 
 ```sh
  make triton-amd-image
 ```
 
-## Running the triton-amd vanilla container
+### Running the triton-amd vanilla container
 
 ```sh
  make triton-amd-run [triton_path=<path-to-triton-on-host>]
@@ -103,4 +116,41 @@ To see the vanilla development containers in action please checkout the
 
 ## Why Container-First Development Matters?
 
-Please checkout why container-first development matters [here](./docs/ContainerFirstDevelopment.md)
+Please checkout why container-first development matters
+[here](./docs/ContainerFirstDevelopment.md).
+
+## More about the containers
+
+The container images provided by this repo are based on
+[RHEL UBI images](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image).
+They support both root and non-root users. For non-root
+user support, the user is created at runtime via the container
+entrypoint script [entrypoint.sh](./entrypoint.sh).
+
+### Adding packages to the rootless development containers
+
+To add extra packages to your own rootless container, create a
+Dockerfile that extends one of the provided base/vanilla
+images:
+
+- quay.io/triton-dev-containers/nvidia
+- quay.io/triton-dev-containers/cpu
+- quay.io/triton-dev-containers/amd
+
+```dockerfile
+FROM quay.io/triton-dev-containers/nvidia:latest
+
+USER 0
+
+RUN dnf update -y && \
+    dnf -y install <PACKAGES> && \ #### < modify this line to add your packages.
+    dnf clean all
+```
+
+### Why do the containers install some dependencies at startup time?
+
+Some dependencies are installed at runtime to optimize image size of
+the development containers.. This allows the images to remain
+lightweight while still providing all necessary functionality.
+The packages installed at startup time can be found in
+[entrypoint.sh](./entrypoint.sh).
