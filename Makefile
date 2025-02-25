@@ -93,15 +93,20 @@ define run_container
 			gpu_args="--runtime=nvidia --gpus=all --env INSTALL_CUDNN=true"; \
 		fi; \
 	fi; \
+    if [ "$(STRIPPED_CMD)" = "podman" ]; then \
+            keep_ns_arg="--userns=keep-id";\
+    else \
+            keep_ns_arg=""; \
+    fi; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
-		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args \
+		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$keep_ns_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
 		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) --userns=keep-id $$gpu_args  \
+		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) $$keep_ns_arg $$gpu_args  \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef
