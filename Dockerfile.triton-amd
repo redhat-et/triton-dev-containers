@@ -35,6 +35,7 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf clean all && rm -rf /var/cache/dnf /tmp/*; \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+        mkdir llvm-project; \
     fi
 
 # Base Stage with ROCm Installation
