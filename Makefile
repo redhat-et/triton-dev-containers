@@ -94,11 +94,11 @@ define run_container
 			gpu_args="--runtime=nvidia --gpus=all --env INSTALL_CUDNN=true"; \
 		fi; \
 	fi; \
-    if [ "$(STRIPPED_CMD)" = "podman" ]; then \
-            keep_ns_arg="--userns=keep-id";\
-    else \
-            keep_ns_arg=""; \
-    fi; \
+	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
+		keep_ns_arg="--userns=keep-id";\
+	else \
+		keep_ns_arg=""; \
+	fi; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$keep_ns_arg \
