@@ -34,6 +34,7 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         ninja; \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+        mkdir llvm-project; \
     fi
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
