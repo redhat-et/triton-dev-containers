@@ -32,7 +32,7 @@ HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
 STRIPPED_CMD := $(shell basename $(CTR_CMD))
 OS := $(shell uname -s)
-SELINUXFLAG := $(shell if [ "$(shell getenforce 1> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
+SELINUXFLAG := $(shell if [ "$(shell getenforce 2> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
 
 ##@ Container Build
 .PHONY: image-builder-check
