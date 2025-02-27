@@ -24,7 +24,7 @@ create_user ?=true
 USERNAME ?=triton
 CUSTOM_LLVM ?=false
 IMAGE_REPO ?=quay.io/triton-dev-containers
-IMAGE_NAME ?=nvidia
+NVIDIA_IMAGE_NAME ?=nvidia
 CPU_IMAGE_NAME ?=cpu
 AMD_IMAGE_NAME ?=amd
 TRITON_TAG ?= latest
@@ -51,7 +51,7 @@ gosu-image: image-builder-check ## Build the Triton devcontainer image
 
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image ## Build the Triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(IMAGE_NAME):$(TRITON_TAG) \
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton .
 
 .PHONY: triton-cpu-image
@@ -114,7 +114,7 @@ endef
 
 .PHONY: triton-run
 triton-run: image-builder-check ## Run the Triton devcontainer image
-	$(call run_container, $(IMAGE_NAME), "triton")
+	$(call run_container, $(NVIDIA_IMAGE_NAME), "triton")
 
 .PHONY: triton-cpu-run
 triton-cpu-run: image-builder-check ## Run the Triton CPU devcontainer image
