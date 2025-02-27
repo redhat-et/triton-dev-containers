@@ -21,6 +21,7 @@ source_dir :=$(shell dirname "$(mkfile_path)")
 triton_path ?=$(source_dir)
 gitconfig_path ?="$(HOME)/.gitconfig"
 create_user ?=true
+torch_version ?=2.5.1
 USERNAME ?=triton
 CUSTOM_LLVM ?=false
 IMAGE_REPO ?=quay.io/triton-dev-containers
@@ -56,7 +57,7 @@ triton-image: image-builder-check gosu-image ## Build the Triton devcontainer im
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU devcontainer image
-	$(CTR_CMD) build --no-cache -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
@@ -101,13 +102,16 @@ define run_container
 	fi; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
+		-e TORCH_VERSION=$(torch_version) \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$keep_ns_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
 		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args \
+		-e TORCH_VERSION=$(torch_version) \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
 		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) $$keep_ns_arg $$gpu_args  \
+		-e TORCH_VERSION=$(torch_version) \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef
