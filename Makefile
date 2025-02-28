@@ -43,7 +43,7 @@ image-builder-check: ## Verify if container runtime is available
 	fi
 
 .PHONY: all
-all: triton-image
+all: triton-image triton-cpu-image triton-amd-image
 
 .PHONY: gosu
 gosu-image: image-builder-check ## Build the Triton devcontainer image
