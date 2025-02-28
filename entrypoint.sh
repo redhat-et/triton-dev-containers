@@ -1,5 +1,7 @@
 #! /bin/bash -e
-#
+
+trap "echo -e '\nScript interrupted. Exiting gracefully.'; exit 1" SIGINT
+
 # Copyright (C) 2024-2025 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +26,7 @@ CUSTOM_LLVM=${CUSTOM_LLVM:-}
 AMD=${AMD:-}
 TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
 ROCM_VERSION=${ROCM_VERSION:-}
+TORCH_VERSION=${TORCH_VERSION:-"2.5.1"}
 HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
 INSTALL_CUDNN=${INSTALL_CUDNN:-}
 CREATE_USER=${CREATE_USER:-false}
@@ -52,13 +55,25 @@ install_dependencies() {
         if [ ! -d "/workspace/triton-cpu" ]; then
             echo "/workspace/triton-cpu not found. Cloning repository..."
             git clone https://github.com/triton-lang/triton-cpu.git "/workspace/triton-cpu"
-            CLONED=1
+
+            if [ ! -d "/workspace/triton-cpu" ]; then
+                echo "/workspace/triton-cpu not found. ERROR Cloning repository..."
+                exit 1
+            else
+                CLONED=1
+            fi
         fi
     else
         if [ ! -d "/workspace/triton" ]; then
             echo "/workspace/triton not found. Cloning repository..."
             git clone https://github.com/triton-lang/triton.git "/workspace/triton"
-            CLONED=1
+            if [ ! -d "/workspace/triton" ]; then
+                echo "/workspace/triton not found. ERROR Cloning repository..."
+                exit 1
+            else
+                CLONED=1
+            fi
+
         fi
     fi
 
@@ -85,9 +100,17 @@ install_dependencies() {
         echo "###########################################################################"
         echo "##################### Installing ROCm dependencies... #####################"
         echo "###########################################################################"
-        pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
+        pip install --no-cache-dir torch=="${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
+    elif [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
+        echo "###########################################################################"
+        echo "###################### Installing torch CPU ... ###########################"
+        echo "###########################################################################"
+        pip install --no-cache-dir torch=="${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/cpu
     else
-        pip install torch
+        echo "###########################################################################"
+        echo "######################### Installing torch ... ############################"
+        echo "###########################################################################"
+        pip install torch=="${TORCH_VERSION}"
     fi
 
     echo "#############################################################################"
@@ -196,6 +219,10 @@ export_vars() {
 
     if [ -n "$HIP_VISIBLE_DEVICES" ]; then
         export_vars+=("HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES")
+    fi
+
+    if [ -n "$TORCH_VERSION" ]; then
+        export_vars+=("TORCH_VERSION=$TORCH_VERSION")
     fi
 
     for var in "${export_vars[@]}"; do
