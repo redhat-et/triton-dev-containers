@@ -12,11 +12,11 @@ repos:
     hooks:
       - id: yamllint
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.17.1
+    rev: v0.17.2
     hooks:
       - id: markdownlint-cli2-rules-docker
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         args: [--toml, codespell.precommit-toml]
@@ -27,7 +27,7 @@ repos:
     hooks:
       - id: shellcheck
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
-    rev: v9.20.0
+    rev: v9.21.0
     hooks:
       - id: commitlint
         stages: [commit-msg]
