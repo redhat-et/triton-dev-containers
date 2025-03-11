@@ -31,6 +31,16 @@ jobs:
             IMAGE_FILE: Dockerfile.llvm
             PLATFORMS: linux/amd64
             LABEL: latest
+            BUILD_ARGS: |
+              CUSTOM_LLVM=true
+              TRITON_CPU_BACKEND=0
+          - IMAGE_NAME: llvm
+            IMAGE_FILE: Dockerfile.llvm
+            PLATFORMS: linux/amd64
+            LABEL: cpu-latest
+            BUILD_ARGS: |
+              CUSTOM_LLVM=true
+              TRITON_CPU_BACKEND=1
 
     steps:
       - name: Checkout

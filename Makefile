@@ -24,6 +24,7 @@ create_user ?=true
 torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^"]+)".*/\1/')
 USERNAME ?=triton
 CUSTOM_LLVM ?=false
+TRITON_CPU_BACKEND ?=0
 IMAGE_REPO ?=quay.io/triton-dev-containers
 NVIDIA_IMAGE_NAME ?=nvidia
 CPU_IMAGE_NAME ?=cpu
@@ -46,23 +47,29 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image triton-cpu-image triton-amd-image
 
-.PHONY: llvm
-llvm-image: image-builder-check ## Build the Triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(TRITON_TAG) -f Dockerfile.llvm .
+.PHONY: llvm-image
+llvm-image: image-builder-check ## Build the Triton LLVM image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(TRITON_TAG) \
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
+		--build-arg TRITON_CPU_BACKEND=$(TRITON_CPU_BACKEND) \
+		-f Dockerfile.llvm .
 
-.PHONY: gosu
-gosu-image: image-builder-check ## Build the Triton devcontainer image
+.PHONY: gosu-image
+gosu-image: image-builder-check ## Build the Triton gosu image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:$(TRITON_TAG) -f Dockerfile.gosu .
 
 .PHONY: triton-image
-triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
+triton-image: image-builder-check gosu-image llvm-image ## Build the Triton GPU image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton .
 
 .PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check gosu-image llvm-image ## Build the Triton CPU devcontainer image
+triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
+	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 TRITON_TAG=cpu-latest
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-cpu .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
+		-f Dockerfile.triton-cpu .
+
 
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image

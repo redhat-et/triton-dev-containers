@@ -23,7 +23,8 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         git pull && \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
         git checkout $COMMIT && \
-        mkdir -p build && \
+        rm -rf build && \
+        mkdir build && \
         cd build && \
         cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \

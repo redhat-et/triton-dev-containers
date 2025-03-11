@@ -15,7 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ARG CUSTOM_LLVM=false
 
-FROM quay.io/triton-dev-containers/llvm:latest AS llvm-build
+FROM quay.io/triton-dev-containers/llvm:cpu-latest AS llvm-build
 ARG CUSTOM_LLVM
 USER 0
 # Conditionally execute the build based on CUSTOM_LLVM
@@ -23,7 +23,8 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         git pull && \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton-cpu/refs/heads/main/cmake/llvm-hash.txt) &&\
         git checkout $COMMIT && \
-        mkdir -p build && \
+        rm -rf build && \
+        mkdir build && \
         cd build && \
         cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
