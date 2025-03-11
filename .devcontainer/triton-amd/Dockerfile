@@ -18,23 +18,37 @@ ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
 ARG HIP_VISIBLE_DEVICES=0
 
-FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
+FROM quay.io/triton-dev-containers/llvm:latest AS llvm-build
 ARG CUSTOM_LLVM
 USER 0
 # Conditionally execute the build based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-        dnf update -y && \
-        dnf -y install clang rpm-build git ninja-build cmake lld && \
-        git clone https://github.com/llvm/llvm-project && \
-        cd llvm-project && \
+        git pull && \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
         git checkout $COMMIT && \
-        mkdir build && \
+        mkdir -p build && \
         cd build && \
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
-        ninja; \
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_ASM_COMPILER=clang \
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_CXX_FLAGS="-Wno-everything" \
+        -DCMAKE_LINKER=lld \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DLLVM_BUILD_UTILS=ON \
+        -DLLVM_BUILD_TOOLS=ON \
+        -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+        -DLLVM_ENABLE_TERMINFO=OFF \
+        -DLLVM_INSTALL_UTILS=ON \
+        -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
+        -DLLVM_ENABLE_PROJECTS="mlir;llvm;lld" && \
+        ninja check-mlir install; \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+        mkdir -p /install; \
     fi
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
@@ -82,7 +96,7 @@ ENV PYTHON_VERSION=3.12 \
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
-COPY --from=llvm-build /llvm-project/ /llvm-project/
+COPY --from=llvm-build /install /llvm-project/install
 
 # Stage for llvm-local-false
 FROM base AS llvm-local-false
@@ -100,8 +114,8 @@ RUN pip install pre-commit
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-    echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
-    echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc"; \
+    echo "export LLVM_BUILD_DIR=/llvm-project/install " >> "${HOME}/.bashrc" && \
+    echo "export LLVM_INCLUDE_DIRS=/llvm-project/install/include" >> "${HOME}/.bashrc" && \
+    echo "export LLVM_LIBRARY_DIR=/llvm-project/install/lib" >> "${HOME}/.bashrc" && \
+    echo "export LLVM_SYSPATH=/llvm-project/install" >> "${HOME}/.bashrc"; \
 fi

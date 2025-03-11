@@ -46,22 +46,26 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image triton-cpu-image triton-amd-image
 
+.PHONY: llvm
+llvm-image: image-builder-check ## Build the Triton devcontainer image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(TRITON_TAG) -f Dockerfile.llvm .
+
 .PHONY: gosu
 gosu-image: image-builder-check ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:$(TRITON_TAG) -f Dockerfile.gosu .
 
 .PHONY: triton-image
-triton-image: image-builder-check gosu-image ## Build the Triton devcontainer image
+triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton .
 
 .PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU devcontainer image
+triton-cpu-image: image-builder-check gosu-image llvm-image ## Build the Triton CPU devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
-triton-amd-image: image-builder-check gosu-image ## Build the Triton AMD devcontainer image
+triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-amd .
 

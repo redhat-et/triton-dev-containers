@@ -16,25 +16,37 @@
 
 ARG CUSTOM_LLVM=false
 
-FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
+FROM quay.io/triton-dev-containers/llvm:latest AS llvm-build
 ARG CUSTOM_LLVM
 USER 0
 # Conditionally execute the build based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-        dnf update -y && \
-        dnf -y install clang rpm-build git ninja-build cmake lld && \
-        dnf clean all && rm -rf /var/cache/dnf && \
-        git clone https://github.com/llvm/llvm-project && \
-        cd llvm-project && \
+        git pull && \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton-cpu/refs/heads/main/cmake/llvm-hash.txt) &&\
         git checkout $COMMIT && \
-        mkdir build && \
+        mkdir -p build && \
         cd build && \
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
-        ninja; \
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DCMAKE_ASM_COMPILER=clang \
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+        -DCMAKE_CXX_FLAGS="-Wno-everything" \
+        -DCMAKE_LINKER=lld \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DLLVM_BUILD_UTILS=ON \
+        -DLLVM_BUILD_TOOLS=ON \
+        -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+        -DLLVM_ENABLE_TERMINFO=OFF \
+        -DLLVM_INSTALL_UTILS=ON \
+        -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
+        -DLLVM_ENABLE_PROJECTS="mlir;llvm;lld" && \
+        ninja check-mlir install; \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
-        mkdir llvm-project; \
+        mkdir -p /install; \
     fi
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
