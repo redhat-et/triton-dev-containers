@@ -42,6 +42,11 @@ ifeq ($(CUSTOM_LLVM),true)
     TRITON_TAG := custom-llvm-$(TRITON_TAG)
 endif
 
+ifeq ($(TRITON_CPU_BACKEND),1)
+    LLVM_TAG := cpu-$(LLVM_TAG)
+endif
+
+
 ##@ Container Build
 .PHONY: image-builder-check
 image-builder-check: ## Verify if container runtime is available
@@ -71,7 +76,7 @@ triton-image: image-builder-check gosu-image llvm-image ## Build the Triton GPU 
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
-	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 TRITON_TAG=cpu-latest
+	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_TAG=cpu-latest
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
 		-f Dockerfile.triton-cpu .
