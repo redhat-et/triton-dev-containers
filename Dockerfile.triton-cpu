@@ -27,7 +27,7 @@ RUN dnf update -y && \
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:cpu-latest /llvm-project/ /llvm-project/
+COPY --from=quay.io/triton-dev-containers/llvm:cpu-latest /install /llvm-project/install
 
 # Stage for llvm-local-false
 FROM base AS llvm-local-false
