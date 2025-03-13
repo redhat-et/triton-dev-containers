@@ -17,9 +17,11 @@
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
 ARG HIP_VISIBLE_DEVICES=0
+ARG TRITON_CPU_BACKEND=0
 
 FROM registry.access.redhat.com/ubi9/python-312:latest AS llvm-build
 ARG CUSTOM_LLVM
+ARG TRITON_CPU_BACKEND=0
 USER 0
 # Conditionally execute the build based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
@@ -35,6 +37,7 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         fi && \
         cd /llvm-project && \
         python3 -m pip install -r mlir/python/requirements.txt && \
+        PROJECTS="mlir;llvm;lld"; \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
         CURRENT_COMMIT=$(git rev-parse HEAD) && \
         if [ "$CURRENT_COMMIT" != "$COMMIT" ] || [ ! -f "/install/bin/llvm-config" ] || [ ! -d "/install/lib" ]; then \
@@ -44,22 +47,14 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
             mkdir build && \
             cd build && \
             cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_ASM_COMPILER=clang \
-            -DCMAKE_C_COMPILER_LAUNCHER=sccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
-            -DCMAKE_CXX_FLAGS="-Wno-everything" \
-            -DCMAKE_LINKER=lld \
-            -DCMAKE_INSTALL_PREFIX=/install \
-            -DLLVM_BUILD_UTILS=ON \
-            -DLLVM_BUILD_TOOLS=ON \
-            -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
-            -DLLVM_ENABLE_TERMINFO=OFF \
-            -DLLVM_INSTALL_UTILS=ON \
-            -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
-            -DLLVM_ENABLE_PROJECTS="mlir;llvm;lld" && \
+                -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+                -DCMAKE_INSTALL_PREFIX=/install \
+                -DLLVM_BUILD_UTILS=ON \
+                -DLLVM_BUILD_TOOLS=ON \
+                -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+                -DLLVM_INSTALL_UTILS=ON \
+                -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
+                -DLLVM_ENABLE_PROJECTS=$PROJECTS && \
             ninja check-mlir install; \
         else \
             echo "LLVM is already up-to-date. Skipping rebuild."; \
