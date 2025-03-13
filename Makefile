@@ -67,7 +67,7 @@ llvm-image: image-builder-check ## Build the Triton LLVM image
 
 .PHONY: gosu-image
 gosu-image: image-builder-check ## Build the Triton gosu image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:$(TRITON_TAG) -f Dockerfile.gosu .
+	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f Dockerfile.gosu .
 
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton GPU image
