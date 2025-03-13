@@ -12,11 +12,14 @@ declare -a files=(
     "$SCRIPT_DIR/triton-cpu/devcontainer.json"
 )
 
-# Get the current user's UID and GID
 UID_VAL=$(id -u)
 GID_VAL=$(id -g)
+USERNAME=$(id -un)
 
-# Function to detect NVIDIA CDI
+is_podman() {
+    command -v podman &> /dev/null && podman info &> /dev/null
+}
+
 is_nvidia_cdi_available() {
     if command -v nvidia-ctk &> /dev/null && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then
         return 0
@@ -24,15 +27,19 @@ is_nvidia_cdi_available() {
     return 1
 }
 
-# Update devcontainer.json with the correct UID and GID
 for var in "${files[@]}"; do
     if [ -f "$var" ]; then
-        sed -i "s/\"--userns=keep-id:uid=[0-9]\+,gid=[0-9]\+\"/\"--userns=keep-id:uid=$UID_VAL,gid=$GID_VAL\"/" "$var"
+        if is_podman; then
+            sed -i "s/\"--userns=keep-id:uid=[0-9]\+,gid=[0-9]\+\"/\"--userns=keep-id:uid=$UID_VAL,gid=$GID_VAL\"/" "$var"
+        fi
 
-        # Update devcontainer.json with the correct gpu flags if CDI is available
         if is_nvidia_cdi_available; then
             sed -i "/--runtime=nvidia/d" "$var"
-            sed -i "s/\"--gpus all\"/\"--device nvidia.com/gpu=all\"/" "$var"
+            sed -i "s|\"--gpus all\"|\"--device\",\n    \"nvidia.com/gpu=all\"|" "$var"
+            sed -i "/\"gpu\": \"optional\"/d" "$var"
         fi
+
+        sed -i "s/\"remoteUser\": \"\${localEnv:USER}\"/\"remoteUser\": \"$USERNAME\"/g" "$var"
+        sed -i "s/\"containerUser\": \"\${localEnv:USER}\"/\"containerUser\": \"$USERNAME\"/g" "$var"
     fi
 done
