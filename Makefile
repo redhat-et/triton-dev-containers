@@ -16,24 +16,25 @@
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
-source_dir :=$(shell dirname "$(mkfile_path)")
-triton_path ?=$(source_dir)
-gitconfig_path ?="$(HOME)/.gitconfig"
-create_user ?=true
-torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^"]+)".*/\1/')
-USERNAME ?=triton
-CUSTOM_LLVM ?=false
-IMAGE_REPO ?=quay.io/triton-dev-containers
-NVIDIA_IMAGE_NAME ?=nvidia
-CPU_IMAGE_NAME ?=cpu
 AMD_IMAGE_NAME ?=amd
-TRITON_TAG ?= latest
-HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
+CPU_IMAGE_NAME ?=cpu
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
-STRIPPED_CMD := $(shell basename $(CTR_CMD))
+CUSTOM_LLVM ?=false
+DEMO_TOOLS ?= false
+HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
+IMAGE_REPO ?=quay.io/triton-dev-containers
+mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
+NVIDIA_IMAGE_NAME ?=nvidia
 OS := $(shell uname -s)
 SELINUXFLAG := $(shell if [ "$(shell getenforce 2> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
+source_dir :=$(shell dirname "$(mkfile_path)")
+STRIPPED_CMD := $(shell basename $(CTR_CMD))
+torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^\"]+)".*/\1/')
+TRITON_TAG ?= latest
+triton_path ?=$(source_dir)
+gitconfig_path ?="$(HOME)/.gitconfig"
+USERNAME ?=triton
+create_user ?=true
 
 ##@ Container Build
 .PHONY: image-builder-check
@@ -100,18 +101,23 @@ define run_container
 	else \
 		keep_ns_arg=""; \
 	fi; \
+		if [ "$(DEMO_TOOLS)" = "true" ]; then \
+		port_arg="-p 8888:8888"; \
+	else \
+		port_arg=""; \
+	fi; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
-		-e TORCH_VERSION=$(torch_version) \
+		-e TORCH_VERSION=$(torch_version) -e DEMO_TOOLS=$(DEMO_TOOLS) $$port_arg \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$keep_ns_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
 		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args \
-		-e TORCH_VERSION=$(torch_version) \
+		-e TORCH_VERSION=$(torch_version) -e DEMO_TOOLS=$(DEMO_TOOLS) $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
 		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) $$keep_ns_arg $$gpu_args  \
-		-e TORCH_VERSION=$(torch_version) \
+		-e TORCH_VERSION=$(torch_version) -e DEMO_TOOLS=$(DEMO_TOOLS) $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef
