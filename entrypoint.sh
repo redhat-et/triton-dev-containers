@@ -23,6 +23,7 @@ USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 CUSTOM_LLVM=${CUSTOM_LLVM:-}
+DEMO_TOOLS=${DEMO_TOOLS:-}
 AMD=${AMD:-}
 TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
 ROCM_VERSION=${ROCM_VERSION:-}
@@ -132,6 +133,15 @@ install_dependencies() {
         pre-commit install
     fi
 
+    if [ -n "$DEMO_TOOLS" ] && [ "$DEMO_TOOLS" = "true" ]; then
+        echo "################################################################"
+        echo "##################### ENABLE DEMO TOOLS ########################"
+        echo "################################################################"
+        pip install jupyter
+        echo 'alias start_jupyter="jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root"' >> ~/.bashrc
+        # TODO ADD VLLM BUILD HERE
+    fi
+
     if [ -n "$CUSTOM_LLVM" ] && [ "$CUSTOM_LLVM" = "true" ]; then
         echo "################################################################"
         echo "##################### CUSTOM LLVM BUILD... #####################"
@@ -200,6 +210,10 @@ export_vars() {
 
     if [ -n "$CUSTOM_LLVM" ]; then
         export_vars+=("CUSTOM_LLVM=$CUSTOM_LLVM")
+    fi
+
+    if [ -n "$DEMO_TOOLS" ]; then
+        export_vars+=("DEMO_TOOLS=$DEMO_TOOLS")
     fi
 
     if [ -n "$TRITON_CPU_BACKEND" ]; then
