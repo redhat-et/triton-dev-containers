@@ -17,24 +17,51 @@
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
 ARG HIP_VISIBLE_DEVICES=0
+ARG TRITON_CPU_BACKEND=0
 
-FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
+FROM registry.access.redhat.com/ubi9/python-312:latest AS llvm-build
 ARG CUSTOM_LLVM
+ARG TRITON_CPU_BACKEND=0
 USER 0
 # Conditionally execute the build based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf update -y && \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
-        git clone https://github.com/llvm/llvm-project && \
-        cd llvm-project && \
+        dnf clean all && rm -rf /var/cache/dnf && \
+        python3 -m pip install --upgrade pip && \
+        python3 -m pip install --upgrade cmake ninja sccache pybind11 && \
+        if [ ! -d "/llvm-project" ]; then \
+            git clone https://github.com/llvm/llvm-project /llvm-project; \
+        else \
+            cd /llvm-project && git fetch origin; \
+        fi && \
+        cd /llvm-project && \
+        python3 -m pip install -r mlir/python/requirements.txt && \
+        PROJECTS="mlir;llvm;lld"; \
         COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
-        git checkout $COMMIT && \
-        mkdir build && \
-        cd build && \
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
-        ninja; \
+        CURRENT_COMMIT=$(git rev-parse HEAD) && \
+        if [ "$CURRENT_COMMIT" != "$COMMIT" ] || [ ! -f "/install/bin/llvm-config" ] || [ ! -d "/install/lib" ]; then \
+            echo "LLVM commit mismatch or missing install. Rebuilding..."; \
+            git checkout $COMMIT && \
+            rm -rf build && \
+            mkdir build && \
+            cd build && \
+            cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+                -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+                -DCMAKE_INSTALL_PREFIX=/install \
+                -DLLVM_BUILD_UTILS=ON \
+                -DLLVM_BUILD_TOOLS=ON \
+                -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+                -DLLVM_INSTALL_UTILS=ON \
+                -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
+                -DLLVM_ENABLE_PROJECTS=$PROJECTS && \
+            ninja check-mlir install; \
+        else \
+            echo "LLVM is already up-to-date. Skipping rebuild."; \
+        fi \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+        mkdir -p /install; \
     fi
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
@@ -82,7 +109,7 @@ ENV PYTHON_VERSION=3.12 \
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
-COPY --from=llvm-build /llvm-project/ /llvm-project/
+COPY --from=llvm-build /install /llvm-project/install
 
 # Stage for llvm-local-false
 FROM base AS llvm-local-false
@@ -100,8 +127,8 @@ RUN pip install pre-commit
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-    echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
-    echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
-    echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc"; \
+    echo "export LLVM_BUILD_DIR=/llvm-project/install " >> "${HOME}/.bashrc" && \
+    echo "export LLVM_INCLUDE_DIRS=/llvm-project/install/include" >> "${HOME}/.bashrc" && \
+    echo "export LLVM_LIBRARY_DIR=/llvm-project/install/lib" >> "${HOME}/.bashrc" && \
+    echo "export LLVM_SYSPATH=/llvm-project/install" >> "${HOME}/.bashrc"; \
 fi

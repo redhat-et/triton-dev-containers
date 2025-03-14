@@ -7,6 +7,8 @@
         "USERNAME": "${localEnv:USER}",
         "USER_UID": "${localEnv:USER_UID}",
         "USER_GID": "${localEnv:USER_GID}",
+        // Uncomment CUSTOM_LLVM to enable specific LLVM build
+        //"CUSTOM_LLVM": "true"
       }
     },
     "remoteUser": "${localEnv:USER}",

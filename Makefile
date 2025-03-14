@@ -24,16 +24,28 @@ create_user ?=true
 torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^"]+)".*/\1/')
 USERNAME ?=triton
 CUSTOM_LLVM ?=false
+TRITON_CPU_BACKEND ?=0
 IMAGE_REPO ?=quay.io/triton-dev-containers
 NVIDIA_IMAGE_NAME ?=nvidia
 CPU_IMAGE_NAME ?=cpu
 AMD_IMAGE_NAME ?=amd
 TRITON_TAG ?= latest
+LLVM_TAG ?= latest # Need a separate tag so we only update TRITON_TAG for custom builds
 HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
 STRIPPED_CMD := $(shell basename $(CTR_CMD))
 OS := $(shell uname -s)
 SELINUXFLAG := $(shell if [ "$(shell getenforce 2> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
+
+# Modify image tag if CUSTOM_LLVM is enabled
+ifeq ($(CUSTOM_LLVM),true)
+    TRITON_TAG := custom-llvm-$(TRITON_TAG)
+endif
+
+ifeq ($(TRITON_CPU_BACKEND),1)
+    LLVM_TAG := cpu-$(LLVM_TAG)
+endif
+
 
 ##@ Container Build
 .PHONY: image-builder-check
@@ -46,22 +58,31 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image triton-cpu-image triton-amd-image
 
-.PHONY: gosu
-gosu-image: image-builder-check ## Build the Triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:$(TRITON_TAG) -f Dockerfile.gosu .
+.PHONY: llvm-image
+llvm-image: image-builder-check ## Build the Triton LLVM image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(LLVM_TAG) \
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
+		--build-arg TRITON_CPU_BACKEND=$(TRITON_CPU_BACKEND) \
+		-f Dockerfile.llvm .
+
+.PHONY: gosu-image
+gosu-image: image-builder-check ## Build the Triton gosu image
+	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f Dockerfile.gosu .
 
 .PHONY: triton-image
-triton-image: image-builder-check gosu-image ## Build the Triton devcontainer image
+triton-image: image-builder-check gosu-image llvm-image ## Build the Triton GPU image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton .
 
 .PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU devcontainer image
+triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
+	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_TAG=cpu-latest
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-cpu .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
+		-f Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
-triton-amd-image: image-builder-check gosu-image ## Build the Triton AMD devcontainer image
+triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-amd .
 
@@ -100,19 +121,14 @@ define run_container
 	else \
 		keep_ns_arg=""; \
 	fi; \
+	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM)"; \
 	if [ "$(create_user)" = "true" ]; then \
-		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
-		-e TORCH_VERSION=$(torch_version) \
-		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$keep_ns_arg \
-		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
+		env_vars+=" -e CREATE_USER=$(create_user) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)`"; \
+		$(CTR_CMD) run $$env_vars $$gpu_args $$keep_ns_arg -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
-		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args \
-		-e TORCH_VERSION=$(torch_version) \
-		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
+		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) $$env_vars $$gpu_args -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) $$keep_ns_arg $$gpu_args  \
-		-e TORCH_VERSION=$(torch_version) \
-		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
+		$(CTR_CMD) run --user $(USER) $$env_vars $$keep_ns_arg $$gpu_args -ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef
 

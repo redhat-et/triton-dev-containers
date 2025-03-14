@@ -17,27 +17,6 @@
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
 
-# LLVM Build Stage
-FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
-ARG CUSTOM_LLVM
-USER 0
-RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-        dnf update -y && \
-        dnf -y install clang rpm-build git ninja-build cmake lld && \
-        git clone https://github.com/llvm/llvm-project && \
-        cd llvm-project && \
-        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) && \
-        git checkout $COMMIT && \
-        mkdir build && cd build && \
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
-              -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
-        ninja && \
-        dnf clean all && rm -rf /var/cache/dnf /tmp/*; \
-    else \
-        echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
-        mkdir llvm-project; \
-    fi
-
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-311 AS base
 ARG ROCM_VERSION=6.2
@@ -68,7 +47,7 @@ PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
 
 # LLVM Integration Stages
 FROM base AS llvm-local-true
-COPY --from=llvm-build /llvm-project/ /llvm-project/
+COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-project/install
 
 FROM base AS llvm-local-false
 ENV TRITON_OFFLINE_BUILD=NO
