@@ -100,6 +100,7 @@ install_dependencies() {
         echo "###########################################################################"
         echo "##################### Installing ROCm dependencies... #####################"
         echo "###########################################################################"
+        TORCH_VERSION="2.5.1"
         pip install --no-cache-dir torch=="${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
     elif [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         echo "###########################################################################"
