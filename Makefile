@@ -95,6 +95,7 @@ define run_container
 		else \
 			gpu_args="--runtime=nvidia --gpus=all --env INSTALL_CUDNN=true"; \
 		fi; \
+                gpu_args+=" --security-opt label=disable"; \
 	fi; \
 	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
 		keep_ns_arg="--userns=keep-id";\
