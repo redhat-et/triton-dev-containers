@@ -87,18 +87,9 @@ install_dependencies() {
         echo "################################################################"
         echo "##################### ENABLE DEMO TOOLS ########################"
         echo "################################################################"
-        pip install jupyter jupytext
+        pip install jupyter
         echo 'alias start_jupyter="jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root"' >> ~/.bashrc
-        if [ ! -d "/workspace/vllm" ]; then
-            echo "#############################################################################"
-            echo "############################ Cloning vllm ... ###############################"
-            echo "#############################################################################"
-            git clone https://github.com/vllm-project/vllm.git "/workspace/vllm"
-            if [ ! -d "/workspace/vllm" ]; then
-                echo "/workspace/vllm not found. ERROR Cloning repository..."
-                exit 1
-            fi
-        fi
+        wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
     fi
 
     navigate
