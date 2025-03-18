@@ -74,8 +74,22 @@ install_dependencies() {
             else
                 CLONED=1
             fi
-
         fi
+    fi
+
+    echo "#############################################################################"
+    echo "################################## Upgrade pip... ###########################"
+    echo "#############################################################################"
+    pip install --upgrade pip
+
+    # Make sure to clone vllm before navigate
+    if [ -n "$DEMO_TOOLS" ] && [ "$DEMO_TOOLS" = "true" ]; then
+        echo "################################################################"
+        echo "##################### ENABLE DEMO TOOLS ########################"
+        echo "################################################################"
+        pip install jupyter
+        echo 'alias start_jupyter="jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root"' >> ~/.bashrc
+        wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
     fi
 
     navigate
@@ -84,11 +98,6 @@ install_dependencies() {
         git submodule init
         git submodule update
     fi
-
-    echo "#############################################################################"
-    echo "##################### Installing Python dependencies... #####################"
-    echo "#############################################################################"
-    pip install --upgrade pip
 
     if [ -n "$INSTALL_CUDNN" ] && [ "$INSTALL_CUDNN" = "true" ]; then
         echo "###########################################################################"
@@ -129,17 +138,7 @@ install_dependencies() {
         echo "#####################Installing pre-commit dependencies...#####################"
         echo "###############################################################################"
         pip install pre-commit
-
         pre-commit install
-    fi
-
-    if [ -n "$DEMO_TOOLS" ] && [ "$DEMO_TOOLS" = "true" ]; then
-        echo "################################################################"
-        echo "##################### ENABLE DEMO TOOLS ########################"
-        echo "################################################################"
-        pip install jupyter
-        echo 'alias start_jupyter="jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root"' >> ~/.bashrc
-        # TODO ADD VLLM BUILD HERE
     fi
 
     if [ -n "$CUSTOM_LLVM" ] && [ "$CUSTOM_LLVM" = "true" ]; then

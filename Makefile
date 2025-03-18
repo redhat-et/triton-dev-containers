@@ -97,12 +97,12 @@ define run_container
 		fi; \
                 gpu_args+=" --security-opt label=disable"; \
 	fi; \
-	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		keep_ns_arg="--userns=keep-id";\
+	if [ "$(STRIPPED_CMD)" = "podman" ] && [ -z "$(SELINUXFLAG)" ]; then \
+		keep_ns_arg="--userns=keep-id"; \
 	else \
 		keep_ns_arg=""; \
 	fi; \
-		if [ "$(DEMO_TOOLS)" = "true" ]; then \
+	if [ "$(DEMO_TOOLS)" = "true" ]; then \
 		port_arg="-p 8888:8888"; \
 	else \
 		port_arg=""; \
