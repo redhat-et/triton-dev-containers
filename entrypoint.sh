@@ -87,7 +87,7 @@ install_dependencies() {
         echo "################################################################"
         echo "##################### ENABLE DEMO TOOLS ########################"
         echo "################################################################"
-        pip install jupyter
+        pip install jupyter jupytext
         echo 'alias start_jupyter="jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root"' >> ~/.bashrc
         if [ ! -d "/workspace/vllm" ]; then
             echo "#############################################################################"
