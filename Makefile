@@ -97,7 +97,7 @@ define run_container
 		fi; \
                 gpu_args+=" --security-opt label=disable"; \
 	fi; \
-	if [ "$(STRIPPED_CMD)" = "podman" ] && [ -z "$(SELINUXFLAG)" ]; then \
+	if [ "$(STRIPPED_CMD)" = "podman" ] ; then \
 		keep_ns_arg="--userns=keep-id"; \
 	else \
 		keep_ns_arg=""; \
