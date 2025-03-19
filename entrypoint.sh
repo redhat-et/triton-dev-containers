@@ -82,15 +82,37 @@ install_dependencies() {
     echo "#############################################################################"
     pip install --upgrade pip
 
-    # Make sure to clone vllm before navigate
+    # Make sure to clone vllm before navigating
     if [ -n "$DEMO_TOOLS" ] && [ "$DEMO_TOOLS" = "true" ]; then
         echo "################################################################"
         echo "##################### ENABLE DEMO TOOLS ########################"
         echo "################################################################"
         pip install jupyter
-        echo 'alias start_jupyter="jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root"' >> ~/.bashrc
-        wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
+
+        if [ ! -f "flash_attention.py" ]; then
+            wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
+        fi
+
+    JUPYTER_FUNCTION=$(cat << 'EOF'
+
+start_jupyter() {
+    original_dir=$(pwd)
+    cd /workspace || return
+    jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+    cd "$original_dir" || return
+}
+EOF
+    )
+
+        if grep -q "start_jupyter()" ~/.bashrc; then
+            echo "start_jupyter function already exists in ~/.bashrc"
+        else
+            echo "Adding start_jupyter function to ~/.bashrc"
+            echo "$JUPYTER_FUNCTION" >> ~/.bashrc
+            echo "start_jupyter added!"
+        fi
     fi
+
 
     navigate
 
