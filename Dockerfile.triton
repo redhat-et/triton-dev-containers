@@ -85,6 +85,6 @@ COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
 COPY hack/triton-gpu-check.py triton-gpu-check.py
 COPY examples/flash_attention_demo.ipynb flash_attention_demo.ipynb
-RUN wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
+COPY examples/flash_attention.py flash_attention.py
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
