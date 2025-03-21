@@ -105,5 +105,6 @@ COPY user.sh user.sh
 COPY entrypoint.sh /entrypoint.sh
 COPY hack/triton-gpu-check.py triton-gpu-check.py
 COPY examples/triton-vector-add-rocm.py triton-vector-add-rocm.py
+COPY examples/flash_attention_demo.ipynb flash_attention_demo.ipynb
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
