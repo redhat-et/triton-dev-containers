@@ -91,9 +91,9 @@ define run_container
 		gpu_args="--device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=$(HIP_DEVICES)"; \
 	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ]; then \
 		if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
-			gpu_args="--device nvidia.com/gpu=all --env INSTALL_CUDNN=true"; \
+			gpu_args="--device nvidia.com/gpu=all"; \
 		else \
-			gpu_args="--runtime=nvidia --gpus=all --env INSTALL_CUDNN=true"; \
+			gpu_args="--runtime=nvidia --gpus=all"; \
 		fi; \
                 gpu_args+=" --security-opt label=disable"; \
 	fi; \
