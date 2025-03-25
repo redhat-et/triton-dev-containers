@@ -14,7 +14,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ARG CUSTOM_LLVM=false
-ARG INSTALL_CUDNN=true
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
 ARG CUSTOM_LLVM
 USER 0
@@ -38,7 +37,6 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
-ARG INSTALL_CUDNN=true
 
 USER 0
 
@@ -70,7 +68,6 @@ ENV BASH_ENV=/workspace/bin/activate \
     PYTHON_VERSION=3.12 \
     PATH=/workspace/bin:$PATH \
     PYTHONUNBUFFERED=1 \
-    INSTALL_CUDNN=${INSTALL_CUDNN} \
     PIP_PREFIX=/workspace \
     PYTHONPATH=/workspace/lib/python$PYTHON_VERSION/site-packages \
     XDG_CACHE_HOME=/workspace \

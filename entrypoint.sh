@@ -29,7 +29,6 @@ TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
 ROCM_VERSION=${ROCM_VERSION:-}
 TORCH_VERSION=${TORCH_VERSION:-"2.5.1"}
 HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
-INSTALL_CUDNN=${INSTALL_CUDNN:-}
 CREATE_USER=${CREATE_USER:-false}
 CLONED=0
 export_cmd=""
@@ -119,13 +118,6 @@ EOF
     if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
         git submodule init
         git submodule update
-    fi
-
-    if [ -n "$INSTALL_CUDNN" ] && [ "$INSTALL_CUDNN" = "true" ]; then
-        echo "###########################################################################"
-        echo "##################### Installing CUDA dependencies... #####################"
-        echo "###########################################################################"
-        python3 -m pip install nvidia-cudnn-cu12;
     fi
 
     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
@@ -239,10 +231,6 @@ export_vars() {
 
     if [ -n "$TRITON_CPU_BACKEND" ]; then
         export_vars+=("TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND")
-    fi
-
-    if [ -n "$INSTALL_CUDNN" ]; then
-        export_vars+=("INSTALL_CUDNN=$INSTALL_CUDNN")
     fi
 
     if [ -n "$AMD" ]; then
