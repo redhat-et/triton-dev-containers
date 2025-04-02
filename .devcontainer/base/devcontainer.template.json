@@ -1,20 +1,14 @@
 {
-    "name": "Triton-CUDA",
     "build": {
       "dockerfile": "Dockerfile",
       "args": {
-        // root (not recommended)
         "USERNAME": "${localEnv:USER}",
         "USER_UID": "${localEnv:USER_UID}",
-        "USER_GID": "${localEnv:USER_GID}",
-        "INSTALL_CUDNN": "true",
-        // Uncomment CUSTOM_LLVM to enable specific LLVM build
-        //"CUSTOM_LLVM": "true"
+        "USER_GID": "${localEnv:USER_GID}"
       }
     },
     "remoteUser": "${localEnv:USER}",
     "containerUser": "${localEnv:USER}",
-    // Add the IDs of extensions you want installed when the container is created.
     "customizations": {
       "vscode": {
         "extensions": [
@@ -30,18 +24,9 @@
         ]
       }
     },
-    "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/triton/postStartCommand.sh",
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached,Z",
     "workspaceFolder": "/workspace",
-    "hostRequirements": {
-      "cpus": 4,
-      "gpu": "optional"
-    },
-    "runArgs": [
-      "--runtime=nvidia",
-      "--gpus all",
-      "--userns=keep-id:uid=1001,gid=1001",
-      "--security-opt=label=disable"
-    ],
-    "updateRemoteUserUID": true
+    "updateRemoteUserUID": true,
+    "containerEnv": {},
+    "runArgs": []
   }
