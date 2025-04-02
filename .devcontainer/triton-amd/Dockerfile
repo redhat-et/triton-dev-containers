@@ -69,8 +69,18 @@ RUN ./user.sh -u $USERNAME -g $USER_GID -i $USER_UID
 # Set the user
 USER $USERNAME
 
-ENV PYTHON_VERSION=3.12 \
-    PATH=$HOME/.local/bin/:$PATH \
+RUN python -m venv /opt && \
+    echo "unset BASH_ENV PROMPT_COMMAND ENV" >> /opt/bin/activate && \
+    chmod -R 777 /opt
+
+RUN echo 'source /opt/bin/activate' >> "${HOME}"/.bashrc
+
+ENV BASH_ENV=/opt/bin/activate \
+    ENV=/opt/bin/activate \
+    PIP_PREFIX=/opt \
+    PYTHONPATH=/opt/lib/python$PYTHON_VERSION/site-packages \
+    PYTHON_VERSION=3.12 \
+    PATH=$HOME/.local/bin/:/opt/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     ROCM_VERSION=$ROCM_VERSION \
     HIP_VISIBLE_DEVICES=$HIP_VISIBLE_DEVICES \
@@ -92,11 +102,12 @@ ENV TRITON_OFFLINE_BUILD=NO
 FROM llvm-local-${CUSTOM_LLVM}
 
 # Install dependencies
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas
-RUN pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
-RUN pip install pre-commit
+RUN source /opt/bin/activate && \
+    pip install --upgrade pip && \
+    pip install --upgrade setuptools && \
+    pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas && \
+    pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}" && \
+    pip install pre-commit
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
