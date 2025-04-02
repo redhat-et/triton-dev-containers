@@ -50,6 +50,12 @@ RUN dnf update -y && \
 # Set the user
 USER $USERNAME
 
+RUN python -m venv /opt && \
+    echo "unset BASH_ENV PROMPT_COMMAND ENV" >> /opt/bin/activate && \
+    chmod -R 777 /opt
+
+RUN echo 'source /opt/bin/activate' >> "${HOME}"/.bashrc
+
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
 COPY --from=llvm-build /llvm-project/ /llvm-project/
@@ -61,18 +67,23 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM}
 
-ENV PYTHON_VERSION=3.12 \
-    PATH=$HOME/.local/bin/:$PATH \
+ENV BASH_ENV=/opt/bin/activate \
+    ENV=/opt/bin/activate \
+    PIP_PREFIX=/opt \
+    PYTHONPATH=/opt/lib/python$PYTHON_VERSION/site-packages \
+    PYTHON_VERSION=3.12 \
+    PATH=$HOME/.local/bin/:/opt/bin:$PATH \
     PYTHONUNBUFFERED=1
 
 # Install dependencies
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install ninja cmake wheel pybind11
+RUN source /opt/bin/activate && \
+    pip install --upgrade pip && \
+    pip install --upgrade setuptools && \
+    pip install ninja cmake wheel pybind11 pre-commit
 RUN if [[ "$INSTALL_CUDNN" == "true" ]]; then \
-	python3 -m pip install nvidia-cudnn-cu12; \
+    source /opt/bin/activate && pip install nvidia-cudnn-cu12; \
 fi
-RUN pip install pre-commit
+
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
