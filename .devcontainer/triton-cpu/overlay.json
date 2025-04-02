@@ -1,0 +1,12 @@
+{
+  "name": "Triton-CPU",
+  "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/triton-cpu/postStartCommand.sh",
+  "hostRequirements": {
+    "cpus": 4,
+    "gpu": false
+  },
+  "runArgs": [
+    "--userns=keep-id:uid=1001,gid=1001",
+    "--security-opt=label=disable"
+  ]
+}

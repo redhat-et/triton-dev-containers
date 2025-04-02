@@ -1,0 +1,25 @@
+{
+  "name": "Triton-ROCm",
+  "build": {
+    "args": {
+      "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}"
+    }
+  },
+  "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/triton-amd/postStartCommand.sh",
+  "hostRequirements": {
+    "cpus": 8
+  },
+  "runArgs": [
+    "--device=/dev/kfd",
+    "--device=/dev/dri",
+    "--security-opt", "seccomp=unconfined",
+    "--security-opt=label=disable",
+    "--group-add=video",
+    "--cap-add=SYS_PTRACE",
+    "--ipc=host",
+    "--userns=keep-id:uid=1001,gid=1001"
+  ],
+  "containerEnv": {
+    "HIP_VISIBLE_DEVICES": "0"
+  }
+}

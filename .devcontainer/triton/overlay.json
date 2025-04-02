@@ -1,0 +1,17 @@
+{
+  "name": "Triton-CUDA",
+  "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/triton/postStartCommand.sh",
+  "hostRequirements": {
+    "cpus": 4,
+    "gpu": "optional"
+  },
+  "runArgs": [
+    "--runtime=nvidia",
+    "--gpus", "all",
+    "--userns=keep-id:uid=1001,gid=1001",
+    "--security-opt=label=disable"
+  ],
+  "containerEnv": {
+    "INSTALL_CUDNN": "true"
+  }
+}

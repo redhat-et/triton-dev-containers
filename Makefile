@@ -134,3 +134,18 @@ triton-cpu-run: image-builder-check ## Run the Triton CPU devcontainer image
 .PHONY: triton-amd-run
 triton-amd-run: image-builder-check ## Run the Triton AMD devcontainer image
 	$(call run_container, $(AMD_IMAGE_NAME), "triton")
+
+##@ Devcontainer
+
+.PHONY: devcontainers
+devcontainers: ## Generate all devcontainer.json files
+	@echo "Running devcontainer generation..."
+	$(MAKE) -C .devcontainer generate
+
+.PHONY: clean-devcontainers
+clean-devcontainers: ## Remove generated devcontainer.json files
+	$(MAKE) -C .devcontainer clean
+
+.PHONY: devcontainers-help
+devcontainers-help: ## Show devcontainer help
+	$(MAKE) -C .devcontainer help
