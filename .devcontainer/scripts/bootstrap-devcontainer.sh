@@ -13,43 +13,59 @@ is_valid_variant() {
 
 if [[ -n "$VARIANT" ]]; then
   if ! is_valid_variant "$VARIANT"; then
-    echo " Invalid variant: $VARIANT"
-    echo "   Valid variants: ${VALID_VARIANTS[*]}"
+    echo "Invalid variant: $VARIANT"
+    echo "  Valid variants: ${VALID_VARIANTS[*]}"
     exit 1
   fi
+  VARIANTS_TO_PROCESS=("$VARIANT")
+else
+  VARIANTS_TO_PROCESS=("${VALID_VARIANTS[@]}")
 fi
 
-echo "Bootstrapping devcontainer for variant: $VARIANT"
+echo "Bootstrapping devcontainer for variant(s): ${VARIANT:-ALL}"
 
-# Clone shallow and filter tree
+# Clone shallowly
 echo "Cloning devcontainer repository..."
 git clone -n --depth=1 --filter=tree:0 https://github.com/redhat-et/triton-dev-containers.git .devcontainer
 TARGET_DIR=".devcontainer"
 (
   cd "$TARGET_DIR" || exit 1
+
   echo "Configuring sparse-checkout..."
-  git sparse-checkout set --no-cone \
-    .devcontainer/Makefile \
-    .devcontainer/base \
-    .devcontainer/scripts \
-    .devcontainer/"$VARIANT"
+  if [[ -n "$VARIANT" ]]; then
+    git sparse-checkout set --no-cone \
+      .devcontainer/Makefile \
+      .devcontainer/base \
+      .devcontainer/scripts \
+      .devcontainer/"$VARIANT"
+  else
+    # Full checkout of everything in .devcontainer
+    git sparse-checkout set --no-cone .devcontainer
+  fi
 
   git checkout
 
   echo "Moving files into place..."
+  mv .devcontainer/Makefile ./Makefile
   mv .devcontainer/base ./base
   mv .devcontainer/scripts ./scripts
-  mv .devcontainer/Makefile ./Makefile
-  mv .devcontainer/"$VARIANT" ./"$VARIANT"
+  for v in "${VARIANTS_TO_PROCESS[@]}"; do
+    mv ".devcontainer/$v" "./$v"
+  done
+
+  if [[ -n "$VARIANT" ]]; then
+    echo "Generating devcontainer.json for $VARIANT..."
+    make generate v="$VARIANT"
+    echo "Removing build-time files..."
+  else
+    echo "Generating devcontainer.json for variants: ${VARIANTS_TO_PROCESS[*]}"
+    make generate
+  fi
 
   echo "Cleaning up temporary clone..."
-  rm -rf .devcontainer .git
-
-  echo "Generating devcontainer.json for $VARIANT..."
-  make generate v="$VARIANT"
-
-  echo "Removing build-time files..."
   rm -rf base scripts Makefile
+  rm -rf .git
+  rm -rf .devcontainer
 )
 
 echo "Adding .devcontainer to .gitignore..."
