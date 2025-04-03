@@ -19,14 +19,12 @@ is_nvidia_cdi_available() {
   command -v nvidia-ctk &> /dev/null && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"
 }
 
-# Accept variant as first argument, default to all
 if [[ $# -eq 1 ]]; then
   variants=("$1")
 else
   variants=("triton" "triton-cpu" "triton-amd")
 fi
 
-# Define mount consistency options based on runtime
 if is_podman; then
   mount_consistency="consistency=cached,Z"
   userns_arg="--userns=keep-id:uid=$UID_VAL,gid=$GID_VAL"
@@ -80,7 +78,7 @@ for variant in "${variants[@]}"; do
       sed -i "/\"gpu\": \"optional\"/d" "$output"
   fi
 
-  # Always copy shared scripts to ensure isolation
+  # ALWAYS copy shared scripts to ensure isolation
   for f in user.sh postStartCommand.sh; do
     cp "$BASE_DIR/base/$f" "$BASE_DIR/$variant/$f"
   done
