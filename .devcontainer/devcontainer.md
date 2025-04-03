@@ -53,7 +53,7 @@ make devcontainers
    > **_NOTE_**: The Dev Container configuration provided supports both root
    (not recommended) and non-root (recommended) users.
 2. Open project in Container: Open the project folder in VS Code, build and
-   attach the development container.
+   connect to the development container.
 3. Development: Work as usual, with access to tools and dependencies defined
    in the container.
 
