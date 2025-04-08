@@ -7,16 +7,19 @@ The setup is optimized for local development using Visual Studio Code.
 ## Prerequisites
 
 - [VSCode](https://code.visualstudio.com/)
-- [Docker](https://docs.docker.com/)
-- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+- A container engine: [Podman](https://podman.io/) (preferred) or
+  [Docker](https://docs.docker.com/)
+- GPU support:
+  - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
   (only needed for GPU use)
+  - [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/index.html)
 - [VSCode Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 - `jq` (used by setup scripts)
 
 > **Note**: Full Dev Container setup details can be found
 > [here](https://code.visualstudio.com/docs/devcontainers/tutorial#_prerequisites).
 
-> **GPU users** must install the NVIDIA Container Toolkit for proper CUDA support.
+> **GPU users** must install the NVIDIA Container Toolkit/ROCm for GPU support.
 
 > **Podman users**: See additional devcontainer settings below.
 ![settings](./gsg/images/settings.png)
