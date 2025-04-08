@@ -93,23 +93,18 @@ python python/tutorials/01-vector-add.py
 
 > **_NOTE_**: This setup takes a WHILE to complete
 
-To build Triton with a custom version of LLVM, please enable the following in
-the `devcontainer.json` file:
+To build Triton with a custom version of LLVM, please enable one of the following
+in the `devcontainer.json` file:
 
 ```json
 "CUSTOM_LLVM": "true"
 ```
 
-To use a different commit for LLVM than what's specified in
-[`cmake/llvm.hash`](../../cmake/llvm-hash.txt), change the following line in the
-[`Dockerfile`](../triton/Dockerfile) from:
+or
 
-```dockerfile
-COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&
+```json
+"LLVM_TAG": "adba14acea99cc6a17d837763a3248c9d4a2fadf"
 ```
 
-to
-
-```dockerfile
-COMMIT=49af6502 &&
-```
+> Note: if you don't set the LLVM_TAG then the latest tag in `llvm-hash.txt`
+file will be used from the relevant Triton project.

@@ -14,31 +14,36 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ARG CUSTOM_LLVM=false
+ARG LLVM_TAG
 
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
 ARG CUSTOM_LLVM
+ARG LLVM_TAG
+
 USER 0
-# Conditionally execute the build based on CUSTOM_LLVM
-RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
+# Conditionally execute the build if CUSTOM_LLVM is true or LLVM_TAG is set
+RUN if [ "$CUSTOM_LLVM" = "true" ] || [ -n "$LLVM_TAG" ]; then \
         dnf update -y && \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
         git clone https://github.com/llvm/llvm-project && \
         cd llvm-project && \
-        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt) &&\
+        COMMIT="${LLVM_TAG:-$(curl -s https://raw.githubusercontent.com/triton-lang/triton/refs/heads/main/cmake/llvm-hash.txt)}" &&\
         git checkout $COMMIT && \
         mkdir build && \
         cd build && \
         cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
         ninja; \
     else \
-        echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+        echo "Skipping LLVM build because neither CUSTOM_LLVM is true nor LLVM_TAG is set"; \
+        mkdir llvm-project; \
     fi
 
-FROM registry.access.redhat.com/ubi9/python-312 AS base
+FROM registry.access.redhat.com/ubi9/python-312 AS final
 ARG USERNAME=1001
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ARG CUSTOM_LLVM
+ARG LLVM_TAG
 ARG INSTALL_CUDNN
 
 USER 0
@@ -56,17 +61,6 @@ RUN python -m venv /opt && \
 
 RUN echo 'source /opt/bin/activate' >> "${HOME}"/.bashrc
 
-# Stage for llvm-local-true
-FROM base AS llvm-local-true
-COPY --from=llvm-build /llvm-project/ /llvm-project/
-
-# Stage for llvm-local-false
-FROM base AS llvm-local-false
-ENV TRITON_OFFLINE_BUILD=NO
-
-# Use intermediate stage selection
-FROM llvm-local-${CUSTOM_LLVM}
-
 ENV BASH_ENV=/opt/bin/activate \
     ENV=/opt/bin/activate \
     PIP_PREFIX=/opt \
@@ -74,6 +68,8 @@ ENV BASH_ENV=/opt/bin/activate \
     PYTHON_VERSION=3.12 \
     PATH=$HOME/.local/bin/:/opt/bin:$PATH \
     PYTHONUNBUFFERED=1
+
+COPY --from=llvm-build /llvm-project/ /llvm-project/
 
 # Install dependencies
 RUN source /opt/bin/activate && \
@@ -86,8 +82,8 @@ fi
 
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 # Conditionally set the env vars based on CUSTOM_LLVM
-RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-    echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
+RUN if [[ "$CUSTOM_LLVM" == "true" || -n "$LLVM_TAG" ]]; then \
+    echo "export LLVM_BUILD_DIR=/llvm-project/build" >> "${HOME}/.bashrc" && \
     echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
     echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
     echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc"; \
