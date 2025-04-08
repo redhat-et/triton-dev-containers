@@ -2,6 +2,8 @@
   "name": "Triton-ROCm",
   "build": {
     "args": {
+      "CUSTOM_LLVM": "false",
+      "LLVM_TAG": "",
       "HIP_VISIBLE_DEVICES": "${localEnv:HIP_VISIBLE_DEVICES}"
     }
   },
