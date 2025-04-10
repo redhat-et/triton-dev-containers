@@ -30,7 +30,8 @@ This repository offers two types of development containers:
 
 1. **Vanilla Containers** – Containers where a development directory
   can be mounted.
-2. **VSCode DevContainers** – Configured for use with Visual Studio
+2. **Profiling Containers** - Vanilla Containers with profiling tools installed
+3. **VSCode DevContainers** – Configured for use with Visual Studio
   Code via the Dev Containers Extension.
 
 ### Prerequisites
@@ -49,6 +50,10 @@ Before using these containers, ensure you have the following installed:
 > **Note:** If using an AMD GPU, install the
 [ROCm Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html).
 
+> **Note:** If using a 'rootless' triton-profiling container, ncu will not work
+> without enabling access to the NVIDIA GPU performance counters. Follow this
+> [NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
+
 ### Supported Hardware
 
 - NVIDIA GPUs
@@ -57,7 +62,7 @@ Before using these containers, ensure you have the following installed:
 
 ### Using Vanilla Containers
 
-#### Building the Triton NVIDIA Vanilla Container
+#### Building the triton NVIDIA vanilla container
 
 ```sh
 make triton-image
@@ -107,11 +112,32 @@ commands.
  make triton-amd-run [triton_path=<path-to-triton-on-host>]
 ```
 
-> **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
+> **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
 at container startup time.
 
 > **_NOTE_**: it's also advised that you commit the image after it's completed initialization
 `[podman|docker] commit <container_id> quay.io/triton-dev-containers/amd:latest`
+
+> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
+and `git submodule update` on the mounted repo if you haven't already run these
+commands.
+
+### Using the Profiling Containers
+
+#### Building the triton NVIDIA profiling container
+
+```sh
+make triton-profiling-image
+```
+
+#### Running the triton NVIDIA profiling container
+
+```sh
+ make triton-profiling-run [triton_path=<path-to-triton-on-host>]
+```
+
+> **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
+at container startup time.
 
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
 and `git submodule update` on the mounted repo if you haven't already run these
@@ -151,6 +177,7 @@ images:
 - quay.io/triton-dev-containers/nvidia
 - quay.io/triton-dev-containers/cpu
 - quay.io/triton-dev-containers/amd
+- quay.io/triton-dev-containers/nvidia-profiling
 
 ```dockerfile
 FROM quay.io/triton-dev-containers/nvidia:latest
