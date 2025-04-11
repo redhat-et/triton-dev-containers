@@ -67,7 +67,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM} AS final
 ARG CUDA_VERSION=12.8
-
+ARG INSTALL_CUDNN
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
     python3.12 -m venv /workspace && \
