@@ -24,6 +24,10 @@ The setup is optimized for local development using Visual Studio Code.
 > **Podman users**: See additional devcontainer settings below.
 ![settings](./gsg/images/settings.png)
 
+> **Root-less triton-profiling container users**: Follow this
+> [NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
+> to enable access to the NVIDIA GPU performance counters when running ncu.
+
 ---
 
 ## How to Use These Containers
@@ -39,6 +43,7 @@ wget -qO- https://raw.githubusercontent.com/redhat-et/triton-dev-containers/main
 > - `triton`
 > - `triton-cpu`
 > - `triton-amd`
+> - `triton-profiling`
 
 ### Option 2: Clone Everything
 

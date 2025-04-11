@@ -22,7 +22,7 @@ is_nvidia_cdi_available() {
 if [[ $# -eq 1 ]]; then
   variants=("$1")
 else
-  variants=("triton" "triton-cpu" "triton-amd")
+  variants=("triton" "triton-cpu" "triton-amd" "triton-profiling")
 fi
 
 if is_podman; then
