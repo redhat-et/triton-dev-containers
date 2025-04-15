@@ -130,6 +130,9 @@ commands.
 make triton-profiling-image
 ```
 
+> **_NOTE_**: if you provide `NSIGHT_GUI=true` the dependencies required to run the gui
+apps will be installed.
+
 #### Running the triton NVIDIA profiling container
 
 ```sh
@@ -142,6 +145,9 @@ at container startup time.
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
+
+> **_NOTE_**: if you provide `NSIGHT_GUI=true` the container will be able to launch
+the `nsys-ui` and `ncu-ui` apps.
 
 ### Using .devcontainers with VSCODE
 

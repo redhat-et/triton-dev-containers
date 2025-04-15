@@ -106,7 +106,15 @@ define run_container
 		fi; \
 		gpu_args+=" --security-opt label=disable"; \
 	fi; \
-	if [ "$(STRIPPED_CMD)" = "podman" ] ; then \
+	if [ "$(strip $(1))" = "$(NVIDIA_PROFILING_IMAGE_NAME)" ] && [ "$(NSIGHT_GUI)" = "false" ]; then \
+		profiling_args="--cap-add=SYS_ADMIN"; \
+	elif [ "$(strip $(1))" = "$(NVIDIA_PROFILING_IMAGE_NAME)" ] && [ "$(NSIGHT_GUI)" = "true" ]; then \
+	 	profiling_args="--cap-add=SYS_ADMIN -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} \
+		-e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
+	else \
+		profiling_args=""; \
+	fi ; \
+	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
 		keep_ns_arg="--userns=keep-id"; \
 	else \
 		keep_ns_arg=""; \
@@ -119,14 +127,14 @@ define run_container
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) -e USERNAME=$(USER) \
 		-e TORCH_VERSION=$(torch_version) -e DEMO_TOOLS=$(DEMO_TOOLS) $$port_arg \
-		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$keep_ns_arg \
+		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$profiling_args $$keep_ns_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
-		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args \
+		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) -e USERNAME=$(USER) $$gpu_args $$profiling_args \
 		-e TORCH_VERSION=$(torch_version) -e DEMO_TOOLS=$(DEMO_TOOLS) $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) $$keep_ns_arg $$gpu_args  \
+		$(CTR_CMD) run --user $(USER) -e USERNAME=$(USER) $$keep_ns_arg $$gpu_args $$profiling_args \
 		-e TORCH_VERSION=$(torch_version) -e DEMO_TOOLS=$(DEMO_TOOLS) $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi

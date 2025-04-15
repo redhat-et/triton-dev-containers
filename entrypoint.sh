@@ -29,6 +29,9 @@ TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
 ROCM_VERSION=${ROCM_VERSION:-}
 TORCH_VERSION=${TORCH_VERSION:-"2.5.1"}
 HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
+DISPLAY=${DISPLAY:-}
+WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}
+XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}
 CREATE_USER=${CREATE_USER:-false}
 CLONED=0
 export_cmd=""
@@ -249,6 +252,18 @@ export_vars() {
         export_vars+=("TORCH_VERSION=$TORCH_VERSION")
     fi
 
+    if [ -n "$DISPLAY" ]; then
+        export_vars+=("DISPLAY=$DISPLAY")
+    fi
+    
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        export_vars+=("WAYLAND_DISPLAY=$WAYLAND_DISPLAY")
+    fi
+
+    if [ -n "$XDG_RUNTIME_DIR" ]; then
+        export_vars+=("XDG_RUNTIME_DIR=/tmp")
+    fi
+    
     for var in "${export_vars[@]}"; do
         export_cmd+="export $var; "
     done
