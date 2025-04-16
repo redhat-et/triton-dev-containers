@@ -130,8 +130,8 @@ commands.
 make triton-profiling-image
 ```
 
-> **_NOTE_**: if you provide `NSIGHT_GUI=true` the dependencies required to run the gui
-apps will be installed.
+> **_NOTE_**: if you provide `NSIGHT_GUI=true` the dependencies required to run
+the gui apps will be installed.
 
 #### Running the triton NVIDIA profiling container
 
