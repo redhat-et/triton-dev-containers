@@ -101,7 +101,7 @@ COPY --from=llvm-build /llvm-project/ /llvm-project/
 RUN source /opt/bin/activate && \
     pip install --upgrade pip && \
     pip install --upgrade setuptools && \
-    pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas && \
+    pip install ninja cmake wheel pybind11 tabulate scipy ninja cmake numpy pyyaml ctypeslib2 matplotlib pandas pytest && \
     pip install --no-cache-dir torch==2.5.1 --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}" && \
     pip install pre-commit
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
