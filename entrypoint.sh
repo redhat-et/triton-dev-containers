@@ -147,7 +147,7 @@ EOF
     if [ -f "${TRITON_DIR}/python/requirements.txt" ]; then
         pip install --no-cache-dir -r "${TRITON_DIR}/python/requirements.txt"
     fi
-    pip install tabulate scipy ninja cmake wheel pybind11
+    pip install tabulate scipy ninja cmake wheel pybind11 pytest
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
     if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
