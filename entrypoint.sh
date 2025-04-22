@@ -255,7 +255,7 @@ export_vars() {
     if [ -n "$DISPLAY" ]; then
         export_vars+=("DISPLAY=$DISPLAY")
     fi
-    
+
     if [ -n "$WAYLAND_DISPLAY" ]; then
         export_vars+=("WAYLAND_DISPLAY=$WAYLAND_DISPLAY")
     fi
@@ -263,7 +263,7 @@ export_vars() {
     if [ -n "$XDG_RUNTIME_DIR" ]; then
         export_vars+=("XDG_RUNTIME_DIR=/tmp")
     fi
-    
+
     for var in "${export_vars[@]}"; do
         export_cmd+="export $var; "
     done
