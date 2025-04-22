@@ -16,27 +16,6 @@
 
 ARG CUSTOM_LLVM=false
 
-FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
-ARG CUSTOM_LLVM
-USER 0
-# Conditionally execute the build based on CUSTOM_LLVM
-RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
-        dnf update -y && \
-        dnf -y install clang rpm-build git ninja-build cmake lld && \
-        dnf clean all && rm -rf /var/cache/dnf && \
-        git clone https://github.com/llvm/llvm-project && \
-        cd llvm-project && \
-        COMMIT=$(curl -s https://raw.githubusercontent.com/triton-lang/triton-cpu/refs/heads/main/cmake/llvm-hash.txt) &&\
-        git checkout $COMMIT && \
-        mkdir build && \
-        cd build && \
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON ../llvm -DLLVM_ENABLE_PROJECTS="mlir;llvm" -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" && \
-        ninja; \
-    else \
-        echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
-        mkdir llvm-project; \
-    fi
-
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
 
@@ -49,7 +28,7 @@ RUN dnf update -y && \
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
-COPY --from=llvm-build /llvm-project/ /llvm-project/
+COPY --from=quay.io/triton-dev-containers/llvm:cpu-latest /install /llvm-project/install
 
 # Stage for llvm-local-false
 FROM base AS llvm-local-false

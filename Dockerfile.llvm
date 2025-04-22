@@ -1,0 +1,50 @@
+ARG CUSTOM_LLVM
+ARG TRITON_CPU_BACKEND=0
+ARG LLVM_TAG
+
+FROM registry.access.redhat.com/ubi9/python-312:latest
+ARG CUSTOM_LLVM
+ARG TRITON_CPU_BACKEND=0
+ARG LLVM_TAG
+USER 0
+
+# Conditionally execute the build based on CUSTOM_LLVM
+RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
+        dnf update -y && \
+        dnf -y install clang rpm-build git ninja-build cmake lld && \
+        dnf clean all && rm -rf /var/cache/dnf && \
+        python3 -m pip install --upgrade pip && \
+        python3 -m pip install --upgrade cmake ninja sccache pybind11 && \
+        if [ ! -d "/llvm-project" ]; then \
+            git clone https://github.com/llvm/llvm-project /llvm-project; \
+        else \
+            cd /llvm-project && git fetch origin; \
+            fi && \
+            cd /llvm-project && \
+            python3 -m pip install -r mlir/python/requirements.txt && \
+            REPO="triton"; \
+            PROJECTS="mlir;llvm"; \
+            if [ "$TRITON_CPU_BACKEND" = "1" ]; then REPO="triton-cpu" PROJECTS="mlir;llvm;lld"; fi; \
+            COMMIT="${LLVM_TAG:-$(curl -s https://raw.githubusercontent.com/triton-lang/$REPO/refs/heads/main/cmake/llvm-hash.txt)}" && \
+            CURRENT_COMMIT=$(git rev-parse HEAD) && \
+            if [ "$CURRENT_COMMIT" != "$COMMIT" ] || [ ! -f "/install/bin/llvm-config" ] || [ ! -d "/install/lib" ]; then \
+                echo "LLVM commit mismatch or missing install. Rebuilding..."; \
+                git checkout $COMMIT && \
+                mkdir -p build && cd build && \
+                cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+                    -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+                    -DCMAKE_INSTALL_PREFIX=/install \
+                    -DLLVM_BUILD_UTILS=ON \
+                    -DLLVM_BUILD_TOOLS=ON \
+                    -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+                    -DLLVM_INSTALL_UTILS=ON \
+                    -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
+                    -DLLVM_ENABLE_PROJECTS=$PROJECTS && \
+                ninja check-mlir install; \
+            else \
+                echo "LLVM is already up-to-date. Skipping rebuild."; \
+            fi \
+        else \
+            echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+            mkdir -p /install; \
+        fi

@@ -162,19 +162,23 @@ EOF
         echo "################################################################"
         echo "##################### CUSTOM LLVM BUILD... #####################"
         echo "################################################################"
-        echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
-        echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
-        echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
-        echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc";
-        declare -a llvm_vars=(
-            "LLVM_BUILD_DIR=/llvm-project/build"
-            "LLVM_INCLUDE_DIRS=/llvm-project/build/include"
-            "LLVM_LIBRARY_DIR=/llvm-project/build/lib"
-            "LLVM_SYSPATH=/llvm-project/build"
-        )
-        for var in "${llvm_vars[@]}"; do
-            export var
-        done
+        if [ -d "/llvm-project/install/bin" ]; then
+            echo "export LLVM_BUILD_DIR=/llvm-project/install " >> "${HOME}/.bashrc" && \
+            echo "export LLVM_INCLUDE_DIRS=/llvm-project/install/include" >> "${HOME}/.bashrc" && \
+            echo "export LLVM_LIBRARY_DIR=/llvm-project/install/lib" >> "${HOME}/.bashrc" && \
+            echo "export LLVM_SYSPATH=/llvm-project/install" >> "${HOME}/.bashrc";
+            declare -a llvm_vars=(
+                "LLVM_BUILD_DIR=/llvm-project/install"
+                "LLVM_INCLUDE_DIRS=/llvm-project/install/include"
+                "LLVM_LIBRARY_DIR=/llvm-project/install/lib"
+                "LLVM_SYSPATH=/llvm-project/install"
+            )
+            for var in "${llvm_vars[@]}"; do
+                export var
+            done
+        else
+            echo "ERROR /llvm-project/install is empty skipping this step"
+        fi
     fi
 }
 
