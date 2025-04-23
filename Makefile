@@ -87,12 +87,12 @@ triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
 		-f Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
-triton-amd-image: image-builder-check gosu-image ## Build the Triton AMD devcontainer image
+triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-amd .
 
 .PHONY: triton-profiling-image
-triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
+triton-profiling-image: image-builder-check gosu-image llvm-image ## Build the Triton profiling devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_PROFILING_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg NSIGHT_GUI=$(NSIGHT_GUI) \
 		-f Dockerfile.triton-profiling .
