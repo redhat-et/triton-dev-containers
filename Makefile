@@ -41,6 +41,7 @@ create_user ?=true
 NVIDIA_PROFILING_IMAGE_NAME ?=nvidia-profiling
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 NSIGHT_GUI ?= false
+user_path ?=
 
 # Modify image tag if CUSTOM_LLVM is enabled
 ifeq ($(CUSTOM_LLVM),true)
@@ -109,6 +110,9 @@ define run_container
 		volume_arg="-v $(triton_path):/workspace/$(strip $(2))$(SELINUXFLAG)"; \
 	else \
 		volume_arg=""; \
+	fi; \
+	if [ -n "$(user_path)" ]; then \
+		volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
 	fi; \
 	if [ "$(OS)" != "Darwin" ] && ! getent passwd $(USER) > /dev/null && [ "$(create_user)" = "false" ]; then \
 		volume_arg+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro"; \
