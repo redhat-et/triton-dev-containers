@@ -98,6 +98,10 @@ install_dependencies() {
         echo "################################################################"
         pip install jupyter
 
+        if [ "$TRITON_CPU_BACKEND" != "true" ] && [ "$AMD" != "true" ]; then
+            pip install jupyterlab-nvidia-nsight
+        fi
+
         if [ ! -f "flash_attention.py" ]; then
             wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
         fi
