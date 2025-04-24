@@ -39,15 +39,21 @@ export_cmd=""
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ -d "/workspace/triton-cpu" ]; then
-            cd "/workspace/triton-cpu" || exit 1
             export TRITON_DIR="/workspace/triton-cpu"
         fi
     else
         if [ -d "/workspace/triton" ]; then
-            cd "/workspace/triton" || exit 1
             export TRITON_DIR="/workspace/triton"
         fi
     fi
+
+    if [ -d "/workspace/user" ]; then
+        export WORKSPACE="/workspace/user"
+    else
+        export WORKSPACE=$TRITON_DIR
+    fi
+
+    cd "$WORKSPACE" || exit 1
 }
 
 install_dependencies() {

@@ -71,7 +71,7 @@ make triton-image
 #### Running the triton NVIDIA vanilla container
 
 ```sh
- make triton-run [triton_path=<path-to-triton-on-host>]
+ make triton-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
 ```
 
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
@@ -80,6 +80,8 @@ at container startup time.
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
+
+> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
 #### Building the triton-cpu vanilla container
 
@@ -90,7 +92,7 @@ commands.
 #### Running the triton-cpu vanilla container
 
 ```sh
- make triton-cpu-run [triton_path=<path-to-triton-on-host>]
+ make triton-cpu-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
 ```
 
 > **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
@@ -99,6 +101,8 @@ at container startup time.
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
+
+> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
 #### Building the triton-amd vanilla container
 
@@ -109,7 +113,7 @@ commands.
 #### Running the triton-amd vanilla container
 
 ```sh
- make triton-amd-run [triton_path=<path-to-triton-on-host>]
+ make triton-amd-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
 ```
 
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
@@ -121,6 +125,8 @@ at container startup time.
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
 and `git submodule update` on the mounted repo if you haven't already run these
 commands.
+
+> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
 ### Using the Profiling Containers
 
@@ -136,7 +142,7 @@ the gui apps will be installed.
 #### Running the triton NVIDIA profiling container
 
 ```sh
- make triton-profiling-run [triton_path=<path-to-triton-on-host>]
+ make triton-profiling-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
 ```
 
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
@@ -148,6 +154,8 @@ commands.
 
 > **_NOTE_**: if you provide `NSIGHT_GUI=true` the container will be able to launch
 the `nsys-ui` and `ncu-ui` apps.
+
+> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
 ### Building the vanilla/profiling containers with custom LLVM
 
