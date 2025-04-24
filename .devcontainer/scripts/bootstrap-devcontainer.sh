@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-VALID_VARIANTS=("triton" "triton-cpu" "triton-amd" "triton-profiling")
+VALID_VARIANTS=("triton" "triton-cpu" "triton-amd")
 VARIANT="${1:-}"
 
 is_valid_variant() {

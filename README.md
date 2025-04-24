@@ -15,7 +15,7 @@ containers and start working.
 ## Details
 
 This repository provides development containers preconfigured with
-all the necessary tools to build and run Triton and Triton-cpu.
+all the necessary tools to build, run and profile Triton and Triton-cpu.
 By mounting your Triton directory from the host into the container,
 you can continue working with your preferred IDE while keeping build
 and runtime tasks isolated within the container environment. This
@@ -24,14 +24,16 @@ the VSCode development container extension. The goal of this repo
 is to provide consistent and reproducible development environments
 for Triton.
 
+> **_NOTE_**: Profiling tools are currently only available for the NVIDIA
+container
+
 ### Available Containers
 
 This repository offers two types of development containers:
 
 1. **Vanilla Containers** – Containers where a development directory
   can be mounted.
-2. **Profiling Containers** - Vanilla Containers with profiling tools installed
-3. **VSCode DevContainers** – Configured for use with Visual Studio
+2. **VSCode DevContainers** – Configured for use with Visual Studio
   Code via the Dev Containers Extension.
 
 ### Prerequisites
@@ -50,9 +52,10 @@ Before using these containers, ensure you have the following installed:
 > **Note:** If using an AMD GPU, install the
 [ROCm Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html).
 
-> **Note:** If using a 'rootless' triton-profiling container, ncu will not work
-> without enabling access to the NVIDIA GPU performance counters. Follow this
-> [NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
+> **Note:** If using a 'rootless' triton container, the NSight Compute ncu
+application will not work without enabling access to the NVIDIA GPU performance
+counters. Follow this
+[NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
 
 ### Supported Hardware
 
@@ -65,13 +68,17 @@ Before using these containers, ensure you have the following installed:
 #### Building the triton NVIDIA vanilla container
 
 ```sh
-make triton-image
+make triton-image [NSIGHT_GUI=true]
 ```
+
+> **_NOTE_**: if you provide `NSIGHT_GUI=true` the dependencies required to run
+the gui apps will be installed. These dependencies require the host build system
+has a valid Red Hat subscription enabled.
 
 #### Running the triton NVIDIA vanilla container
 
 ```sh
- make triton-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
+ make triton-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace> NSIGHT_GUI=true]
 ```
 
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
@@ -82,6 +89,9 @@ and `git submodule update` on the mounted repo if you haven't already run these
 commands.
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
+
+> **_NOTE_**: if you provide `NSIGHT_GUI=true` the container will be able to launch
+the `nsys-ui` and `ncu-ui` apps.
 
 #### Building the triton-cpu vanilla container
 
@@ -128,39 +138,10 @@ commands.
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
-### Using the Profiling Containers
-
-#### Building the triton NVIDIA profiling container
-
-```sh
-make triton-profiling-image
-```
-
-> **_NOTE_**: if you provide `NSIGHT_GUI=true` the dependencies required to run
-the gui apps will be installed.
-
-#### Running the triton NVIDIA profiling container
-
-```sh
- make triton-profiling-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
-```
-
-> **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
-at container startup time.
-
-> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
-and `git submodule update` on the mounted repo if you haven't already run these
-commands.
-
-> **_NOTE_**: if you provide `NSIGHT_GUI=true` the container will be able to launch
-the `nsys-ui` and `ncu-ui` apps.
-
-> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
-
 ### Building the vanilla/profiling containers with custom LLVM
 
 ```sh
- make CUSTOM_LLVM=true [triton-image | triton-amd-image | triton-profiling-image ]
+ make CUSTOM_LLVM=true [triton-image | triton-amd-image ]
 ```
 
 > **_NOTE_**: this command will use the commit in `llvm-hash.txt` from the relevant
@@ -201,7 +182,6 @@ images:
 - quay.io/triton-dev-containers/nvidia
 - quay.io/triton-dev-containers/cpu
 - quay.io/triton-dev-containers/amd
-- quay.io/triton-dev-containers/nvidia-profiling
 
 ```dockerfile
 FROM quay.io/triton-dev-containers/nvidia:latest

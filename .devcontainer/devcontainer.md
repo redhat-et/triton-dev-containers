@@ -43,7 +43,6 @@ wget -qO- https://raw.githubusercontent.com/redhat-et/triton-dev-containers/main
 > - `triton`
 > - `triton-cpu`
 > - `triton-amd`
-> - `triton-profiling`
 
 ### Option 2: Clone Everything
 

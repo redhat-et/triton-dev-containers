@@ -39,7 +39,6 @@ triton_path ?=$(source_dir)
 gitconfig_path ?="$(HOME)/.gitconfig"
 USERNAME ?=triton
 create_user ?=true
-NVIDIA_PROFILING_IMAGE_NAME ?=nvidia-profiling
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 NSIGHT_GUI ?= false
 user_path ?=
@@ -62,7 +61,7 @@ image-builder-check: ## Verify if container runtime is available
 	fi
 
 .PHONY: all
-all: triton-image triton-cpu-image triton-amd-image triton-profiling-image
+all: triton-image triton-cpu-image triton-amd-image
 
 .PHONY: llvm-image
 llvm-image: image-builder-check ## Build the Triton LLVM image
@@ -79,7 +78,8 @@ gosu-image: image-builder-check ## Build the Triton gosu image
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg NSIGHT_GUI=$(NSIGHT_GUI) \
+		-f Dockerfile.triton .
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
@@ -92,12 +92,6 @@ triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-amd .
-
-.PHONY: triton-profiling-image
-triton-profiling-image: image-builder-check gosu-image llvm-image ## Build the Triton profiling devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_PROFILING_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg NSIGHT_GUI=$(NSIGHT_GUI) \
-		-f Dockerfile.triton-profiling .
 
 ##@ Container Run
 # If you are on an OS that has the user in /etc/passwd then we can pass
@@ -125,22 +119,22 @@ define run_container
 	fi; \
 	if [ "$(strip $(1))" = "$(AMD_IMAGE_NAME)" ]; then \
 		gpu_args="--device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=$(HIP_DEVICES)"; \
-	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ] || [ "$(strip $(1))" = "$(NVIDIA_PROFILING_IMAGE_NAME)" ]; then \
+		profiling_args=""; \
+	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ]; then \
 		if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
 			gpu_args="--device nvidia.com/gpu=all"; \
 		else \
 			gpu_args="--runtime=nvidia --gpus=all"; \
 		fi; \
 		gpu_args+=" --security-opt label=disable"; \
-	fi; \
-	if [ "$(strip $(1))" = "$(NVIDIA_PROFILING_IMAGE_NAME)" ] && [ "$(NSIGHT_GUI)" = "false" ]; then \
 		profiling_args="--cap-add=SYS_ADMIN"; \
-	elif [ "$(strip $(1))" = "$(NVIDIA_PROFILING_IMAGE_NAME)" ] && [ "$(NSIGHT_GUI)" = "true" ]; then \
-	 	profiling_args="--cap-add=SYS_ADMIN -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} \
-		-e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
+		if [ "$(NSIGHT_GUI)" = "true" ]; then \
+			profiling_args+=" -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} \
+			-e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
+		fi; \
 	else \
 		profiling_args=""; \
-	fi ; \
+	fi; \
 	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
 		keep_ns_arg="--userns=keep-id"; \
 	else \
@@ -176,10 +170,6 @@ triton-cpu-run: image-builder-check ## Run the Triton CPU devcontainer image
 .PHONY: triton-amd-run
 triton-amd-run: image-builder-check ## Run the Triton AMD devcontainer image
 	$(call run_container, $(AMD_IMAGE_NAME), "triton")
-
-.PHONY: triton-profiling-run
-triton-profiling-run: image-builder-check ## Run the Triton devcontainer image
-	$(call run_container, $(NVIDIA_PROFILING_IMAGE_NAME), "triton")
 
 ##@ Devcontainer
 
