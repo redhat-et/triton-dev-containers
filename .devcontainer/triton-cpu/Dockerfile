@@ -26,6 +26,6 @@ RUN echo 'source /opt/bin/activate' >> "${HOME}"/.bashrc
 
 RUN source /opt/bin/activate && \
     pip install --upgrade pip setuptools && \
-    pip install ninja cmake wheel pybind11 pre-commit
+    pip install ninja cmake wheel pybind11 pre-commit pytest
 
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
