@@ -21,79 +21,26 @@ on: # yamllint disable-line rule:truthy
 
 jobs:
   amd-image_build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-      packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - IMAGE_NAME: amd
-            IMAGE_FILE: Dockerfile.triton-amd
-            PLATFORMS: linux/amd64
-            LABEL: latest
-            BUILD_ARGS: |
-              USERNAME=triton
-              CUSTOM_LLVM=false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          image: tonistiigi/binfmt:qemu-v8.1.5
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Set up cosign
-        uses: sigstore/cosign-installer@main
-
-      - name: Login to Quay
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        uses: docker/login-action@v3
-        with:
-          registry: quay.io/triton-dev-containers
-          username: ${{ secrets.qt_username }}
-          password: ${{ secrets.qt_password }}
-
-      - name: Build and (conditionally) push image
-        id: build-push-image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: ${{ matrix.PLATFORMS }}
-          push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-          tags: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}
-          labels: ${{ matrix.LABEL }}
-          build-args: ${{ matrix.BUILD_ARGS }}
-          file: ${{ matrix.IMAGE_FILE }}
-
-      - name: Sign images with GitHub OIDC Token
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        run: |
-          cosign sign -y quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}:${{ matrix.LABEL }}@${{ steps.build-push-image.outputs.digest }}
-
-      - name: Generate image attestation
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: quay.io/triton-dev-containers/${{ matrix.IMAGE_NAME }}
-          subject-digest: ${{ steps.build-push-image.outputs.digest }}
-          push-to-registry: true
+    uses: ./.github/workflows/image-build.yml
+    with:
+      image-name: amd
+      image-tag: latest
+      dockerfile: Dockerfile.triton-amd
+      build-args: |
+        USERNAME=triton
+        CUSTOM_LLVM=false
+      platforms: linux/amd64
+    secrets:
+      qt_username: ${{ secrets.qt_username }}
+      qt_password: ${{ secrets.qt_password }}
 
   amd-image-sbom:
-    needs: amd-image_build  # Ensures SBOM is generated after the image build
+    needs: amd-image_build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    uses: ./.github/workflows/amd-image-sbom.yml
+    uses: ./.github/workflows/image-sbom.yml
     with:
-      image-tag: "latest"
+      image-name: amd
+      image-tag: latest
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

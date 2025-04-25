@@ -1,0 +1,65 @@
+name: image-sbom
+
+on: # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        type: string
+      image-tag:
+        required: true
+        type: string
+    secrets:
+      qt_username:
+        required: true
+      qt_password:
+        required: true
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@main
+
+      - name: Login to Quay
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io/triton-dev-containers
+          username: ${{ secrets.qt_username }}
+          password: ${{ secrets.qt_password }}
+
+      - name: Generate SBOM with Trivy
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: quay.io/triton-dev-containers/${{ inputs.image-name }}:${{ inputs.image-tag }}
+          format: spdx-json
+          output: ./sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json
+
+      - name: Generate SBOM attestation with Cosign
+        run: |
+          cosign attest -y \
+            --predicate ./sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json \
+            --type spdxjson \
+            quay.io/triton-dev-containers/${{ inputs.image-name }}:${{ inputs.image-tag }}
+
+      - name: Compress SBOM
+        run: gzip ./sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json.gz
+          path: ./sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json.gz
+          retention-days: 1
