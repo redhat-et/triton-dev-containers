@@ -24,6 +24,7 @@ USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 CUSTOM_LLVM=${CUSTOM_LLVM:-}
 DEMO_TOOLS=${DEMO_TOOLS:-}
+NOTEBOOK_PORT=${NOTEBOOK_PORT:-8888}
 AMD=${AMD:-}
 TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
 ROCM_VERSION=${ROCM_VERSION:-}
@@ -106,7 +107,7 @@ install_dependencies() {
 start_jupyter() {
     original_dir=$(pwd)
     cd /workspace || return
-    jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+    jupyter notebook --ip=0.0.0.0 --port=$NOTEBOOK_PORT --no-browser --allow-root
     cd "$original_dir" || return
 }
 EOF
