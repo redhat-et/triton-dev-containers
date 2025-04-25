@@ -1,0 +1,79 @@
+name: image-build
+
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+    inputs:
+      image-name: {type: string, required: true}
+      image-tag: {type: string, required: true}
+      dockerfile: {type: string, required: true}
+      build-args: {type: string, required: false}
+      platforms: {type: string, required: true}
+    secrets:
+      qt_username: {required: true}
+      qt_password: {required: true}
+    outputs:
+      digest:
+        description: "Image digest"
+        value: ${{ jobs.build.outputs.digest }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.build-push-image.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          image: tonistiigi/binfmt:qemu-v8.1.5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up cosign
+        uses: sigstore/cosign-installer@main
+
+      - name: Login to Quay
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io/triton-dev-containers
+          username: ${{ secrets.qt_username }}
+          password: ${{ secrets.qt_password }}
+
+      - name: Build and (conditionally) push image
+        id: build-push-image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ inputs.platforms }}
+          push: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+          tags: quay.io/triton-dev-containers/${{ inputs.image-name }}:${{ inputs.image-tag }}
+          labels: ${{ inputs.image-tag }}
+          build-args: ${{ inputs.build-args }}
+          file: ${{ inputs.dockerfile }}
+
+      - name: Sign images with GitHub OIDC Token
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          cosign sign -y \
+            quay.io/triton-dev-containers/${{ inputs.image-name }}:${{ inputs.image-tag }}@${{ steps.build-push-image.outputs.digest }}
+
+      - name: Generate image attestation
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: quay.io/triton-dev-containers/${{ inputs.image-name }}
+          subject-digest: ${{ steps.build-push-image.outputs.digest }}
+          push-to-registry: true

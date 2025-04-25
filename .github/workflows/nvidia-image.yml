@@ -1,18 +1,18 @@
-name: profiling-image
+name: nvidia-image
 
 on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
     paths:
-      - .github/workflows/profiling-image.yml
-      - Dockerfile.triton-profiling
+      - .github/workflows/nvidia-image.yml
+      - Dockerfile.triton
       - entrypoint.sh
       - users.sh
   pull_request:
     paths:
-      - .github/workflows/profiling-image.yml
-      - Dockerfile.triton-profiling
+      - .github/workflows/nvidia-image.yml
+      - Dockerfile.triton
       - entrypoint.sh
       - users.sh
   schedule:
@@ -20,12 +20,12 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  profiling-image-build:
+  nvidia-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
-      image-name: nvidia-profiling
+      image-name: nvidia
       image-tag: latest
-      dockerfile: Dockerfile.triton-profiling
+      dockerfile: Dockerfile.triton
       build-args: |
         USERNAME=triton
         CUSTOM_LLVM=false
@@ -35,12 +35,12 @@ jobs:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
 
-  profiling-image-sbom:
-    needs: profiling-image-build
+  nvidia-image-sbom:
+    needs: nvidia-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
-      image-name: nvidia-profiling
+      image-name: nvidia
       image-tag: latest
     secrets:
       qt_username: ${{ secrets.qt_username }}
