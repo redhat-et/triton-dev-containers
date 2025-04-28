@@ -81,7 +81,7 @@ COPY --from=llvm-build /llvm-project/ /llvm-project/
 RUN source /opt/bin/activate && \
     pip install --upgrade pip && \
     pip install --upgrade setuptools && \
-    pip install ninja cmake wheel pybind11 pre-commit
+    pip install ninja cmake wheel pybind11 pre-commit pytest
 RUN if [[ "$INSTALL_CUDNN" == "true" ]]; then \
     source /opt/bin/activate && pip install nvidia-cudnn-cu12; \
 fi

@@ -39,15 +39,21 @@ export_cmd=""
 navigate() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ -d "/workspace/triton-cpu" ]; then
-            cd "/workspace/triton-cpu" || exit 1
             export TRITON_DIR="/workspace/triton-cpu"
         fi
     else
         if [ -d "/workspace/triton" ]; then
-            cd "/workspace/triton" || exit 1
             export TRITON_DIR="/workspace/triton"
         fi
     fi
+
+    if [ -d "/workspace/user" ]; then
+        export WORKSPACE="/workspace/user"
+    else
+        export WORKSPACE=$TRITON_DIR
+    fi
+
+    cd "$WORKSPACE" || exit 1
 }
 
 install_dependencies() {
@@ -147,7 +153,7 @@ EOF
     if [ -f "${TRITON_DIR}/python/requirements.txt" ]; then
         pip install --no-cache-dir -r "${TRITON_DIR}/python/requirements.txt"
     fi
-    pip install tabulate scipy ninja cmake wheel pybind11
+    pip install tabulate scipy ninja cmake wheel pybind11 pytest
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
     if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
@@ -162,19 +168,23 @@ EOF
         echo "################################################################"
         echo "##################### CUSTOM LLVM BUILD... #####################"
         echo "################################################################"
-        echo "export LLVM_BUILD_DIR=/llvm-project/build " >> "${HOME}/.bashrc" && \
-        echo "export LLVM_INCLUDE_DIRS=/llvm-project/build/include" >> "${HOME}/.bashrc" && \
-        echo "export LLVM_LIBRARY_DIR=/llvm-project/build/lib" >> "${HOME}/.bashrc" && \
-        echo "export LLVM_SYSPATH=/llvm-project/build" >> "${HOME}/.bashrc";
-        declare -a llvm_vars=(
-            "LLVM_BUILD_DIR=/llvm-project/build"
-            "LLVM_INCLUDE_DIRS=/llvm-project/build/include"
-            "LLVM_LIBRARY_DIR=/llvm-project/build/lib"
-            "LLVM_SYSPATH=/llvm-project/build"
-        )
-        for var in "${llvm_vars[@]}"; do
-            export var
-        done
+        if [ -d "/llvm-project/install/bin" ]; then
+            echo "export LLVM_BUILD_DIR=/llvm-project/install " >> "${HOME}/.bashrc" && \
+            echo "export LLVM_INCLUDE_DIRS=/llvm-project/install/include" >> "${HOME}/.bashrc" && \
+            echo "export LLVM_LIBRARY_DIR=/llvm-project/install/lib" >> "${HOME}/.bashrc" && \
+            echo "export LLVM_SYSPATH=/llvm-project/install" >> "${HOME}/.bashrc";
+            declare -a llvm_vars=(
+                "LLVM_BUILD_DIR=/llvm-project/install"
+                "LLVM_INCLUDE_DIRS=/llvm-project/install/include"
+                "LLVM_LIBRARY_DIR=/llvm-project/install/lib"
+                "LLVM_SYSPATH=/llvm-project/install"
+            )
+            for var in "${llvm_vars[@]}"; do
+                export var
+            done
+        else
+            echo "ERROR /llvm-project/install is empty skipping this step"
+        fi
     fi
 }
 

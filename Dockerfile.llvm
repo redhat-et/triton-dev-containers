@@ -1,0 +1,72 @@
+ARG CUSTOM_LLVM
+ARG TRITON_CPU_BACKEND=0
+ARG LLVM_TAG
+
+FROM registry.access.redhat.com/ubi9/python-312:latest
+ARG CUSTOM_LLVM
+ARG TRITON_CPU_BACKEND=0
+ARG LLVM_TAG
+USER 0
+
+# Conditionally execute the build based on CUSTOM_LLVM
+RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
+        dnf update -y && \
+        dnf -y install clang rpm-build git ninja-build cmake lld && \
+        dnf clean all && rm -rf /var/cache/dnf && \
+        python3 -m pip install --upgrade pip && \
+        python3 -m pip install --upgrade cmake ninja sccache pybind11 && \
+        if [ ! -d "/llvm-project" ]; then \
+            git clone https://github.com/llvm/llvm-project /llvm-project; \
+        else \
+            cd /llvm-project && git fetch origin; \
+        fi && \
+        cd /llvm-project && \
+        python3 -m pip install -r mlir/python/requirements.txt && \
+        REPO="triton"; \
+        PROJECTS="mlir;llvm"; \
+        if [ "$TRITON_CPU_BACKEND" = "1" ]; then REPO="triton-cpu" PROJECTS="mlir;llvm;lld"; fi; \
+        COMMIT="${LLVM_TAG:-$(curl -s https://raw.githubusercontent.com/triton-lang/$REPO/refs/heads/main/cmake/llvm-hash.txt)}" && \
+        CURRENT_COMMIT=$(git rev-parse HEAD) && \
+        if [ "$CURRENT_COMMIT" != "$COMMIT" ] || [ ! -f "/install/bin/llvm-config" ] || [ ! -d "/install/lib" ]; then \
+            echo "LLVM commit mismatch or missing install. Rebuilding..."; \
+            git checkout $COMMIT && \
+            mkdir -p build && cd build && \
+            cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+                -DLLVM_ENABLE_ASSERTIONS=ON ../llvm \
+                -DCMAKE_INSTALL_PREFIX=/install \
+                -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+                -DLLVM_TARGETS_TO_BUILD="host;NVPTX;AMDGPU" \
+                -DLLVM_ENABLE_PROJECTS=$PROJECTS \
+                -DLLVM_ENABLE_LIBCXX:BOOL=OFF \
+                -DLLVM_ENABLE_ZLIB:BOOL=ON \
+                -DLLVM_ENABLE_FFI:BOOL=ON \
+                -DLLVM_ENABLE_RTTI:BOOL=ON \
+                -DLLVM_BUILD_RUNTIME:BOOL=ON \
+                -DLLVM_BUILD_TOOLS:BOOL=OFF \
+                -DLLVM_INCLUDE_TOOLS:BOOL=ON \
+                -DLLVM_INCLUDE_TESTS:BOOL=OFF \
+                -DLLVM_BUILD_TESTS:BOOL=OFF \
+                -DLLVM_INSTALL_GTEST:BOOL=OFF \
+                -DLLVM_LIT_ARGS=-v \
+                -DLLVM_INCLUDE_EXAMPLES:BOOL=OFF \
+                -DLLVM_BUILD_EXAMPLES:BOOL=OFF \
+                -DLLVM_INCLUDE_UTILS:BOOL=OFF \
+                -DLLVM_INSTALL_UTILS:BOOL=OFF \
+                -DLLVM_INCLUDE_DOCS:BOOL=OFF \
+                -DLLVM_BUILD_DOCS:BOOL=OFF \
+                -DLLVM_ENABLE_SPHINX:BOOL=OFF \
+                -DLLVM_ENABLE_DOXYGEN:BOOL=OFF \
+                -DLLVM_UNREACHABLE_OPTIMIZE:BOOL=OFF \
+                -DLLVM_BUILD_LLVM_DYLIB:BOOL=OFF \
+                -DLLVM_LINK_LLVM_DYLIB:BOOL=OFF \
+                -DLLVM_INSTALL_TOOLCHAIN_ONLY:BOOL=OFF \
+                -DLLVM_INCLUDE_BENCHMARKS=OFF \
+                -DMLIR_ENABLE_EXECUTION_ENGINE:bool=OFF && \
+            ninja install; \
+        else \
+            echo "LLVM is already up-to-date. Skipping rebuild."; \
+        fi \
+    else \
+        echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \
+        mkdir -p /install; \
+    fi
