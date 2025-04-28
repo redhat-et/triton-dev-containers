@@ -18,7 +18,7 @@ ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
 
 # Base Stage with ROCm Installation
-FROM registry.access.redhat.com/ubi9/python-311 AS base
+FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG ROCM_VERSION=6.2
 USER 0
 
