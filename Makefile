@@ -150,7 +150,7 @@ define run_container
 	else \
 		port_arg=""; \
 	fi; \
-	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM)" -e DEMO_TOOLS=$(DEMO_TOOLS); \
+	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e DEMO_TOOLS=$(DEMO_TOOLS)"; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) $$env_vars $$port_arg \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$profiling_args $$keep_ns_arg \
