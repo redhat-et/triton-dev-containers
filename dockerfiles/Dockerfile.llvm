@@ -23,8 +23,8 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         cd /llvm-project && \
         python3 -m pip install -r mlir/python/requirements.txt && \
         REPO="triton"; \
-        PROJECTS="mlir;llvm"; \
-        if [ "$TRITON_CPU_BACKEND" = "1" ]; then REPO="triton-cpu" PROJECTS="mlir;llvm;lld"; fi; \
+        PROJECTS="mlir;llvm;lld"; \
+        if [ "$TRITON_CPU_BACKEND" = "1" ]; then REPO="triton-cpu"; fi; \
         COMMIT="${LLVM_TAG:-$(curl -s https://raw.githubusercontent.com/triton-lang/$REPO/refs/heads/main/cmake/llvm-hash.txt)}" && \
         CURRENT_COMMIT=$(git rev-parse HEAD) && \
         if [ "$CURRENT_COMMIT" != "$COMMIT" ] || [ ! -f "/install/bin/llvm-config" ] || [ ! -d "/install/lib" ]; then \
