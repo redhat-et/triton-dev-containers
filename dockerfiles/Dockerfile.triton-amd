@@ -15,40 +15,61 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUSTOM_LLVM=false
+ARG ROCM_VERSION=6.2
 
+# Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG CUSTOM_LLVM
-
+ARG ROCM_VERSION=6.2
 USER 0
 
-RUN dnf update -y && \
-    dnf -y install clang cmake lld ninja-build \
-    openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
-    dnf clean all && rm -rf /var/cache/dnf
+# Install the ROCm rpms
+RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
+    echo "name=ROCm" >> /etc/yum.repos.d/rocm.repo && \
+    echo "baseurl=https://repo.radeon.com/rocm/rhel9/$ROCM_VERSION/main" >> /etc/yum.repos.d/rocm.repo && \
+    echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
+    echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
+    dnf install -y llvm clang clang-libs lld && \
+    dnf install -y --nodocs --setopt=install_weak_deps=False \
+        amd-smi-lib \
+        amd-smi \
+        miopen-hip \
+        rocm-core \
+        rocm-hip-libraries \
+        rocminfo && \
+    dnf clean all && rm -rf /var/cache/yum
 
-# Stage for llvm-local-true
+# Set environment variables for ROCm
+ENV LC_ALL=C.UTF-8 \
+LANG=C.UTF-8 \
+ROCM_PATH=/opt/rocm \
+LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
+PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
+
+# LLVM Integration Stages
 FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:cpu-latest /install /llvm-project/install
+COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-project/install
 
-# Stage for llvm-local-false
 FROM base AS llvm-local-false
 ENV TRITON_OFFLINE_BUILD=NO
 
-# Use intermediate stage selection
+# Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
+ARG ROCM_VERSION=6.2
 
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
     python -m venv /workspace && \
     echo "unset BASH_ENV PROMPT_COMMAND ENV" >> /workspace/bin/activate && \
     chmod -R 777 /workspace
+
 ENV BASH_ENV=/workspace/bin/activate \
     ENV=/workspace/bin/activate \
     PROMPT_COMMAND=". /workspace/bin/activate" \
-    PYTHON_VERSION=3.12 \
+    PYTHON_VERSION=3.11 \
     PATH=/workspace/bin:$PATH \
     PYTHONUNBUFFERED=1 \
-    TRITON_CPU_BACKEND=1 \
+    AMD=true \
+    ROCM_VERSION=$ROCM_VERSION \
     PIP_PREFIX=/workspace \
     PYTHONPATH=/workspace/lib/python$PYTHON_VERSION/site-packages \
     XDG_CACHE_HOME=/workspace \
@@ -59,8 +80,10 @@ WORKDIR /workspace
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
 RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
-COPY user.sh user.sh
-COPY entrypoint.sh /entrypoint.sh
+COPY dockerfiles/user.sh user.sh
+COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY hack/triton-gpu-check.py triton-gpu-check.py
+COPY examples/triton-vector-add-rocm.py triton-vector-add-rocm.py
+COPY examples/flash_attention_demo.ipynb flash_attention_demo.ipynb
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
