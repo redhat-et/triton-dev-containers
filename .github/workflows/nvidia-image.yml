@@ -6,13 +6,13 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/nvidia-image.yml
-      - Dockerfile.triton
+      - dockerfiles/Dockerfile.triton
       - entrypoint.sh
       - users.sh
   pull_request:
     paths:
       - .github/workflows/nvidia-image.yml
-      - Dockerfile.triton
+      - dockerfiles/Dockerfile.triton
       - entrypoint.sh
       - users.sh
   schedule:
@@ -25,7 +25,7 @@ jobs:
     with:
       image-name: nvidia
       image-tag: latest
-      dockerfile: Dockerfile.triton
+      dockerfile: dockerfiles/Dockerfile.triton
       build-args: |
         USERNAME=triton
         CUSTOM_LLVM=false

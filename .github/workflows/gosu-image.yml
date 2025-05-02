@@ -6,11 +6,11 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/gosu-image.yml
-      - Dockerfile.gosu
+      - dockerfiles/Dockerfile.gosu
   pull_request:
     paths:
       - .github/workflows/gosu-image.yml
-      - Dockerfile.gosu
+      - dockerfiles/Dockerfile.gosu
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
     with:
       image-name: gosu
       image-tag: latest
-      dockerfile: Dockerfile.gosu
+      dockerfile: dockerfiles/Dockerfile.gosu
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}

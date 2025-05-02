@@ -69,29 +69,29 @@ llvm-image: image-builder-check ## Build the Triton LLVM image
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
 		--build-arg LLVM_TAG=$(LLVM_TAG) \
 		--build-arg TRITON_CPU_BACKEND=$(TRITON_CPU_BACKEND) \
-		-f Dockerfile.llvm .
+		-f dockerfiles/Dockerfile.llvm .
 
 .PHONY: gosu-image
 gosu-image: image-builder-check ## Build the Triton gosu image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f Dockerfile.gosu .
+	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f dockerfiles/Dockerfile.gosu .
 
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg NSIGHT_GUI=$(NSIGHT_GUI) \
-		-f Dockerfile.triton .
+		-f dockerfiles/Dockerfile.triton .
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
 	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_IMAGE_LABEL=cpu-latest
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
 		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
-		-f Dockerfile.triton-cpu .
+		-f dockerfiles/Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f Dockerfile.triton-amd .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-amd .
 
 ##@ Container Run
 # If you are on an OS that has the user in /etc/passwd then we can pass
