@@ -40,7 +40,7 @@ gitconfig_path ?="$(HOME)/.gitconfig"
 USERNAME ?=triton
 create_user ?=true
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
-NSIGHT_GUI ?= false
+INSTALL_NSIGHT ?=false
 user_path ?=
 
 # Modify image tag if CUSTOM_LLVM is enabled
@@ -78,8 +78,7 @@ gosu-image: image-builder-check ## Build the Triton gosu image
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg NSIGHT_GUI=$(NSIGHT_GUI) \
-		-f dockerfiles/Dockerfile.triton .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton .
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
@@ -127,10 +126,10 @@ define run_container
 			gpu_args="--runtime=nvidia --gpus=all"; \
 		fi; \
 		gpu_args+=" --security-opt label=disable"; \
-		profiling_args="--cap-add=SYS_ADMIN"; \
-		if [ "$(NSIGHT_GUI)" = "true" ]; then \
-			profiling_args+=" -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} \
-			-e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
+		if [ "$(INSTALL_NSIGHT)" = "true" ]; then \
+			profiling_args="--cap-add=SYS_ADMIN -e INSTALL_NSIGHT=${INSTALL_NSIGHT} -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} -e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
+		else \
+			profiling_args=""; \
 		fi; \
 	else \
 		profiling_args=""; \

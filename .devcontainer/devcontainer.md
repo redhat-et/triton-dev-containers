@@ -20,10 +20,6 @@ Full VSCode Dev Container setup details can be found
 
 > **GPU users** must install the NVIDIA Container Toolkit/ROCm for GPU support.
 
-> **Root-less triton-profiling container users**: Follow this
-> [NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
-> to enable access to the NVIDIA GPU performance counters when running ncu.
-
 > **Podman users**: The VSCode Dev Container extension needs the additional settings
 > shown below when using podman.
 > `docker-compose` or `podman-compose` can be used with podman.
