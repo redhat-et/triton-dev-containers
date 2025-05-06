@@ -6,13 +6,13 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/cpu-image.yml
-      - Dockerfile.triton-cpu
+      - dockerfiles/Dockerfile.triton-cpu
       - entrypoint.sh
       - users.sh
   pull_request:
     paths:
       - .github/workflows/cpu-image.yml
-      - Dockerfile.triton-cpu
+      - dockerfiles/Dockerfile.triton-cpu
       - entrypoint.sh
       - users.sh
   schedule:
@@ -25,7 +25,7 @@ jobs:
     with:
       image-name: cpu
       image-tag: latest
-      dockerfile: Dockerfile.triton-cpu
+      dockerfile: dockerfiles/Dockerfile.triton-cpu
       build-args: |
         USERNAME=triton
         CUSTOM_LLVM=false

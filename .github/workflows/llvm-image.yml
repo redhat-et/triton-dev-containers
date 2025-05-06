@@ -6,11 +6,11 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/llvm-image.yml
-      - Dockerfile.llvm
+      - dockerfiles/Dockerfile.llvm
   pull_request:
     paths:
       - .github/workflows/llvm-image.yml
-      - Dockerfile.llvm
+      - dockerfiles/Dockerfile.llvm
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
@@ -23,14 +23,14 @@ jobs:
         include:
           - image-name: llvm
             image-tag: latest
-            dockerfile: Dockerfile.llvm
+            dockerfile: dockerfiles/Dockerfile.llvm
             platforms: linux/amd64
             build-args: |
               CUSTOM_LLVM=true
               TRITON_CPU_BACKEND=0
           - image-name: llvm
             image-tag: cpu-latest
-            dockerfile: Dockerfile.llvm
+            dockerfile: dockerfiles/Dockerfile.llvm
             platforms: linux/amd64
             build-args: |
               CUSTOM_LLVM=true
