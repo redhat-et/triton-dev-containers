@@ -127,7 +127,7 @@ define run_container
 		fi; \
 		gpu_args+=" --security-opt label=disable"; \
 		if [ "$(INSTALL_NSIGHT)" = "true" ]; then \
-			profiling_args="--cap-add=SYS_ADMIN -e INSTALL_NSIGHT=${INSTALL_NSIGHT} -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} -e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
+			profiling_args="--privileged --cap-add=SYS_ADMIN -e INSTALL_NSIGHT=${INSTALL_NSIGHT} -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} -e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
 		else \
 			profiling_args=""; \
 		fi; \
