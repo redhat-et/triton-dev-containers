@@ -35,6 +35,9 @@ WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}
 XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}
 CREATE_USER=${CREATE_USER:-false}
 CLONED=0
+CUDA_VERSION=12-8
+CUDA_REPO=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+INSTALL_NSIGHT=${INSTALL_NSIGHT:-false}
 export_cmd=""
 
 navigate() {
@@ -57,7 +60,26 @@ navigate() {
     cd "$WORKSPACE" || exit 1
 }
 
-install_dependencies() {
+install_system_dependencies() {
+    if [ "$INSTALL_NSIGHT" = "true" ]; then
+        echo "################################################################"
+        echo "################# INSTALLING NVIDIA NSIGHT... ##################"
+        echo "################################################################"
+        sudo dnf -y config-manager --add-repo ${CUDA_REPO}
+        sudo dnf -y install cublasmp cuda-cupti-${CUDA_VERSION} \
+            cuda-gdb-${CUDA_VERSION} cuda-nsight-${CUDA_VERSION} \
+            cuda-nsight-compute-${CUDA_VERSION} cuda-nsight-systems-${CUDA_VERSION} \
+            libxkbfile qt5-qtwayland xcb-util-cursor
+        sudo dnf clean all
+
+        # Create a symlink to the installed version of CUDA
+        COMPUTE_VERSION=$(ls /opt/nvidia/nsight-compute)
+        sudo alternatives --install /usr/local/bin/ncu ncu "/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu" 100
+        sudo alternatives --install /usr/local/bin/ncu-ui ncu-ui "/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu-ui" 100
+    fi
+}
+
+install_user_dependencies() {
     echo "#############################################################################"
     echo "################### Cloning the Triton repos (if needed)... #################"
     echo "#############################################################################"
@@ -98,7 +120,7 @@ install_dependencies() {
         echo "################################################################"
         pip install jupyter
 
-        if [ "$TRITON_CPU_BACKEND" != "true" ] && [ "$AMD" != "true" ]; then
+        if [ "$INSTALL_NSIGHT" = "true" ]; then
             pip install jupyterlab-nvidia-nsight
         fi
 
@@ -295,14 +317,16 @@ if [ -n "$CREATE_USER" ] && [ "$CREATE_USER" = "true" ]; then
         fi
 
         export_vars
+        install_system_dependencies
 
-        echo "Switching to user: $USER to install dependencies."
-        runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_dependencies navigate); install_dependencies"
+        echo "Switching to user: $USER to install user dependencies."
+        runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_user_dependencies navigate); install_user_dependencies"
         navigate
         exec gosu "$USER" "$@"
     fi
 else
-    install_dependencies
+    install_system_dependencies
+    install_user_dependencies
     navigate
     exec "$@"
 fi
