@@ -74,8 +74,8 @@ install_system_dependencies() {
 
         # Create a symlink to the installed version of CUDA
         COMPUTE_VERSION=$(ls /opt/nvidia/nsight-compute)
-        sudo alternatives --install /usr/local/bin/ncu ncu /opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu 100
-        sudo alternatives --install /usr/local/bin/ncu-ui ncu-ui /opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu-ui 100
+        sudo alternatives --install /usr/local/bin/ncu ncu "/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu" 100
+        sudo alternatives --install /usr/local/bin/ncu-ui ncu-ui "/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu-ui" 100
     fi
 }
 
