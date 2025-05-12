@@ -13,12 +13,10 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-ARG CUDA_VERSION=12-8
 ARG CUSTOM_LLVM=false
 ARG LLVM_TAG
 
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
-ARG CUDA_VERSION
 ARG CUSTOM_LLVM
 ARG LLVM_TAG
 
@@ -44,23 +42,16 @@ FROM registry.access.redhat.com/ubi9/python-312 AS final
 ARG USERNAME=1001
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-ARG CUDA_VERSION
 ARG CUSTOM_LLVM
 ARG LLVM_TAG
 ARG INSTALL_CUDNN
-ARG CUDA_REPO=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
 
 USER 0
 COPY user.sh user.sh
 # Create the user
 RUN ./user.sh -u $USERNAME -g $USER_GID -i $USER_UID
 RUN dnf update -y && \
-    dnf -y config-manager --add-repo ${CUDA_REPO} && \
-    dnf -y install clang cmake lld ninja-build && \
-    dnf -y install --nodocs --setopt=install_weak_deps=False \
-    cublasmp cuda-cupti-${CUDA_VERSION} cuda-gdb-${CUDA_VERSION} \
-    cuda-nsight-${CUDA_VERSION} cuda-nsight-compute-${CUDA_VERSION} \
-    cuda-nsight-systems-${CUDA_VERSION};
+    dnf -y install clang cmake lld ninja-build
 
 # Set the user
 USER $USERNAME
@@ -71,15 +62,12 @@ RUN python -m venv /opt && \
 
 RUN echo 'source /opt/bin/activate' >> "${HOME}"/.bashrc
 
-# Create a symlink to the installed version of CUDA
-RUN ln -sf /usr/local/cuda-${CUDA_VERSION/-/.} /usr/local/cuda
-
 ENV BASH_ENV=/opt/bin/activate \
     ENV=/opt/bin/activate \
     PIP_PREFIX=/opt \
     PYTHONPATH=/opt/lib/python$PYTHON_VERSION/site-packages \
     PYTHON_VERSION=3.12 \
-    PATH=$HOME/.local/bin/:/opt/bin:/usr/local/cuda/bin:$PATH \
+    PATH=$HOME/.local/bin/:/opt/bin:$PATH \
     PYTHONUNBUFFERED=1
 
 COPY --from=llvm-build /llvm-project/ /llvm-project/

@@ -15,7 +15,7 @@ containers and start working.
 ## Details
 
 This repository provides development containers preconfigured with
-all the necessary tools to build, run and profile Triton and Triton-cpu.
+all the necessary tools to build and run Triton and Triton-cpu.
 By mounting your Triton directory from the host into the container,
 you can continue working with your preferred IDE while keeping build
 and runtime tasks isolated within the container environment. This
@@ -23,9 +23,6 @@ repo also provides the .devcontainer files that can be used with
 the VSCode development container extension. The goal of this repo
 is to provide consistent and reproducible development environments
 for Triton.
-
-> **_NOTE_**: Profiling tools are currently only available for the NVIDIA
-container
 
 ### Available Containers
 
@@ -52,7 +49,12 @@ Before using these containers, ensure you have the following installed:
 > **Note:** If using an AMD GPU, install the
 [ROCm Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html).
 
-> **Note:** If using a 'rootless' triton container, the NSight Compute ncu
+> **Note:** To install the NVIDIA NSight profiling tools, the host system needs
+to have an active Red Hat subscription. A free subscription can be acquired from
+the Red Hat Developer website.
+[Red Hat Developer: Register](https://developers.redhat.com/register)
+
+> **Note:** If using a 'rootless' triton container, the NVIDIA NSight Compute
 application will not work without enabling access to the NVIDIA GPU performance
 counters. Follow this
 [NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
@@ -68,17 +70,13 @@ counters. Follow this
 #### Building the triton NVIDIA vanilla container
 
 ```sh
-make triton-image [NSIGHT_GUI=true]
+make triton-image
 ```
-
-> **_NOTE_**: if you provide `NSIGHT_GUI=true` the dependencies required to run
-the gui apps will be installed. These dependencies require the host build system
-has a valid Red Hat subscription enabled.
 
 #### Running the triton NVIDIA vanilla container
 
 ```sh
- make triton-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace> NSIGHT_GUI=true]
+ make triton-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace> INSTALL_NSIGHT=true]
 ```
 
 > **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
@@ -90,8 +88,9 @@ commands.
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
-> **_NOTE_**: if you provide `NSIGHT_GUI=true` the container will be able to launch
-the `nsys-ui` and `ncu-ui` apps.
+> **_NOTE_**: if you provide `INSTALL_NSIGHT=true` the NVIDIA NSight profiling
+tools will be installed. This requires the host system to have an active
+Red Hat subscription.
 
 #### Building the triton-cpu vanilla container
 
@@ -138,7 +137,7 @@ commands.
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
-### Building the vanilla/profiling containers with custom LLVM
+### Building the vanilla containers with custom LLVM
 
 ```sh
  make CUSTOM_LLVM=true [triton-image | triton-amd-image ]
