@@ -5,7 +5,7 @@ This guide walks you through using a
 configured with all the tools needed to build and run Triton (or Triton-CPU).
 The setup is optimized for local development using Visual Studio Code.
 Full VSCode Dev Container setup details can be found
-[here](https://code.visualstudio.com/docs/devcontainers/tutorial#_prerequisites).
+[official Visual Studio Code documentation](https://code.visualstudio.com/docs/devcontainers/tutorial#_prerequisites).
 
 ## Prerequisites
 

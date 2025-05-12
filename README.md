@@ -162,8 +162,7 @@ To see the vanilla development containers in action please checkout the
 
 ### Why Container-First Development Matters?
 
-Please checkout why container-first development matters
-[here](./docs/ContainerFirstDevelopment.md).
+Please checkout [why container-first development matters](./docs/ContainerFirstDevelopment.md).
 
 ### More about the containers
 
