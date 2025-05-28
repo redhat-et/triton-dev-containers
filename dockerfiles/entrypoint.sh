@@ -121,7 +121,7 @@ install_user_dependencies() {
         pip install jupyter
 
         if [ "$INSTALL_NSIGHT" = "true" ]; then
-            pip install jupyterlab-nvidia-nsight
+            pip install jupyterlab-nvidia-nsight nvtx
         fi
 
         if [ ! -f "flash_attention.py" ]; then
