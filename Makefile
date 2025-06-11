@@ -20,7 +20,6 @@ AMD_IMAGE_NAME ?=amd
 CPU_IMAGE_NAME ?=cpu
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
 CUSTOM_LLVM ?=false
-DEMO_TOOLS ?= false
 NOTEBOOK_PORT ?= 8888
 HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
 IMAGE_REPO ?=quay.io/triton-dev-containers
@@ -139,12 +138,8 @@ define run_container
 	else \
 		keep_ns_arg=""; \
 	fi; \
-	if [ "$(DEMO_TOOLS)" = "true" ]; then \
-		port_arg="-p ${NOTEBOOK_PORT}:${NOTEBOOK_PORT}"; \
-	else \
-		port_arg=""; \
-	fi; \
-	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e DEMO_TOOLS=$(DEMO_TOOLS) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT)"; \
+	port_arg="-p ${NOTEBOOK_PORT}:${NOTEBOOK_PORT}"; \
+	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT)"; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) $$env_vars $$port_arg \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$profiling_args $$keep_ns_arg \

@@ -23,7 +23,6 @@ USER=${USERNAME:-triton}
 USER_ID=${USER_UID:-1000}
 GROUP_ID=${USER_GID:-1000}
 CUSTOM_LLVM=${CUSTOM_LLVM:-}
-DEMO_TOOLS=${DEMO_TOOLS:-}
 NOTEBOOK_PORT=${NOTEBOOK_PORT:-8888}
 AMD=${AMD:-}
 TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
@@ -113,20 +112,18 @@ install_user_dependencies() {
     echo "#############################################################################"
     pip install --upgrade pip
 
-    # Make sure to clone vllm before navigating
-    if [ -n "$DEMO_TOOLS" ] && [ "$DEMO_TOOLS" = "true" ]; then
-        echo "################################################################"
-        echo "##################### ENABLE DEMO TOOLS ########################"
-        echo "################################################################"
-        pip install jupyter
+    echo "################################################################"
+    echo "#####################  Install Jupyter  ########################"
+    echo "################################################################"
+    pip install jupyter
 
-        if [ "$INSTALL_NSIGHT" = "true" ]; then
-            pip install jupyterlab-nvidia-nsight nvtx
-        fi
+    if [ "$INSTALL_NSIGHT" = "true" ]; then
+        pip install jupyterlab-nvidia-nsight nvtx
+    fi
 
-        if [ ! -f "flash_attention.py" ]; then
-            wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
-        fi
+    if [ ! -f "flash_attention.py" ]; then
+        wget https://raw.githubusercontent.com/fulvius31/triton-cache-comparison/refs/heads/main/scripts/flash_attention.py
+    fi
 
     JUPYTER_FUNCTION=$(cat << 'EOF'
 
@@ -139,15 +136,13 @@ start_jupyter() {
 EOF
     )
 
-        if grep -q "start_jupyter()" ~/.bashrc; then
-            echo "start_jupyter function already exists in ~/.bashrc"
-        else
-            echo "Adding start_jupyter function to ~/.bashrc"
-            echo "$JUPYTER_FUNCTION" >> ~/.bashrc
-            echo "start_jupyter added!"
-        fi
+    if grep -q "start_jupyter()" ~/.bashrc; then
+        echo "start_jupyter function already exists in ~/.bashrc"
+    else
+        echo "Adding start_jupyter function to ~/.bashrc"
+        echo "$JUPYTER_FUNCTION" >> ~/.bashrc
+        echo "start_jupyter added!"
     fi
-
 
     navigate
 
@@ -263,10 +258,6 @@ export_vars() {
 
     if [ -n "$CUSTOM_LLVM" ]; then
         export_vars+=("CUSTOM_LLVM=$CUSTOM_LLVM")
-    fi
-
-    if [ -n "$DEMO_TOOLS" ]; then
-        export_vars+=("DEMO_TOOLS=$DEMO_TOOLS")
     fi
 
     if [ -n "$TRITON_CPU_BACKEND" ]; then
