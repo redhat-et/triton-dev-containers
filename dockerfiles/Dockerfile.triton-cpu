@@ -15,6 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUSTOM_LLVM=false
+ARG INSTALL_TRITON=source
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
@@ -36,6 +37,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM} AS final
+ARG INSTALL_TRITON
 
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
@@ -53,7 +55,8 @@ ENV BASH_ENV=/workspace/bin/activate \
     PYTHONPATH=/workspace/lib/python$PYTHON_VERSION/site-packages \
     XDG_CACHE_HOME=/workspace \
     TRITON_CACHE_DIR=/workspace/.triton/cache \
-    TRITON_HOME=/workspace/
+    TRITON_HOME=/workspace/ \
+    INSTALL_TRITON=$INSTALL_TRITON
 
 WORKDIR /workspace
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc

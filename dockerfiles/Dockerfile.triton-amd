@@ -16,6 +16,7 @@
 
 ARG CUSTOM_LLVM=false
 ARG ROCM_VERSION=6.2
+ARG INSTALL_TRITON=source
 
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-312 AS base
@@ -55,6 +56,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 # Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
 ARG ROCM_VERSION=6.2
+ARG INSTALL_TRITON
 
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
@@ -74,7 +76,8 @@ ENV BASH_ENV=/workspace/bin/activate \
     PYTHONPATH=/workspace/lib/python$PYTHON_VERSION/site-packages \
     XDG_CACHE_HOME=/workspace \
     TRITON_CACHE_DIR=/workspace/.triton/cache \
-    TRITON_HOME=/workspace/
+    TRITON_HOME=/workspace/ \
+    INSTALL_TRITON=$INSTALL_TRITON
 
 WORKDIR /workspace
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc

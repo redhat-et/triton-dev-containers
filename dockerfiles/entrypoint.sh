@@ -1,5 +1,4 @@
 #! /bin/bash -e
-
 trap "echo -e '\nScript interrupted. Exiting gracefully.'; exit 1" SIGINT
 
 # Copyright (C) 2024-2025 Red Hat, Inc.
@@ -27,37 +26,42 @@ NOTEBOOK_PORT=${NOTEBOOK_PORT:-8888}
 AMD=${AMD:-}
 TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
 ROCM_VERSION=${ROCM_VERSION:-}
-TORCH_VERSION=${TORCH_VERSION:-"2.5.1"}
+TORCH_VERSION=${TORCH_VERSION:-2.7.1}
+TRITON_VERSION_PYTORCH=$(curl -fsSL https://raw.githubusercontent.com/pytorch/pytorch/main/.ci/docker/triton_version.txt | tr -d '\r\n' || true)
+TRITON_VERSION_PYTORCH=${TRITON_VERSION_PYTORCH:-3.3.1}
 HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
 DISPLAY=${DISPLAY:-}
 WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}
 XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}
 CREATE_USER=${CREATE_USER:-false}
-CLONED=0
 CUDA_VERSION=12-8
 CUDA_REPO=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
 INSTALL_NSIGHT=${INSTALL_NSIGHT:-false}
 export_cmd=""
+declare -g CLONED=0
 
 navigate() {
-    if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
-        if [ -d "/workspace/triton-cpu" ]; then
-            export TRITON_DIR="/workspace/triton-cpu"
+    if [ "$INSTALL_TRITON" = "source" ]; then
+        if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
+            TRITON_DIR="/workspace/triton-cpu"
+        else
+            TRITON_DIR="/workspace/triton"
         fi
-    else
-        if [ -d "/workspace/triton" ]; then
-            export TRITON_DIR="/workspace/triton"
+
+        if [ -d "$TRITON_DIR" ]; then
+            export TRITON_DIR
+            cd "$TRITON_DIR"
+            return
+        else
+            echo "Warning: Expected Triton source directory not found: $TRITON_DIR"
         fi
     fi
 
-    if [ -d "/workspace/user" ]; then
-        export WORKSPACE="/workspace/user"
-    else
-        export WORKSPACE=$TRITON_DIR
-    fi
-
-    cd "$WORKSPACE" || exit 1
+    # Fallback to /workspace
+    export WORKSPACE="/workspace"
+    cd "$WORKSPACE"
 }
+
 
 install_system_dependencies() {
     if [ "$INSTALL_NSIGHT" = "true" ]; then
@@ -77,40 +81,69 @@ install_system_dependencies() {
         sudo alternatives --install /usr/local/bin/ncu-ui ncu-ui "/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu-ui" 100
     fi
 }
+install_triton_from_source() {
+    echo "#############################################################################"
+    echo "########################### Triton Installation  ############################"
+    echo "#############################################################################"
+
+    if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
+        REPO_URL="https://github.com/triton-lang/triton-cpu.git"
+        TARGET_DIR="/workspace/triton-cpu"
+    else
+        REPO_URL="https://github.com/triton-lang/triton.git"
+        TARGET_DIR="/workspace/triton"
+    fi
+
+    if [ ! -d "$TARGET_DIR" ]; then
+        echo "$TARGET_DIR not found. Cloning repository..."
+        git clone "$REPO_URL" "$TARGET_DIR"
+
+        if [ ! -d "$TARGET_DIR" ]; then
+            echo "$TARGET_DIR not found after clone. ERROR."
+            exit 1
+        fi
+        CLONED=1
+    fi
+}
+
+install_triton_dependencies() {
+    : "${TRITON_DIR:?TRITON_DIR is not set}"
+
+    echo "Installing Triton dependencies..."
+    if [ -f "${TRITON_DIR}/python/requirements.txt" ]; then
+        pip install --no-cache-dir -r "${TRITON_DIR}/python/requirements.txt"
+    fi
+
+    pip install tabulate scipy ninja cmake wheel pybind11 pytest
+    pip install numpy pyyaml ctypeslib2 matplotlib pandas
+}
+
 
 install_user_dependencies() {
     echo "#############################################################################"
-    echo "################### Cloning the Triton repos (if needed)... #################"
+    echo "==> Triton Installation Mode: $INSTALL_TRITON"
+    echo "==> PyTorch Triton version: ${TRITON_VERSION_PYTORCH}"
+    echo "==> CUSTOM_LLVM=$CUSTOM_LLVM"
+    echo "==> TRITON_CPU_BACKEND=$TRITON_CPU_BACKEND"
     echo "#############################################################################"
-    if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
-        if [ ! -d "/workspace/triton-cpu" ]; then
-            echo "/workspace/triton-cpu not found. Cloning repository..."
-            git clone https://github.com/triton-lang/triton-cpu.git "/workspace/triton-cpu"
-
-            if [ ! -d "/workspace/triton-cpu" ]; then
-                echo "/workspace/triton-cpu not found. ERROR Cloning repository..."
-                exit 1
-            else
-                CLONED=1
-            fi
-        fi
-    else
-        if [ ! -d "/workspace/triton" ]; then
-            echo "/workspace/triton not found. Cloning repository..."
-            git clone https://github.com/triton-lang/triton.git "/workspace/triton"
-            if [ ! -d "/workspace/triton" ]; then
-                echo "/workspace/triton not found. ERROR Cloning repository..."
-                exit 1
-            else
-                CLONED=1
-            fi
-        fi
-    fi
 
     echo "#############################################################################"
     echo "################################## Upgrade pip... ###########################"
     echo "#############################################################################"
     pip install --upgrade pip
+
+    case "$INSTALL_TRITON" in
+      source)
+        install_triton_from_source
+        ;;
+      skip)
+        echo "Skipping Triton source installation"
+        ;;
+      *)
+        echo "Unknown INSTALL_TRITON value: $INSTALL_TRITON"
+        exit 1
+        ;;
+    esac
 
     echo "################################################################"
     echo "#####################  Install Jupyter  ########################"
@@ -146,10 +179,20 @@ EOF
 
     navigate
 
-    if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
-        git submodule init
-        git submodule update
+    if [ "$INSTALL_TRITON" = "source" ]; then
+        if [ "$CLONED" -eq 1 ]; then
+            git submodule init
+            git submodule update
+        fi
+        install_triton_dependencies
     fi
+
+    if [ -z "$TORCH_VERSION" ]; then
+        echo "ERROR: TORCH_VERSION is not set"
+        exit 1
+    fi
+
+    echo "Installing torch==${TORCH_VERSION} for backend: $( [ "$TRITON_CPU_BACKEND" = "1" ] && echo 'CPU' || echo 'CUDA/ROCm' )"
 
     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
         echo "###########################################################################"
@@ -168,15 +211,6 @@ EOF
         echo "###########################################################################"
         pip install torch=="${TORCH_VERSION}"
     fi
-
-    echo "#############################################################################"
-    echo "##################### Installing Triton dependencies... #####################"
-    echo "#############################################################################"
-    if [ -f "${TRITON_DIR}/python/requirements.txt" ]; then
-        pip install --no-cache-dir -r "${TRITON_DIR}/python/requirements.txt"
-    fi
-    pip install tabulate scipy ninja cmake wheel pybind11 pytest
-    pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
     if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
         echo "###############################################################################"
@@ -278,6 +312,14 @@ export_vars() {
 
     if [ -n "$TORCH_VERSION" ]; then
         export_vars+=("TORCH_VERSION=$TORCH_VERSION")
+    fi
+
+    if [ -n "$TRITON_VERSION_PYTORCH" ]; then
+        export_vars+=("TRITON_VERSION_PYTORCH=$TRITON_VERSION_PYTORCH")
+    fi
+
+     if [ -n "$INSTALL_TRITON" ]; then
+        export_vars+=("INSTALL_TRITON=$INSTALL_TRITON")
     fi
 
     if [ -n "$DISPLAY" ]; then
