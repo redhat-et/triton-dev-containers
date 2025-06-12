@@ -16,34 +16,60 @@
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-AMD_IMAGE_NAME ?=amd
-CPU_IMAGE_NAME ?=cpu
-CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
-CUSTOM_LLVM ?=false
-NOTEBOOK_PORT ?= 8888
-HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
-IMAGE_REPO ?=quay.io/triton-dev-containers
-LLVM_IMAGE_LABEL ?= latest # Need a separate tag so we only update TRITON_TAG for custom builds
-LLVM_TAG ?=
-mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
-NVIDIA_IMAGE_NAME ?=nvidia
-TORCH_IMAGE_NAME ?=torch
-TORCH_AMD_IMAGE_NAME ?=torch-amd
-TORCH_CPU_IMAGE_NAME ?=torch-cpu
-OS := $(shell uname -s)
-source_dir :=$(shell dirname "$(mkfile_path)")
-STRIPPED_CMD := $(shell basename $(CTR_CMD))
-torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^\"]+)".*/\1/')
-TRITON_CPU_BACKEND ?=0
-TRITON_TAG ?= latest
-triton_path ?=$(source_dir)
-gitconfig_path ?=$(HOME)/.gitconfig
-USERNAME ?=triton
-create_user ?=true
-# NOTE: Requires host build system to have a valid Red Hat Subscription if true
-INSTALL_NSIGHT ?=false
-user_path ?=
-INSTALL_TRITON ?= source # options: source | skip
+#################################################################################
+# ------------------------------------------------------------------------------
+# System environment and tooling
+# ------------------------------------------------------------------------------
+CTR_CMD             := $(or $(shell command -v podman), $(shell command -v docker))
+OS                  := $(shell uname -s)
+STRIPPED_CMD        := $(shell basename $(CTR_CMD))
+mkfile_path         := $(abspath $(lastword $(MAKEFILE_LIST)))
+source_dir          := $(shell dirname "$(mkfile_path)")
+gitconfig_path      ?= $(HOME)/.gitconfig
+
+# ------------------------------------------------------------------------------
+# Build and runtime options
+# ------------------------------------------------------------------------------
+CUSTOM_LLVM         ?= false
+TRITON_CPU_BACKEND  ?= 0
+TRITON_TAG          ?= latest
+LLVM_TAG            ?=
+LLVM_IMAGE_LABEL    ?= latest
+INSTALL_TRITON      ?= source     # Options: source | skip
+INSTALL_NSIGHT      ?= false
+create_user         ?= true
+user_path           ?=
+triton_path         ?= $(source_dir)
+
+# ------------------------------------------------------------------------------
+# PyTorch and Triton versions
+# ------------------------------------------------------------------------------
+torch_version       ?= $(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^\"]+)".*/\1/')
+
+# ------------------------------------------------------------------------------
+# Runtime configuration
+# ------------------------------------------------------------------------------
+USERNAME            ?= triton
+NOTEBOOK_PORT       ?= 8888
+HIP_DEVICES         := $(or $(HIP_VISIBLE_DEVICES), 0)
+
+# ------------------------------------------------------------------------------
+# Image naming
+# ------------------------------------------------------------------------------
+IMAGE_REPO          ?= quay.io/triton-dev-containers
+
+# Base image prefixes
+TORCH_PREFIX        ?= torch
+
+# Image name definitions (clean and extensible)
+NVIDIA_IMAGE_NAME   ?= nvidia
+CPU_IMAGE_NAME      ?= cpu
+AMD_IMAGE_NAME      ?= amd
+
+TORCH_IMAGE_NAME        ?= $(TORCH_PREFIX)
+TORCH_CPU_IMAGE_NAME    ?= $(TORCH_PREFIX)-$(CPU_IMAGE_NAME)
+TORCH_AMD_IMAGE_NAME    ?= $(TORCH_PREFIX)-$(AMD_IMAGE_NAME)
+#################################################################################
 
 # Modify image tag if CUSTOM_LLVM is enabled
 ifeq ($(CUSTOM_LLVM),true)
