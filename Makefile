@@ -97,6 +97,20 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image triton-cpu-image triton-amd-image
 
+define build_image
+	@echo "Building image: $(IMAGE_REPO)/$(1):$(TRITON_TAG)"
+# $(1) = image name
+# $(2) = use CUSTOM_LLVM
+# $(3) = INSTALL_TRITON value
+# $(4) = torch_version
+# $(5) = Dockerfile name
+ 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(1):$(TRITON_TAG) \
+		$(if $(2),--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM)) \
+		$(if $(3),--build-arg INSTALL_TRITON=$(3)) \
+		$(if $(4),--build-arg TORCH_VERSION=$(torch_version)) \
+		-f dockerfiles/$(5) .
+endef
+
 .PHONY: llvm-image
 llvm-image: image-builder-check ## Build the Triton LLVM image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(LLVM_IMAGE_LABEL) \
@@ -109,42 +123,33 @@ llvm-image: image-builder-check ## Build the Triton LLVM image
 gosu-image: image-builder-check ## Build the Triton gosu image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f dockerfiles/Dockerfile.gosu .
 
+.PHONY: build-images
+build-images: triton-image triton-cpu-image triton-amd-image torch-dev-image torch-dev-amd-image torch-dev-cpu-image ## Build all images
+
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton .
+	$(call build_image,$(NVIDIA_IMAGE_NAME),true,,$(torch_version),Dockerfile.triton)
 
 .PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
+triton-cpu-image: image-builder-check gosu-image
 	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_IMAGE_LABEL=cpu-latest
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
-		-f dockerfiles/Dockerfile.triton-cpu .
+	$(call build_image,$(CPU_IMAGE_NAME),true,,,Dockerfile.triton-cpu)
 
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-amd .
+	$(call build_image,$(AMD_IMAGE_NAME),true,,$(torch_version),Dockerfile.triton-amd)
 
 .PHONY: torch-dev-image
-torch-dev-image: ## Build image with PyTorch-supported Triton
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(TORCH_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg INSTALL_TRITON=skip \
-		--build-arg TORCH_VERSION=$(torch_version) \
-		-f dockerfiles/Dockerfile.triton .
+torch-dev-image: image-builder-check ## Build image with PyTorch-supported Triton
+	$(call build_image,$(TORCH_IMAGE_NAME),,skip,$(torch_version),Dockerfile.triton)
 
 .PHONY: torch-dev-amd-image
-torch-dev-amd-image: ## Build AMD image with PyTorch-supported Triton
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(TORCH_AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg INSTALL_TRITON=skip \
-		--build-arg TORCH_VERSION=$(torch_version) \
-		-f dockerfiles/Dockerfile.triton-amd .
+torch-dev-amd-image: image-builder-check ## Build AMD image with PyTorch-supported Triton
+	$(call build_image,$(TORCH_AMD_IMAGE_NAME),,skip,$(torch_version),Dockerfile.triton-amd)
 
 .PHONY: torch-dev-cpu-image
-torch-dev-cpu-image: ## Build CPU image with PyTorch-supported Triton
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(TORCH_CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg INSTALL_TRITON=skip \
-		-f dockerfiles/Dockerfile.triton-cpu .
+torch-dev-cpu-image: image-builder-check ## Build CPU image with PyTorch-supported Triton
+	$(call build_image,$(TORCH_CPU_IMAGE_NAME),,skip,$(torch_version),Dockerfile.triton-cpu)
 
 ##@ Container Run
 # If you are on an OS that has the user in /etc/passwd then we can pass
