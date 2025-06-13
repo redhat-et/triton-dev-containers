@@ -16,32 +16,60 @@
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-AMD_IMAGE_NAME ?=amd
-CPU_IMAGE_NAME ?=cpu
-CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
-CUSTOM_LLVM ?=false
-DEMO_TOOLS ?= false
-NOTEBOOK_PORT ?= 8888
-HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
-IMAGE_REPO ?=quay.io/triton-dev-containers
-LLVM_IMAGE_LABEL ?= latest # Need a separate tag so we only update TRITON_TAG for custom builds
-LLVM_TAG ?=
-mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
-NVIDIA_IMAGE_NAME ?=nvidia
-OS := $(shell uname -s)
-SELINUXFLAG := $(shell if [ "$(shell getenforce 2> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
-source_dir :=$(shell dirname "$(mkfile_path)")
-STRIPPED_CMD := $(shell basename $(CTR_CMD))
-torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^\"]+)".*/\1/')
-TRITON_CPU_BACKEND ?=0
-TRITON_TAG ?= latest
-triton_path ?=$(source_dir)
-gitconfig_path ?="$(HOME)/.gitconfig"
-USERNAME ?=triton
-create_user ?=true
-# NOTE: Requires host build system to have a valid Red Hat Subscription if true
-INSTALL_NSIGHT ?=false
-user_path ?=
+#################################################################################
+# ------------------------------------------------------------------------------
+# System environment and tooling
+# ------------------------------------------------------------------------------
+CTR_CMD             := $(or $(shell command -v podman), $(shell command -v docker))
+OS                  := $(shell uname -s)
+STRIPPED_CMD        := $(shell basename $(CTR_CMD))
+mkfile_path         := $(abspath $(lastword $(MAKEFILE_LIST)))
+source_dir          := $(shell dirname "$(mkfile_path)")
+gitconfig_path      ?= $(HOME)/.gitconfig
+
+# ------------------------------------------------------------------------------
+# Build and runtime options
+# ------------------------------------------------------------------------------
+CUSTOM_LLVM         ?= false
+TRITON_CPU_BACKEND  ?= 0
+TRITON_TAG          ?= latest
+LLVM_TAG            ?=
+LLVM_IMAGE_LABEL    ?= latest
+INSTALL_TRITON      ?= source     # Options: source | skip
+INSTALL_NSIGHT      ?= false
+create_user         ?= true
+user_path           ?=
+triton_path         ?= $(source_dir)
+
+# ------------------------------------------------------------------------------
+# PyTorch and Triton versions
+# ------------------------------------------------------------------------------
+torch_version       ?= $(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^\"]+)".*/\1/')
+
+# ------------------------------------------------------------------------------
+# Runtime configuration
+# ------------------------------------------------------------------------------
+USERNAME            ?= triton
+NOTEBOOK_PORT       ?= 8888
+HIP_DEVICES         := $(or $(HIP_VISIBLE_DEVICES), 0)
+
+# ------------------------------------------------------------------------------
+# Image naming
+# ------------------------------------------------------------------------------
+IMAGE_REPO          ?= quay.io/triton-dev-containers
+
+# Base image prefixes
+TORCH_PREFIX        ?= torch
+
+# Image name definitions (clean and extensible)
+NVIDIA_IMAGE_NAME   ?= nvidia
+CPU_IMAGE_NAME      ?= cpu
+AMD_IMAGE_NAME      ?= amd
+
+TORCH_IMAGE_NAME        ?= $(TORCH_PREFIX)
+TORCH_CPU_IMAGE_NAME    ?= $(TORCH_PREFIX)-$(CPU_IMAGE_NAME)
+TORCH_AMD_IMAGE_NAME    ?= $(TORCH_PREFIX)-$(AMD_IMAGE_NAME)
+#################################################################################
 
 # Modify image tag if CUSTOM_LLVM is enabled
 ifeq ($(CUSTOM_LLVM),true)
@@ -50,6 +78,12 @@ endif
 
 ifeq ($(TRITON_CPU_BACKEND),1)
     LLVM_IMAGE_LABEL := cpu-$(LLVM_IMAGE_LABEL)
+endif
+
+ifeq ($(shell command -v getenforce >/dev/null 2>&1 && getenforce),Enforcing)
+  SELINUXFLAG := :z
+else
+  SELINUXFLAG :=
 endif
 
 ##@ Container Build
@@ -63,6 +97,20 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image triton-cpu-image triton-amd-image
 
+define build_image
+	@echo "Building image: $(IMAGE_REPO)/$(1):$(TRITON_TAG)"
+# $(1) = image name
+# $(2) = use CUSTOM_LLVM
+# $(3) = INSTALL_TRITON value
+# $(4) = torch_version
+# $(5) = Dockerfile name
+ 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(1):$(TRITON_TAG) \
+		$(if $(2),--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM)) \
+		$(if $(3),--build-arg INSTALL_TRITON=$(3)) \
+		$(if $(4),--build-arg TORCH_VERSION=$(torch_version)) \
+		-f dockerfiles/$(5) .
+endef
+
 .PHONY: llvm-image
 llvm-image: image-builder-check ## Build the Triton LLVM image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(LLVM_IMAGE_LABEL) \
@@ -75,22 +123,33 @@ llvm-image: image-builder-check ## Build the Triton LLVM image
 gosu-image: image-builder-check ## Build the Triton gosu image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f dockerfiles/Dockerfile.gosu .
 
+.PHONY: build-images
+build-images: triton-image triton-cpu-image triton-amd-image torch-dev-image torch-dev-amd-image torch-dev-cpu-image ## Build all images
+
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton .
+	$(call build_image,$(NVIDIA_IMAGE_NAME),true,,$(torch_version),Dockerfile.triton)
 
 .PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
+triton-cpu-image: image-builder-check gosu-image
 	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_IMAGE_LABEL=cpu-latest
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
-		-f dockerfiles/Dockerfile.triton-cpu .
+	$(call build_image,$(CPU_IMAGE_NAME),true,,,Dockerfile.triton-cpu)
 
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-amd .
+	$(call build_image,$(AMD_IMAGE_NAME),true,,$(torch_version),Dockerfile.triton-amd)
+
+.PHONY: torch-dev-image
+torch-dev-image: image-builder-check ## Build image with PyTorch-supported Triton
+	$(call build_image,$(TORCH_IMAGE_NAME),,skip,$(torch_version),Dockerfile.triton)
+
+.PHONY: torch-dev-amd-image
+torch-dev-amd-image: image-builder-check ## Build AMD image with PyTorch-supported Triton
+	$(call build_image,$(TORCH_AMD_IMAGE_NAME),,skip,$(torch_version),Dockerfile.triton-amd)
+
+.PHONY: torch-dev-cpu-image
+torch-dev-cpu-image: image-builder-check ## Build CPU image with PyTorch-supported Triton
+	$(call build_image,$(TORCH_CPU_IMAGE_NAME),,skip,$(torch_version),Dockerfile.triton-cpu)
 
 ##@ Container Run
 # If you are on an OS that has the user in /etc/passwd then we can pass
@@ -99,8 +158,9 @@ triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton 
 # With podman if you aren't creating the user you need to explicitly pass
 # the user as --user $(USER) to start the container as that user.
 define run_container
-	echo "Running container image: $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) with $(CTR_CMD)"
-	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
+	@echo "Running container image: $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) with $(CTR_CMD)" \
+	volume_arg=""; \
+	if [ "$(triton_path)" != "$(source_dir)" ]; then \
 		volume_arg="-v $(triton_path):/workspace/$(strip $(2))$(SELINUXFLAG)"; \
 	else \
 		volume_arg=""; \
@@ -113,12 +173,9 @@ define run_container
 	fi; \
 	if [ -f "$(gitconfig_path)" ]; then \
 		gitconfig_arg="-v $(gitconfig_path):/etc/gitconfig$(SELINUXFLAG)"; \
-	else \
-		gitconfig_arg=""; \
 	fi; \
 	if [ "$(strip $(1))" = "$(AMD_IMAGE_NAME)" ]; then \
 		gpu_args="--device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=$(HIP_DEVICES)"; \
-		profiling_args=""; \
 	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ]; then \
 		if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
 			gpu_args="--device nvidia.com/gpu=all"; \
@@ -131,20 +188,9 @@ define run_container
 		else \
 			profiling_args=""; \
 		fi; \
-	else \
-		profiling_args=""; \
 	fi; \
-	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		keep_ns_arg="--userns=keep-id"; \
-	else \
-		keep_ns_arg=""; \
-	fi; \
-	if [ "$(DEMO_TOOLS)" = "true" ]; then \
-		port_arg="-p ${NOTEBOOK_PORT}:${NOTEBOOK_PORT}"; \
-	else \
-		port_arg=""; \
-	fi; \
-	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e DEMO_TOOLS=$(DEMO_TOOLS) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT)"; \
+	port_arg="-p $(NOTEBOOK_PORT):$(NOTEBOOK_PORT)"; \
+	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT)"; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) $$env_vars $$port_arg \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$profiling_args $$keep_ns_arg \
@@ -169,6 +215,18 @@ triton-cpu-run: image-builder-check ## Run the Triton CPU devcontainer image
 .PHONY: triton-amd-run
 triton-amd-run: image-builder-check ## Run the Triton AMD devcontainer image
 	$(call run_container, $(AMD_IMAGE_NAME), "triton")
+
+.PHONY: torch-dev-run
+torch-dev-run: image-builder-check ## Run the torch-triton (NVIDIA) image
+	$(call run_container, $(TORCH_IMAGE_NAME), "torch")
+
+.PHONY: torch-dev-amd-run
+torch-dev-amd-run: image-builder-check ## Run the torch-triton (AMD) image
+	$(call run_container, $(TORCH_AMD_IMAGE_NAME), "torch-amd")
+
+.PHONY: torch-dev-cpu-run
+torch-dev-cpu-run: image-builder-check ## Run the torch-triton (CPU) image
+	$(call run_container, $(TORCH_CPU_IMAGE_NAME), "torch-cpu")
 
 ##@ Devcontainer
 
