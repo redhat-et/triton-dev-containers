@@ -15,12 +15,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUSTOM_LLVM=false
-ARG ROCM_VERSION=6.2
+ARG ROCM_VERSION=6.4.1
 ARG INSTALL_TRITON=source
 
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG ROCM_VERSION=6.2
+ARG ROCM_VERSION=6.4.1
 USER 0
 
 # Install the ROCm rpms
@@ -32,7 +32,6 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     dnf install -y llvm clang clang-libs lld && \
     dnf install -y --nodocs --setopt=install_weak_deps=False \
         amd-smi-lib \
-        amd-smi \
         miopen-hip \
         rocm-core \
         rocm-hip-libraries \

@@ -25,8 +25,11 @@ CUSTOM_LLVM=${CUSTOM_LLVM:-}
 NOTEBOOK_PORT=${NOTEBOOK_PORT:-8888}
 AMD=${AMD:-}
 TRITON_CPU_BACKEND=${TRITON_CPU_BACKEND:-}
-ROCM_VERSION=${ROCM_VERSION:-}
-TORCH_VERSION=${TORCH_VERSION:-2.7.1}
+ROCM_VERSION=${ROCM_VERSION:-$(curl -fsSL https://repo.radeon.com/rocm/manylinux/ \
+  | grep -oP 'rocm-rel-\K[0-9]+\.[0-9]+(\.[0-9]+)?(?=/)' \
+  | sort -V \
+  | tail -1)}
+TORCH_VERSION=${TORCH_VERSION:-$(curl -fsSL https://api.github.com/repos/pytorch/pytorch/releases/latest | jq -r .tag_name | sed 's/^v//')}
 TRITON_VERSION_PYTORCH=$(curl -fsSL https://raw.githubusercontent.com/pytorch/pytorch/main/.ci/docker/triton_version.txt | tr -d '\r\n' || true)
 TRITON_VERSION_PYTORCH=${TRITON_VERSION_PYTORCH:-3.3.1}
 HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-}
@@ -62,7 +65,6 @@ navigate() {
     cd "$WORKSPACE"
 }
 
-
 install_system_dependencies() {
     if [ "$INSTALL_NSIGHT" = "true" ]; then
         echo "################################################################"
@@ -81,6 +83,37 @@ install_system_dependencies() {
         sudo alternatives --install /usr/local/bin/ncu-ui ncu-ui "/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu-ui" 100
     fi
 }
+
+install_rocm_wheels() {
+    echo "################################################################"
+    echo "################## Installing ROCm Wheels ######################"
+    echo "################################################################"
+
+    PY_VERSION_TAG="cp312"
+    BASE_URL="https://repo.radeon.com/rocm/manylinux/rocm-rel-${ROCM_VERSION}"
+
+    WHEEL_DIR="/workspace/rocm-wheels"
+    mkdir -p "$WHEEL_DIR"
+    cd "$WHEEL_DIR"
+
+    echo "Downloading wheels for ROCm ${ROCM_VERSION}..."
+    wget "${BASE_URL}/torch-2.6.0+rocm${ROCM_VERSION}.git1ded221d-${PY_VERSION_TAG}-${PY_VERSION_TAG}-linux_x86_64.whl"
+    wget "${BASE_URL}/torchvision-0.21.0+rocm${ROCM_VERSION}.git4040d51f-${PY_VERSION_TAG}-${PY_VERSION_TAG}-linux_x86_64.whl"
+    wget "${BASE_URL}/torchaudio-2.6.0+rocm${ROCM_VERSION}.gitd8831425-${PY_VERSION_TAG}-${PY_VERSION_TAG}-linux_x86_64.whl"
+    wget "${BASE_URL}/pytorch_triton_rocm-3.2.0+rocm${ROCM_VERSION}.git6da9e660-${PY_VERSION_TAG}-${PY_VERSION_TAG}-linux_x86_64.whl"
+
+    echo "Uninstalling previous torch-related ROCm packages if any..."
+    pip uninstall -y torch torchvision torchaudio pytorch-triton-rocm || true
+
+    echo "Installing downloaded ROCm wheels..."
+    pip install ./*.whl
+
+    echo "Cleaning up ROCm wheel files..."
+    rm -f ./*.whl
+
+    cd /workspace
+}
+
 install_triton_from_source() {
     echo "#############################################################################"
     echo "########################### Triton Installation  ############################"
@@ -117,7 +150,6 @@ install_triton_dependencies() {
     pip install tabulate scipy ninja cmake wheel pybind11 pytest
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 }
-
 
 install_user_dependencies() {
     echo "#############################################################################"
@@ -195,11 +227,7 @@ EOF
     echo "Installing torch==${TORCH_VERSION} for backend: $( [ "$TRITON_CPU_BACKEND" = "1" ] && echo 'CPU' || echo 'CUDA/ROCm' )"
 
     if [ -n "$AMD" ] && [ "$AMD" = "true" ]; then
-        echo "###########################################################################"
-        echo "##################### Installing ROCm dependencies... #####################"
-        echo "###########################################################################"
-        TORCH_VERSION="2.5.1"
-        pip install --no-cache-dir torch=="${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/rocm"${ROCM_VERSION}"
+        install_rocm
     elif [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         echo "###########################################################################"
         echo "###################### Installing torch CPU ... ###########################"

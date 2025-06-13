@@ -16,7 +16,7 @@
 
 ARG CUSTOM_LLVM=false
 ARG LLVM_TAG
-ARG ROCM_VERSION=6.2
+ARG ROCM_VERSION=6.4.1
 ARG HIP_VISIBLE_DEVICES=0
 
 FROM registry.access.redhat.com/ubi9/ubi:latest AS llvm-build
@@ -47,7 +47,7 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ARG CUSTOM_LLVM=false
 ARG LLVM_TAG
-ARG ROCM_VERSION=6.2
+ARG ROCM_VERSION=6.4.1
 ARG HIP_VISIBLE_DEVICES=0
 
 USER 0
@@ -60,7 +60,6 @@ RUN echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     dnf install -y llvm clang clang-libs lld && \
     dnf install -y --nodocs --setopt=install_weak_deps=False \
         amd-smi-lib \
-        amd-smi \
         miopen-hip \
         rocm-core \
         rocm-hip-libraries \
