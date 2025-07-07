@@ -183,6 +183,11 @@ EOF
     pip install tabulate scipy ninja cmake wheel pybind11 pytest
     pip install numpy pyyaml ctypeslib2 matplotlib pandas
 
+    echo "####################################################################################"
+    echo "##################### Installing Triton Proton dependencies... #####################"
+    echo "####################################################################################"
+    pip install llnl-hatchet
+
     if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
         echo "###############################################################################"
         echo "#####################Installing pre-commit dependencies...#####################"
