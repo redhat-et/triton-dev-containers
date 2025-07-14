@@ -37,7 +37,7 @@ jobs:
           password: ${{ secrets.qt_password }}
 
       - name: Generate SBOM with Trivy
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@0.32.0
         with:
           image-ref: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
           format: spdx-json
