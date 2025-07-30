@@ -57,6 +57,16 @@ chdir_triton() {
 chdir_workspace() {
     if [ -d "/workspace/user" ]; then
         export WORKSPACE="/workspace/user"
+    elif [ -n "$TRITON_DIR" ] && [ -d "$TRITON_DIR" ]; then
+        export WORKSPACE="$TRITON_DIR"
+    else
+        echo "Error: WORKSPACE and TRITON_DIR not set properly." >&2
+        exit 1
+    fi
+    cd "$WORKSPACE" || exit 1
+}
+    if [ -d "/workspace/user" ]; then
+        export WORKSPACE="/workspace/user"
     else
         export WORKSPACE=$TRITON_DIR
     fi
