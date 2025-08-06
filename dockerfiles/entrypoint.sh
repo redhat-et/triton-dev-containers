@@ -65,14 +65,6 @@ chdir_workspace() {
     fi
     cd "$WORKSPACE" || exit 1
 }
-    if [ -d "/workspace/user" ]; then
-        export WORKSPACE="/workspace/user"
-    else
-        export WORKSPACE=$TRITON_DIR
-    fi
-
-    cd "$WORKSPACE" || exit 1
-}
 
 install_system_dependencies() {
     if [ "$INSTALL_NSIGHT" = "true" ]; then
