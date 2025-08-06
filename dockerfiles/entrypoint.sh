@@ -40,7 +40,7 @@ CUDA_REPO=https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/
 INSTALL_NSIGHT=${INSTALL_NSIGHT:-false}
 export_cmd=""
 
-navigate() {
+chdir_triton() {
     if [ -n "$TRITON_CPU_BACKEND" ] && [ "$TRITON_CPU_BACKEND" -eq 1 ]; then
         if [ -d "/workspace/triton-cpu" ]; then
             export TRITON_DIR="/workspace/triton-cpu"
@@ -51,12 +51,18 @@ navigate() {
         fi
     fi
 
+    cd "$TRITON_DIR" || exit 1
+}
+
+chdir_workspace() {
     if [ -d "/workspace/user" ]; then
         export WORKSPACE="/workspace/user"
+    elif [ -n "$TRITON_DIR" ] && [ -d "$TRITON_DIR" ]; then
+        export WORKSPACE="$TRITON_DIR"
     else
-        export WORKSPACE=$TRITON_DIR
+        echo "Error: WORKSPACE and TRITON_DIR not set properly." >&2
+        exit 1
     fi
-
     cd "$WORKSPACE" || exit 1
 }
 
@@ -149,7 +155,7 @@ EOF
     fi
 
 
-    navigate
+    chdir_triton
 
     if [ -n "$CLONED" ] && [ "$CLONED" -eq 1 ]; then
         git submodule init
@@ -325,13 +331,13 @@ if [ -n "$CREATE_USER" ] && [ "$CREATE_USER" = "true" ]; then
         install_system_dependencies
 
         echo "Switching to user: $USER to install user dependencies."
-        runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_user_dependencies navigate); install_user_dependencies"
-        navigate
+        runuser -u "$USER" -- bash -c "$export_cmd $(declare -f install_user_dependencies chdir_triton); install_user_dependencies"
+        chdir_workspace
         exec gosu "$USER" "$@"
     fi
 else
     install_system_dependencies
     install_user_dependencies
-    navigate
+    chdir_workspace
     exec "$@"
 fi
