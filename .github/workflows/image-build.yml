@@ -72,7 +72,7 @@ jobs:
 
       - name: Generate image attestation
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-name: quay.io/triton-dev-containers/${{ inputs.image-name }}
           subject-digest: ${{ steps.build-push-image.outputs.digest }}
