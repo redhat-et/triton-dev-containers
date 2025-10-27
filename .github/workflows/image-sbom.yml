@@ -58,7 +58,7 @@ jobs:
         run: gzip ./sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json
 
       - name: Upload SBOM Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json.gz
           path: ./sbom-${{ inputs.image-name }}-${{ inputs.image-tag }}.spdx.json.gz
