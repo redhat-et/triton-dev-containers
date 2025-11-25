@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Red Hat Inc
 
+SHELL := /bin/bash
+
 ##@ Help
 # The help target prints out all targets with their descriptions organized
 # beneath their categories. The categories are represented by '##@' and the
