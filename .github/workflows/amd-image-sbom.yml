@@ -51,7 +51,7 @@ jobs:
         run: gzip ./sbom-amd-${{ inputs.image-tag }}.spdx.json
 
       - name: Save SBOM as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
           path: ./sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
