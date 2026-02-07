@@ -1,4 +1,4 @@
-VARIANTS := triton triton-cpu triton-amd
+VARIANTS := cpu cuda rocm
 BASE_DIR := $(CURDIR)
 
 ##@ Devcontainer
@@ -20,12 +20,12 @@ list: ## List all variants
 
 clean: ## Remove all generated devcontainer.json files
 	@for v in $(VARIANTS); do \
-	  echo "Removing $$v/devcontainer.json"; \
-	  rm -f $(BASE_DIR)/$$v/devcontainer.json; \
-	  echo "Removing $$v/user.sh"; \
-	  rm -f $(BASE_DIR)/$$v/user.sh; \
-	  echo "Removing $$v/postStartCommand.sh"; \
-	  rm -f $(BASE_DIR)/$$v/postStartCommand.sh; \
+		echo "Removing $$v/devcontainer.json"; \
+		rm -f $(BASE_DIR)/$$v/devcontainer.json; \
+		echo "Removing $$v/create_user.sh"; \
+		rm -f $(BASE_DIR)/$$v/create_user.sh; \
+		echo "Removing $$v/postStartCommand.sh"; \
+		rm -f $(BASE_DIR)/$$v/postStartCommand.sh; \
 	done
 
 help: ## Show this help message

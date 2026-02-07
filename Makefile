@@ -18,162 +18,336 @@ SHELL := /bin/bash
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-AMD_IMAGE_NAME ?=amd
-CPU_IMAGE_NAME ?=cpu
+#################################################################################
+# ------------------------------------------------------------------------------
+# System environment and tooling
+# ------------------------------------------------------------------------------
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
-CUSTOM_LLVM ?=false
-DEMO_TOOLS ?= false
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+source_dir := $(dir $(mkfile_path))
+
+# ------------------------------------------------------------------------------
+# Buildtime configuration
+# ------------------------------------------------------------------------------
+WORKSPACE = /workspace
+
+# ------------------------------------------------------------------------------
+# Versions
+# ------------------------------------------------------------------------------
+CUDA_VERSION ?= 13-0
+GOSU_VERSION ?= 1.19
+PYTHON_VERSION ?= 3.12
+ROCM_VERSION ?= 7.1.1
+CENTOS_VERSION ?= 10
+
+# ------------------------------------------------------------------------------
+# Image naming
+# ------------------------------------------------------------------------------
+IMAGE_REPO = quay.io/triton-dev-containers
+
+# Image name definitions (clean and extensible)
+GOSU_IMAGE_NAME = gosu
+BASE_IMAGE_NAME = base
+CUDA_IMAGE_NAME = cuda
+ROCM_IMAGE_NAME = rocm
+CPU_IMAGE_NAME = cpu
+
+# Image tags
+IMAGE_TAG := centos$(CENTOS_VERSION)
+
+GOSU_IMAGE_TAG := $(GOSU_VERSION)-$(IMAGE_TAG)
+BASE_IMAGE_TAG := $(IMAGE_TAG)
+CUDA_IMAGE_TAG := $(CUDA_VERSION)-$(IMAGE_TAG)
+ROCM_IMAGE_TAG := $(ROCM_VERSION)-$(IMAGE_TAG)
+CPU_IMAGE_TAG := $(IMAGE_TAG)
+
+# ------------------------------------------------------------------------------
+# Runtime configuration
+# ------------------------------------------------------------------------------
+RUNTIME_ARGS ?=
+
+# Set the max number of jobs to use when building a framework
+# Use a lower value to decrease ram usage during a build
+MAX_JOBS ?= $(shell nproc --all)
+
+# Jupyter notebook server port
 NOTEBOOK_PORT ?= 8888
-HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
-IMAGE_REPO ?=quay.io/triton-dev-containers
-LLVM_IMAGE_LABEL ?= latest # Need a separate tag so we only update TRITON_TAG for custom builds
-LLVM_TAG ?=
-mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
-NVIDIA_IMAGE_NAME ?=nvidia
-OS := $(shell uname -s)
-SELINUXFLAG := $(shell if [ "$(shell getenforce 2> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
-source_dir :=$(shell dirname "$(mkfile_path)")
-STRIPPED_CMD := $(shell basename $(CTR_CMD))
-torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/releases/latest | grep '"tag_name":' | sed -E 's/.*"tag_name": "v?([^\"]+)".*/\1/')
-TRITON_CPU_BACKEND ?=0
-TRITON_TAG ?= latest
-triton_path ?=$(source_dir)
-gitconfig_path ?="$(HOME)/.gitconfig"
-USERNAME ?=triton
-create_user ?=true
-# NOTE: Requires host build system to have a valid Red Hat Subscription if true
-INSTALL_NSIGHT ?=false
+
+# Install debugging and profiling tools
+INSTALL_NSIGHT ?= false
+INSTALL_TOOLS ?= false
+INSTALL_JUPYTER ?= true
+
+# Operation to perform for each framework (default is skip)
+INSTALL_LLVM ?= skip                # [ source | skip ]
+INSTALL_HELION ?= skip                # [ source | release | nightly | skip ]
+INSTALL_TRITON ?= skip                # [ source | release | skip ]
+INSTALL_TORCH ?= skip                # [ source | release | nightly | test | skip ]
+INSTALL_VLLM ?= skip                # [ source | release | nightly | skip ]
+
+# Framework versions to install from PyPi (latest is default for Torch)
+PIP_TORCH_VERSION ?=
+PIP_HELION_VERSION ?=
+PIP_TRITON_VERSION ?=
+PIP_VLLM_VERSION ?=
+
+# Device indices (NVIDIA and AMD)
+CUDA_VISIBLE_DEVICES ?=
+ROCR_VISIBLE_DEVICES ?=
+
+# Source code paths
+llvm_path ?=
+helion_path ?=
+torch_path ?=
+triton_path ?= $(source_dir)
 user_path ?=
+vllm_path ?=
+gitconfig_path ?=
 
-# Modify image tag if CUSTOM_LLVM is enabled
-ifeq ($(CUSTOM_LLVM),true)
-    TRITON_TAG := custom-llvm-$(TRITON_TAG)
-endif
+# Wheel url for PyTorch
+PIP_TORCH_INDEX_URL ?=
 
-ifeq ($(TRITON_CPU_BACKEND),1)
-    LLVM_IMAGE_LABEL := cpu-$(LLVM_IMAGE_LABEL)
-endif
+# Torch backend selector for UV [ auto | cu<cuda version> | rocm<rocm version> | cpu ]
+UV_TORCH_BACKEND ?=
 
-##@ Container Build
-.PHONY: image-builder-check
-image-builder-check: ## Verify if container runtime is available
-	@if [ -z "$(CTR_CMD)" ]; then \
-		echo '!! ERROR: containerized builds require podman or docker CLI, none found in $$PATH' >&2; \
-		exit 1; \
-	fi
+# Wheel url for vLLM
+PIP_VLLM_EXTRA_INDEX_URL ?=
+
+# vLLM repo commit hash for specific wheel build install
+PIP_VLLM_COMMIT ?=
+
+create_user ?= $(USER)
+
+SCRIPTS = $(wildcard scripts/*.sh)
 
 .PHONY: all
-all: triton-image triton-cpu-image triton-amd-image
+all: build-images
 
-.PHONY: llvm-image
-llvm-image: image-builder-check ## Build the Triton LLVM image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(LLVM_IMAGE_LABEL) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
-		--build-arg LLVM_TAG=$(LLVM_TAG) \
-		--build-arg TRITON_CPU_BACKEND=$(TRITON_CPU_BACKEND) \
-		-f dockerfiles/Dockerfile.llvm .
+##@ Container Build
 
-.PHONY: gosu-image
-gosu-image: image-builder-check ## Build the Triton gosu image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f dockerfiles/Dockerfile.gosu .
-
-.PHONY: triton-image
-triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton .
-
-.PHONY: triton-cpu-image
-triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
-	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_IMAGE_LABEL=cpu-latest
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
-		-f dockerfiles/Dockerfile.triton-cpu .
-
-.PHONY: triton-amd-image
-triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-amd .
-
-##@ Container Run
-# If you are on an OS that has the user in /etc/passwd then we can pass
-# the user from the host to the pod. Otherwise we default to create the
-# user inside the container.
-# With podman if you aren't creating the user you need to explicitly pass
-# the user as --user $(USER) to start the container as that user.
-define run_container
-	echo "Running container image: $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) with $(CTR_CMD)"
-	@if [ "$(triton_path)" != "$(source_dir)" ]; then \
-		volume_arg="-v $(triton_path):/workspace/$(strip $(2))$(SELINUXFLAG)"; \
-	else \
-		volume_arg=""; \
-	fi; \
-	if [ -n "$(user_path)" ]; then \
-		volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
-	fi; \
-	if [ "$(OS)" != "Darwin" ] && ! getent passwd $(USER) > /dev/null && [ "$(create_user)" = "false" ]; then \
-		volume_arg+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro"; \
-	fi; \
-	if [ -f "$(gitconfig_path)" ]; then \
-		gitconfig_arg="-v $(gitconfig_path):/etc/gitconfig$(SELINUXFLAG)"; \
-	else \
-		gitconfig_arg=""; \
-	fi; \
-	if [ "$(strip $(1))" = "$(AMD_IMAGE_NAME)" ]; then \
-		gpu_args="--device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=$(HIP_DEVICES)"; \
-		profiling_args=""; \
-	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ]; then \
-		if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
-			gpu_args="--device nvidia.com/gpu=all"; \
-		else \
-			gpu_args="--runtime=nvidia --gpus=all"; \
-		fi; \
-		gpu_args+=" --security-opt label=disable"; \
-		if [ "$(INSTALL_NSIGHT)" = "true" ]; then \
-			profiling_args="--privileged --cap-add=SYS_ADMIN -e INSTALL_NSIGHT=${INSTALL_NSIGHT} -e DISPLAY=${DISPLAY} -e WAYLAND_DISPLAY=${WAYLAND_DISPLAY} -e XDG_RUNTIME_DIR=/tmp -v ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/tmp/${WAYLAND_DISPLAY}:ro"; \
-		else \
-			profiling_args=""; \
-		fi; \
-	else \
-		profiling_args=""; \
-	fi; \
-	if [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		keep_ns_arg="--userns=keep-id"; \
-	else \
-		keep_ns_arg=""; \
-	fi; \
-	if [ "$(DEMO_TOOLS)" = "true" ]; then \
-		port_arg="-p ${NOTEBOOK_PORT}:${NOTEBOOK_PORT}"; \
-	else \
-		port_arg=""; \
-	fi; \
-	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e DEMO_TOOLS=$(DEMO_TOOLS) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT)"; \
-	if [ "$(create_user)" = "true" ]; then \
-		$(CTR_CMD) run -e CREATE_USER=$(create_user) $$env_vars $$port_arg \
-		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$profiling_args $$keep_ns_arg \
-		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
-	elif [ "$(STRIPPED_CMD)" = "docker" ]; then \
-		$(CTR_CMD) run --user $(shell id -u):$(shell id -g) $$env_vars $$gpu_args $$profiling_args $$port_arg \
-		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
-	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run --user $(USER) $$env_vars $$keep_ns_arg $$gpu_args $$profiling_args $$port_arg \
-		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
-	fi
+# $(1) = image name
+# $(2) = image tag
+# $(3) = podman args
+# $(4) = dockerfile name
+define build-image
+	@echo Building image: $(IMAGE_REPO)/$(1):$(2)
+	$(CTR_CMD) build -t $(IMAGE_REPO)/$(1):$(2) \
+		$(3) -f dockerfiles/$(4) .
 endef
 
-.PHONY: triton-run
-triton-run: image-builder-check ## Run the Triton devcontainer image
-	$(call run_container, $(NVIDIA_IMAGE_NAME), "triton")
+# Old build targets (DEPRECATED)
+.PHONY: triton-image
+triton-image: cuda-image
 
-.PHONY: triton-cpu-run
-triton-cpu-run: image-builder-check ## Run the Triton CPU devcontainer image
-	$(call run_container, $(CPU_IMAGE_NAME), "triton-cpu")
+.PHONY: triton-cpu-image
+triton-cpu-image: cpu-image
+
+.PHONY: triton-amd-image
+triton-amd-image: rocm-image
+
+.PHONY: build-images
+build-images: cuda-image cpu-image rocm-image ## Build all container images
+
+define base_image_build_args
+--build-arg CENTOS_VERSION=$(CENTOS_VERSION) \
+--build-arg GOSU_VERSION=$(GOSU_VERSION) \
+--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+--build-arg WORKSPACE=$(WORKSPACE)
+endef
+
+.PHONY: base-image
+base-image: dockerfiles/Dockerfile $(SCRIPTS) ## Build the Base container image
+	$(call build-image,$(BASE_IMAGE_NAME),$(BASE_IMAGE_TAG),$(base_image_build_args),Dockerfile)
+
+define image_build_args
+--build-arg BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) \
+--build-arg BASE_IMAGE_TAG=$(BASE_IMAGE_TAG)
+endef
+
+cuda-image: base-image dockerfiles/Dockerfile.cuda ## Build a CUDA container image
+	$(call build-image,$(CUDA_IMAGE_NAME),$(CUDA_IMAGE_TAG),$(image_build_args) \
+		--build-arg CUDA_VERSION=$(CUDA_VERSION),Dockerfile.cuda)
+
+cpu-image: base-image dockerfiles/Dockerfile.cpu ## Build a CPU container image
+	$(call build-image,$(CPU_IMAGE_NAME),$(CPU_IMAGE_TAG),$(image_build_args),Dockerfile.cpu)
+
+rocm-image: base-image dockerfiles/Dockerfile.rocm ## Build a ROCm container image
+	$(call build-image,$(ROCM_IMAGE_NAME),$(ROCM_IMAGE_TAG),$(image_build_args) \
+		--build-arg ROCM_VERSION=$(ROCM_VERSION),Dockerfile.rocm)
+
+##@ Container Run
+RUNTIME_ARGS := -t $(IMAGE_TAG) -p $(NOTEBOOK_PORT) -j $(MAX_JOBS)
+
+ifneq ($(llvm_path), )
+	RUNTIME_ARGS += -s LLVM=$(llvm_path)
+endif
+
+ifneq ($(helion_path), )
+	RUNTIME_ARGS += -s HELION=$(helion_path)
+endif
+
+ifneq ($(torch_path), )
+	RUNTIME_ARGS += -s TORCH=$(torch_path)
+endif
+
+ifneq ($(triton_path),$(source_dir))
+	RUNTIME_ARGS += -s TRITON=$(triton_path)
+endif
+
+ifneq ($(user_path), )
+	RUNTIME_ARGS += -s USER=$(user_path)
+endif
+
+ifneq ($(vllm_path), )
+	RUNTIME_ARGS += -s VLLM=$(vllm_path)
+endif
+
+ifneq ($(gitconfig_path), )
+	RUNTIME_ARGS += -s GITCONFIG=$(gitconfig_path)
+endif
+
+ifeq ($(INSTALL_JUPYTER),true)
+	RUNTIME_ARGS += -o INSTALL_JUPYTER=true
+endif
+
+ifeq ($(INSTALL_NSIGHT),true)
+	INSTALL_TOOLS = true
+endif
+
+ifeq ($(INSTALL_TOOLS),true)
+	RUNTIME_ARGS += -o INSTALL_TOOLS=true
+endif
+
+ifneq ($(PIP_HELION_VERSION), )
+	RUNTIME_ARGS += -o PIP_HELION_VERSION=$(PIP_HELION_VERSION)
+endif
+
+ifneq ($(PIP_TORCH_VERSION), )
+	RUNTIME_ARGS += -o PIP_TORCH_VERSION=$(PIP_TORCH_VERSION)
+endif
+
+ifneq ($(PIP_TRITON_VERSION), )
+	RUNTIME_ARGS += -o PIP_TRITON_VERSION=$(PIP_TRITON_VERSION)
+endif
+
+ifneq ($(PIP_VLLM_VERSION), )
+	RUNTIME_ARGS += -o PIP_VLLM_VERSION=$(PIP_VLLM_VERSION)
+endif
+
+ifneq ($(CUDA_VISIBLE_DEVICES), )
+	RUNTIME_ARGS += -o CUDA_VISIBLE_DEVICES=$(CUDA_VISIBLE_DEVICES)
+endif
+
+ifneq ($(ROCR_VISIBLE_DEVICES), )
+	RUNTIME_ARGS += -o ROCR_VISIBLE_DEVICES=$(ROCR_VISIBLE_DEVICES)
+endif
+
+ifneq ($(PIP_TORCH_INDEX_URL), )
+	RUNTIME_ARGS += -o PIP_TORCH_INDEX_URL=$(PIP_TORCH_INDEX_URL)
+endif
+
+ifneq ($(UV_TORCH_BACKEND), )
+	RUNTIME_ARGS += -o UV_TORCH_BACKEND=$(UV_TORCH_BACKEND)
+endif
+
+ifneq ($(PIP_VLLM_EXTRA_INDEX_URL), )
+	RUNTIME_ARGS += -o PIP_VLLM_EXTRA_INDEX_URL=$(PIP_VLLM_EXTRA_INDEX_URL)
+endif
+
+ifneq ($(PIP_VLLM_COMMIT), )
+	RUNTIME_ARGS += -o PIP_VLLM_COMMIT=$(PIP_VLLM_COMMIT)
+endif
+
+ifneq ($(create_user), )
+	RUNTIME_ARGS += -u $(create_user)
+endif
+
+define CUDA_RUNTIME_ARGS
+	$(RUNTIME_ARGS) \
+	-o CUDA_VERSION=$(CUDA_VERSION)
+endef
+
+define CPU_RUNTIME_ARGS
+	$(RUNTIME_ARGS)
+endef
+
+define ROCM_RUNTIME_ARGS
+	$(RUNTIME_ARGS) \
+	-o ROCM_VERSION=$(ROCM_VERSION)
+endef
+
+# Old runtime targets (DEPRECATED)
+.PHONY: triton-run
+triton-run: triton-cuda-run
 
 .PHONY: triton-amd-run
-triton-amd-run: image-builder-check ## Run the Triton AMD devcontainer image
-	$(call run_container, $(AMD_IMAGE_NAME), "triton")
+triton-amd-run: triton-rocm-run
+
+.PHONY: base-run
+base-run: ## Run the Base container image
+	@./triton-dev-containers.sh $(RUNTIME_ARGS) -d $(BASE_IMAGE_NAME)
+
+.PHONY: cuda-run
+cuda-run: ## Run the CUDA container image
+	@./triton-dev-containers.sh $(CUDA_RUNTIME_ARGS) -d $(CUDA_IMAGE_NAME)
+
+.PHONY: cpu-run
+cpu-run: ## Run the CPU container image
+	@./triton-dev-containers.sh $(CPU_RUNTIME_ARGS) -d $(CPU_IMAGE_NAME)
+
+.PHONY: rocm-run
+rocm-run: ## Run the ROCm container image
+	@./triton-dev-containers.sh $(ROCM_RUNTIME_ARGS) -d $(ROCM_IMAGE_NAME)
+
+.PHONY: helion-cuda-run
+helion-cuda-run: ## Run the Helion CUDA container image
+	@./triton-dev-containers.sh $(CUDA_RUNTIME_ARGS) -d $(CUDA_IMAGE_NAME) -k helion
+
+.PHONY: helion-cpu-run
+helion-cpu-run: ## Run the Helion CPU container image
+	@./triton-dev-containers.sh $(CPU_RUNTIME_ARGS) -d $(CPU_IMAGE_NAME) -k helion
+
+.PHONY: helion-rocm-run
+helion-rocm-run: ## Run the Helion ROCm container image
+	@./triton-dev-containers.sh $(ROCM_RUNTIME_ARGS) -d $(ROCM_IMAGE_NAME) -k helion
+
+.PHONY: triton-cuda-run
+triton-cuda-run: ## Run the Triton CUDA container image
+	@./triton-dev-containers.sh $(CUDA_RUNTIME_ARGS) -d $(CUDA_IMAGE_NAME) -k triton
+
+.PHONY: triton-cpu-run
+triton-cpu-run: ## Run the Triton CPU container image
+	@./triton-dev-containers.sh $(CPU_RUNTIME_ARGS) -d $(CPU_IMAGE_NAME) -k triton
+
+.PHONY: triton-rocm-run
+triton-rocm-run: ## Run the Triton ROCm container image
+	@./triton-dev-containers.sh $(ROCM_RUNTIME_ARGS) -d $(ROCM_IMAGE_NAME) -k triton
+
+.PHONY: torch-cuda-run
+torch-cuda-run: ## Run the PyTorch CUDA container image
+	@./triton-dev-containers.sh $(CUDA_RUNTIME_ARGS) -d $(CUDA_IMAGE_NAME) -k torch
+
+.PHONY: torch-cpu-run
+torch-cpu-run: ## Run the PyTorch CPU container image
+	@./triton-dev-containers.sh $(CPU_RUNTIME_ARGS) -d $(CPU_IMAGE_NAME) -k torch
+
+.PHONY: torch-rocm-run
+torch-rocm-run: ## Run the PyTorch ROCm container image
+	@./triton-dev-containers.sh $(ROCM_RUNTIME_ARGS) -d $(ROCM_IMAGE_NAME) -k torch
+
+.PHONY: vllm-cuda-run
+vllm-cuda-run: ## Run the vLLM CUDA container image
+	@./triton-dev-containers.sh $(CUDA_RUNTIME_ARGS) -d $(CUDA_IMAGE_NAME) -k vllm
+
+.PHONY: vllm-cpu-run
+vllm-cpu-run: ## Run the vLLM CPU container image
+	@./triton-dev-containers.sh $(CPU_RUNTIME_ARGS) -d $(CPU_IMAGE_NAME) -k vllm
+
+.PHONY: vllm-rocm-run
+vllm-rocm-run: ## Run the vLLM ROCm container image
+	@./triton-dev-containers.sh $(ROCM_RUNTIME_ARGS) -d $(ROCM_IMAGE_NAME) -k vllm
 
 ##@ Devcontainer
-
 .PHONY: devcontainers
 devcontainers: ## Generate all devcontainer.json files
 	@echo "Running devcontainer generation..."
@@ -186,3 +360,14 @@ clean-devcontainers: ## Remove generated devcontainer.json files
 .PHONY: devcontainers-help
 devcontainers-help: ## Show devcontainer help
 	$(MAKE) -C .devcontainer help
+
+##@ Runtime Script Installation
+.PHONY: install
+install: $(HOME)/.local/bin/triton-dev-containers ## Install the triton-dev-containers.sh runtime script
+
+$(HOME)/.local/bin/triton-dev-containers: triton-dev-containers.sh
+	install -m 0750 -D $< $@
+
+.PHONY: uninstall
+uninstall: ## Uninstall the triton-dev-containers.sh runtime script
+	rm -f $(HOME)/.local/bin/triton-dev-containers
