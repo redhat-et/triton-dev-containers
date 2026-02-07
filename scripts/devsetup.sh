@@ -24,6 +24,7 @@ declare -a SAVE_VARS=(
 	"DISPLAY"
 	"INSTALL_JUPYTER"
 	"INSTALL_LLVM"
+	"INSTALL_HELION"
 	"INSTALL_TOOLS"
 	"INSTALL_TORCH"
 	"INSTALL_TRITON"
@@ -76,4 +77,8 @@ fi
 
 if [ "${INSTALL_TORCH:-skip}" != "skip" ]; then
 	run_as_user devinstall_torch "$INSTALL_TORCH"
+fi
+
+if [ "${INSTALL_HELION:-skip}" != "skip" ]; then
+	run_as_user devinstall_helion "$INSTALL_HELION"
 fi
