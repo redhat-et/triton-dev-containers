@@ -26,6 +26,7 @@ declare -a SAVE_VARS=(
 	"INSTALL_JUPYTER"
 	"INSTALL_TOOLS"
 	"INSTALL_TRITON"
+	"INSTALL_VLLM"
 	"MAX_JOBS"
 	"PIP_TRITON_VERSION"
 	"ROCM_VERSION"
@@ -63,4 +64,8 @@ run_as_user devinstall_software
 
 if [ "${INSTALL_TRITON:-skip}" != "skip" ]; then
 	run_as_user devinstall_triton "$INSTALL_TRITON"
+fi
+
+if [ "${INSTALL_VLLM:-skip}" != "skip" ]; then
+	run_as_user devinstall_vllm "$INSTALL_VLLM"
 fi

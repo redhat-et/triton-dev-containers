@@ -64,6 +64,7 @@ WORKDIR /workspace
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
 
 COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
+COPY scripts/devinstall_vllm.sh /workspace/bin/devinstall_vllm
 COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
 COPY scripts/devsetup.sh /workspace/bin/devsetup
 COPY scripts/devinstall_software.sh /workspace/bin/devinstall_software

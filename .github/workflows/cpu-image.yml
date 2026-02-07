@@ -11,6 +11,7 @@ on: # yamllint disable-line rule:truthy
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
       - scripts/devinstall_triton.sh
+      - scripts/devinstall_vllm.sh
       - scripts/devcreate_user.sh
       - scripts/devsetup.sh
   pull_request:
@@ -21,6 +22,7 @@ on: # yamllint disable-line rule:truthy
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
       - scripts/devinstall_triton.sh
+      - scripts/devinstall_vllm.sh
       - scripts/devcreate_user.sh
       - scripts/devsetup.sh
   schedule:
