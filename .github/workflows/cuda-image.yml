@@ -1,12 +1,12 @@
-name: amd-image
+name: cuda-image
 
 on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
     paths:
-      - .github/workflows/amd-image.yml
-      - dockerfiles/Dockerfile.triton-amd
+      - .github/workflows/cuda-image.yml
+      - dockerfiles/Dockerfile.triton
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -19,8 +19,8 @@ on: # yamllint disable-line rule:truthy
       - scripts/devsetup.sh
   pull_request:
     paths:
-      - .github/workflows/amd-image.yml
-      - dockerfiles/Dockerfile.triton-amd
+      - .github/workflows/cuda-image.yml
+      - dockerfiles/Dockerfile.triton
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -36,12 +36,12 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  amd-image_build:
+  cuda-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
-      image-name: amd
-      image-tag: latest
-      dockerfile: dockerfiles/Dockerfile.triton-amd
+      image-name: cuda
+      image-tag: 13-2-centos10
+      dockerfile: dockerfiles/Dockerfile.cuda
       build-args: |
         USERNAME=triton
       platforms: linux/amd64
@@ -49,13 +49,13 @@ jobs:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
 
-  amd-image-sbom:
-    needs: amd-image_build
+  cuda-image-sbom:
+    needs: cuda-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
-      image-name: amd
-      image-tag: latest
+      image-name: cuda
+      image-tag: 13-2-centos10
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

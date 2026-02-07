@@ -13,7 +13,7 @@ on: # yamllint disable-line rule:truthy
         required: true
 
 jobs:
-  amd-image-sbom:
+  rocm-image-sbom:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,20 +39,20 @@ jobs:
       - name: Generate SBOM with Trivy
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
+          image-ref: quay.io/triton-dev-containers/rocm:${{ inputs.image-tag }}
           format: spdx-json
-          output: ./sbom-amd-${{ inputs.image-tag }}.spdx.json
+          output: ./sbom-rocm-${{ inputs.image-tag }}.spdx.json
 
       - name: Generate SBOM attestation with Cosign
         run: |
-          cosign attest -y --predicate ./sbom-amd-${{ inputs.image-tag }}.spdx.json quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
+          cosign attest -y --predicate ./sbom-rocm-${{ inputs.image-tag }}.spdx.json quay.io/triton-dev-containers/rocm:${{ inputs.image-tag }}
 
       - name: Compress SBOM
-        run: gzip ./sbom-amd-${{ inputs.image-tag }}.spdx.json
+        run: gzip ./sbom-rocm-${{ inputs.image-tag }}.spdx.json
 
       - name: Save SBOM as artifact
         uses: actions/upload-artifact@v7
         with:
-          name: sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
-          path: ./sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
+          name: sbom-rocm-${{ inputs.image-tag }}.spdx.json.gz
+          path: ./sbom-rocm-${{ inputs.image-tag }}.spdx.json.gz
           retention-days: 1

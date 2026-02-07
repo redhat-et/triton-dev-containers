@@ -1,39 +1,39 @@
-name: gosu-image
+name: base-image
 
 on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
     paths:
-      - .github/workflows/gosu-image.yml
-      - dockerfiles/Dockerfile.gosu
+      - .github/workflows/base-image.yml
+      - dockerfiles/Dockerfile
   pull_request:
     paths:
-      - .github/workflows/gosu-image.yml
-      - dockerfiles/Dockerfile.gosu
+      - .github/workflows/base-image.yml
+      - dockerfiles/Dockerfile
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
 
 jobs:
-  gosu-image-build:
+  base-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
-      image-name: gosu
-      image-tag: latest
-      dockerfile: dockerfiles/Dockerfile.gosu
+      image-name: base
+      image-tag: centos10
+      dockerfile: dockerfiles/Dockerfile
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
 
-  gosu-image-sbom:
-    needs: gosu-image-build
+  base-image-sbom:
+    needs: base-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
-      image-name: gosu
-      image-tag: latest
+      image-name: base
+      image-tag: centos10
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

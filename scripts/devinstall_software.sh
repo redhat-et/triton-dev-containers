@@ -81,6 +81,14 @@ fi
 EOF
 	$SUDO chmod +x /usr/local/bin/start_jupyter
 	echo "start_jupyter added!"
+
+	echo "Installing Jupyter Notebook export dependencies ..."
+	$SUDO dnf -y install pandoc texlive-adjustbox \
+		texlive-collection-fontsrecommended texlive-eurosym texlive-fontspec \
+		texlive-grffile texlive-jknapltx texlive-metafont texlive-parskip \
+		texlive-soul texlive-tcolorbox texlive-titling texlive-upquote \
+		texlive-ulem texlive-unicode-math texlive-xetex
+
 fi
 
 if ((${USE_CCACHE:-0} != 0)); then
@@ -112,6 +120,10 @@ export CUDA_HOME=/usr/local/cuda
 export PATH=/usr/local/cuda/bin:\$PATH
 EOF
 
+	if [ "${INSTALL_JUPYTER:-}" = "true" ]; then
+		pip_install jupyterlab-nvidia-nsight nvtx
+	fi
+
 	if [ "${INSTALL_TOOLS:-}" = "true" ]; then
 		echo "Installing NVIDIA Nsight ..."
 		$SUDO dnf -y install cublasmp "cuda-gdb-$CUDA_VERSION" \
@@ -125,8 +137,6 @@ EOF
 			"/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu" 100
 		$SUDO alternatives --install /usr/local/bin/ncu-ui ncu-ui \
 			"/opt/nvidia/nsight-compute/${COMPUTE_VERSION}/ncu-ui" 100
-
-		pip_install jupyterlab-nvidia-nsight nvtx
 	fi
 elif [ -n "${ROCM_VERSION:-}" ]; then
 	echo "Installing ROCm build dependencies ..."

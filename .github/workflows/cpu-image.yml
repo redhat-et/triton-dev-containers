@@ -6,7 +6,7 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/cpu-image.yml
-      - dockerfiles/Dockerfile.triton-cpu
+      - dockerfiles/Dockerfile.cpu
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -20,7 +20,7 @@ on: # yamllint disable-line rule:truthy
   pull_request:
     paths:
       - .github/workflows/cpu-image.yml
-      - dockerfiles/Dockerfile.triton-cpu
+      - dockerfiles/Dockerfile.cpu
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -40,8 +40,8 @@ jobs:
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: cpu
-      image-tag: latest
-      dockerfile: dockerfiles/Dockerfile.triton-cpu
+      image-tag: centos10
+      dockerfile: dockerfiles/Dockerfile.cpu
       build-args: |
         USERNAME=triton
       platforms: linux/amd64
@@ -55,7 +55,7 @@ jobs:
     uses: ./.github/workflows/image-sbom.yml
     with:
       image-name: cpu
-      image-tag: latest
+      image-tag: centos10
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
