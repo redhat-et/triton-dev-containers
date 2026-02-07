@@ -8,20 +8,18 @@ ARG TRITON_CPU_BACKEND=0
 ARG LLVM_TAG
 USER 0
 
+COPY scripts/devinstall_llvm.sh devinstall_llvm
+
 # Conditionally execute the build based on CUSTOM_LLVM
 RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf update -y && \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
         dnf clean all && rm -rf /var/cache/dnf && \
-        python3 -m pip install --upgrade pip && \
-        python3 -m pip install --upgrade cmake ninja sccache pybind11 && \
-        if [ ! -d "/llvm-project" ]; then \
-            git clone https://github.com/llvm/llvm-project /llvm-project; \
-        else \
-            cd /llvm-project && git fetch origin; \
-        fi && \
-        cd /llvm-project && \
-        python3 -m pip install -r mlir/python/requirements.txt && \
+        python3 -m pip install --upgrade uv && \
+        uv pip install --system --upgrade cmake ninja sccache pybind11 && \
+        export WORKSPACE=/usr/src && \
+        ./devinstall_llvm source && \
+        cd "/usr/src/llvm-project" && \
         REPO="triton"; \
         PROJECTS="mlir;llvm;lld"; \
         if [ "$TRITON_CPU_BACKEND" = "1" ]; then REPO="triton-cpu"; fi; \
@@ -63,8 +61,6 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
                 -DLLVM_INCLUDE_BENCHMARKS=OFF \
                 -DMLIR_ENABLE_EXECUTION_ENGINE:bool=OFF && \
             ninja install; \
-        else \
-            echo "LLVM is already up-to-date. Skipping rebuild."; \
         fi \
     else \
         echo "Skipping LLVM build because CUSTOM_LLVM is not true"; \

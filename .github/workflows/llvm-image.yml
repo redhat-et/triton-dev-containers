@@ -6,10 +6,12 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/llvm-image.yml
+      - scripts/devinstall_llvm.sh
       - dockerfiles/Dockerfile.llvm
   pull_request:
     paths:
       - .github/workflows/llvm-image.yml
+      - scripts/devinstall_llvm.sh
       - dockerfiles/Dockerfile.llvm
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
