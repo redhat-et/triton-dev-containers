@@ -29,6 +29,7 @@ declare -a SAVE_VARS=(
 	"INSTALL_TOOLS"
 	"INSTALL_TORCH"
 	"INSTALL_TRITON"
+	"INSTALL_VLLM"
 	"MAX_JOBS"
 	"PIP_HELION_INDEX_URL"
 	"PIP_HELION_VERSION"
@@ -37,6 +38,8 @@ declare -a SAVE_VARS=(
 	"PIP_TORCHAUDIO_VERSION"
 	"PIP_TORCH_INDEX_URL"
 	"PIP_TRITON_VERSION"
+	"PIP_VLLM_EXTRA_INDEX_URL"
+	"PIP_VLLM_VERSION"
 	"ROCM_VERSION"
 	"ROCR_VISIBLE_DEVICES"
 	"TORCH_GITREF"
@@ -45,6 +48,8 @@ declare -a SAVE_VARS=(
 	"TRITON_GITREF"
 	"USE_CCACHE"
 	"UV_TORCH_BACKEND"
+	"VLLM_COMMIT"
+	"VLLM_GITREF"
 	"WAYLAND_DISPLAY"
 	"WORKSPACE"
 	"XDG_RUNTIME_DIR"
@@ -84,4 +89,8 @@ fi
 
 if [ "${INSTALL_HELION:-skip}" != "skip" ]; then
 	run_as_user devinstall_helion "$INSTALL_HELION"
+fi
+
+if [ "${INSTALL_VLLM:-skip}" != "skip" ]; then
+	run_as_user devinstall_vllm "$INSTALL_VLLM"
 fi
