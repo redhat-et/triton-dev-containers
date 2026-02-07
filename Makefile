@@ -44,6 +44,9 @@ create_user ?=true
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 INSTALL_NSIGHT ?=false
 user_path ?=
+INSTALL_TRITON ?= source # Options: release, source, skip
+INSTALL_JUPYTER ?= true
+USE_CCACHE ?= 0
 
 # Modify image tag if CUSTOM_LLVM is enabled
 ifeq ($(CUSTOM_LLVM),true)
@@ -86,8 +89,7 @@ triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devc
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
 	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_IMAGE_LABEL=cpu-latest
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg TRITON_CPU_BACKEND=1 \
-		-f dockerfiles/Dockerfile.triton-cpu .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
@@ -120,7 +122,6 @@ define run_container
 	fi; \
 	if [ "$(strip $(1))" = "$(AMD_IMAGE_NAME)" ]; then \
 		gpu_args="--device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add=video --cap-add=SYS_PTRACE --ipc=host --env HIP_VISIBLE_DEVICES=$(HIP_DEVICES)"; \
-		profiling_args=""; \
 	elif [ "$(strip $(1))" = "$(NVIDIA_IMAGE_NAME)" ]; then \
 		if command -v nvidia-ctk >/dev/null 2>&1 && nvidia-ctk cdi list | grep -q "nvidia.com/gpu=all"; then \
 			gpu_args="--device nvidia.com/gpu=all"; \
@@ -146,7 +147,7 @@ define run_container
 	else \
 		port_arg=""; \
 	fi; \
-	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e DEMO_TOOLS=$(DEMO_TOOLS) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT)"; \
+	env_vars="-e USERNAME=$(USER) -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE)"; \
 	if [ "$(create_user)" = "true" ]; then \
 		$(CTR_CMD) run -e CREATE_USER=$(create_user) $$env_vars $$port_arg \
 		-e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` $$gpu_args $$profiling_args $$keep_ns_arg \
