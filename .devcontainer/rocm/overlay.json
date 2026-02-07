@@ -1,0 +1,28 @@
+{
+  "name": "ROCm",
+  "build": {
+    "args": {
+      "PYTHON_VERSION": "3.12",
+      "ROCR_VISIBLE_DEVICES": "${localEnv:ROCR_VISIBLE_DEVICES}",
+      "UBI_VERSION": "9"
+    }
+  },
+  "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/rocm/postStartCommand.sh",
+  "hostRequirements": {
+    "cpus": 8
+  },
+  "runArgs": [
+    "--device=/dev/kfd",
+    "--device=/dev/dri",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--security-opt=label=disable",
+    "--group-add=render,video",
+    "--cap-add=SYS_PTRACE",
+    "--ipc=host",
+    "--userns=keep-id:uid=1000,gid=1000"
+  ],
+  "containerEnv": {
+    "ROCR_VISIBLE_DEVICES": "${localEnv:ROCR_VISIBLE_DEVICES}"
+  }
+}

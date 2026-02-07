@@ -1,0 +1,25 @@
+{
+  "name": "CUDA",
+  "build": {
+    "args": {
+      "CUDA_VISIBLE_DEVICES": "${localEnv:CUDA_VISIBLE_DEVICES}",
+      "PYTHON_VERSION": "3.12",
+      "UBI_VERSION": "9"
+    }
+  },
+  "postStartCommand": "${containerWorkspaceFolder}/.devcontainer/cuda/postStartCommand.sh",
+  "hostRequirements": {
+    "cpus": 4,
+    "gpu": "optional"
+  },
+  "runArgs": [
+    "--runtime=nvidia",
+    "--gpus",
+    "all",
+    "--userns=keep-id:uid=1000,gid=1000",
+    "--security-opt=label=disable"
+  ],
+  "containerEnv": {
+    "CUDA_VISIBLE_DEVICES": "${localEnv:CUDA_VISIBLE_DEVICES}"
+  }
+}

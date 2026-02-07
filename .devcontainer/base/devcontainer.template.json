@@ -1,32 +1,32 @@
 {
-    "build": {
-      "dockerfile": "Dockerfile",
-      "args": {
-        "USERNAME": "${localEnv:USER}",
-        "USER_UID": "${localEnv:USER_UID}",
-        "USER_GID": "${localEnv:USER_GID}"
-      }
-    },
-    "remoteUser": "${localEnv:USER}",
-    "containerUser": "${localEnv:USER}",
-    "customizations": {
-      "vscode": {
-        "extensions": [
-          "ms-python.debugpy",
-          "ms-python.flake8",
-          "ms-python.python",
-          "ms-python.vscode-pylance",
-          "ms-vscode.cmake-tools",
-          "ms-vscode.cpptools",
-          "ms-vscode.cpptools-extension-pack",
-          "ms-vscode.cpptools-themes",
-          "twxs.cmake"
-        ]
-      }
-    },
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached,Z",
-    "workspaceFolder": "/workspace",
-    "updateRemoteUserUID": true,
-    "containerEnv": {},
-    "runArgs": []
-  }
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "USERNAME": "${localEnv:USER}",
+      "USER_UID": "${localEnv:USER_UID}",
+      "USER_GID": "${localEnv:USER_GID}"
+    }
+  },
+  "remoteUser": "${localEnv:USER}",
+  "containerUser": "${localEnv:USER}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.debugpy",
+        "ms-python.flake8",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "twxs.cmake"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached,Z",
+  "workspaceFolder": "/workspace",
+  "updateRemoteUserUID": true,
+  "containerEnv": {},
+  "runArgs": []
+}
