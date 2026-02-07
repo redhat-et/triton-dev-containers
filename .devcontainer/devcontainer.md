@@ -74,14 +74,14 @@ Once the script completes, there should be a `.devcontainer/` directory in the
 top-level of the repository being developed.
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/redhat-et/triton-dev-containers/main/.devcontainer/scripts/bootstrap-devcontainer.sh | bash -s triton-cpu
+wget -qO- https://raw.githubusercontent.com/redhat-et/triton-dev-containers/main/.devcontainer/scripts/bootstrap-devcontainer.sh | bash -s cpu
 ```
 
-> Replace `triton-cpu` (above) with one of the supported variants:
+> Replace `cpu` (above) with one of the supported variants:
 >
-> - `triton`
-> - `triton-cpu`
-> - `triton-amd`
+> - `cuda`
+> - `cpu`
+> - `rocm`
 
 #### Option 2: Clone Everything
 
@@ -127,23 +127,3 @@ and `03-matrix-multiplication-cpu.py`.
 ```bash
 python python/tutorials/01-vector-add.py
 ```
-
-## Building Triton with a Custom LLVM in Dev Container
-
-> **_NOTE_**: This setup takes a WHILE to complete
-
-To build Triton with a custom version of LLVM, please enable one of the following
-in the `devcontainer.json` file:
-
-```json
-"CUSTOM_LLVM": "true"
-```
-
-or
-
-```json
-"LLVM_TAG": "adba14acea99cc6a17d837763a3248c9d4a2fadf"
-```
-
-> Note: if you don't set the LLVM_TAG then the latest tag in `llvm-hash.txt`
-file will be used from the relevant Triton project.
