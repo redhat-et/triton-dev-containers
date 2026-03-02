@@ -37,7 +37,7 @@ jobs:
           password: ${{ secrets.qt_password }}
 
       - name: Generate SBOM with Trivy
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.2
         with:
           image-ref: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
           format: spdx-json
@@ -51,7 +51,7 @@ jobs:
         run: gzip ./sbom-amd-${{ inputs.image-tag }}.spdx.json
 
       - name: Save SBOM as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
           path: ./sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
