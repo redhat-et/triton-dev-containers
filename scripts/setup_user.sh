@@ -78,22 +78,22 @@ create_user() {
 		echo "Creating user $USERNAME with UID $USER_ID and GID $GROUP_ID"
 
 		# Create group if it doesn't exist
-		if ! getent group "$USER_GID" >/dev/null; then
-			groupadd --gid "$USER_GID" "$USERNAME"
+		if ! getent group "$GROUP_ID" >/dev/null; then
+			groupadd --gid "$GROUP_ID" "$USERNAME"
 		else # modify the name
-			gname=$(getent group "$USER_GID" | cut -d: -f1)
-			groupmod -g "$USER_GID" -n "$USERNAME" "$gname"
+			gname=$(getent group "$GROUP_ID" | cut -d: -f1)
+			groupmod -g "$GROUP_ID" -n "$USERNAME" "$gname"
 		fi
 
 		# Check if the UID is in use
-		if getent passwd "$USER_UID" >/dev/null; then
-			echo "Warning: UID $USER_UID is already in use. Creating the user with UID $DEFAULT_UID instead." >&2
-			USER_UID=$DEFAULT_UID
+		if getent passwd "$USER_ID" >/dev/null; then
+			echo "Warning: UID $USER_ID is already in use. Creating the user with UID $DEFAULT_UID instead." >&2
+			USER_ID=$DEFAULT_UID
 		fi
 
 		# Create user if it doesn't exist
 		if ! getent passwd "$USERNAME" >/dev/null; then
-			useradd --uid "$USER_UID" --gid "$USER_GID" -m "$USERNAME"
+			useradd --uid "$USER_ID" --gid "$GROUP_ID" -m "$USERNAME"
 		fi
 
 		# Add current (arbitrary) user to /etc/passwd and /etc/group
@@ -109,11 +109,11 @@ create_user() {
 
 fix_permissions() {
 	echo "Fixing permissions for user $USERNAME ..."
-	chown "$USERNAME:$USER_GID" -R "$HOME"
-	chown "$USERNAME:$USER_GID" -R /opt
-	chown "$USERNAME:$USER_GID" -R "$WORKSPACE"
-	mkdir -p "/run/user/$USER_UID"
-	chown "$USERNAME:$USER_GID" "/run/user/$USER_UID"
+	chown "$USERNAME:$GROUP_ID" -R "$HOME"
+	chown "$USERNAME:$GROUP_ID" -R /opt
+	chown "$USERNAME:$GROUP_ID" -R "$WORKSPACE"
+	mkdir -p "/run/user/$USER_ID"
+	chown "$USERNAME:$GROUP_ID" "/run/user/$USER_ID"
 }
 
 ##
