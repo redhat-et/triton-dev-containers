@@ -130,10 +130,13 @@ install_deps() {
 		echo "Installing torch for CPU"
 		pip_install "torch${PIP_TORCH_VERSION:-}" \
 			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cpu"
-	else
+	elif [ -n "${CUDA_VERSION:-}" ]; then
 		echo "Installing torch for CUDA version $CUDA_VERSION"
 		pip_install "torch${PIP_TORCH_VERSION:-}" \
 			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cu${CUDA_VERSION/[.-]/}"
+	else
+		echo "Installing torch ..."
+		pip_install "torch${PIP_TORCH_VERSION:-}"
 	fi
 }
 
