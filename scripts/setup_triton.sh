@@ -22,10 +22,10 @@ set -euo pipefail
 declare -a PIP_INSTALL_ARGS
 PIP_TORCH_INDEX_URL_BASE=https://download.pytorch.org/whl
 
+WORKSPACE=${WORKSPACE:-${HOME}}
+
 TRITON_DIR=${WORKSPACE}/triton
 TRITON_REPO=https://github.com/triton-lang/triton.git
-
-WORKSPACE=${WORKSPACE:-${HOME}}
 
 # Extract the major.minor version from ROCM_VERSION, e.g. 6.4 from 6.4.4
 get_rocm_version() {
