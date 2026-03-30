@@ -62,11 +62,13 @@ ENV BASH_ENV=/workspace/bin/activate \
 WORKDIR /workspace
 
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
-COPY scripts/setup_triton.sh setup_triton.sh
-COPY scripts/setup_user.sh setup_user.sh
-COPY scripts/setup.sh setup.sh
-COPY scripts/install_software.sh install_software.sh
-COPY scripts/ldpretend.sh ldpretend.sh
+
+COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
+COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
+COPY scripts/devsetup.sh /workspace/bin/devsetup
+COPY scripts/devinstall_software.sh /workspace/bin/devinstall_software
+COPY scripts/ldpretend.sh /workspace/bin/ldpretend
+
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY hack/triton-gpu-check.py triton-gpu-check.py
 

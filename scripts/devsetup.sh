@@ -57,11 +57,11 @@ run_as_user() {
 
 echo "Setting up the container environment ..."
 if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
-	./setup_user.sh
+	devcreate_user
 fi
 
-run_as_user ./install_software.sh
+run_as_user devinstall_software
 
 if [ "${INSTALL_TRITON:-skip}" != "skip" ]; then
-	run_as_user ./setup_triton.sh "$INSTALL_TRITON"
+	run_as_user devinstall_triton "$INSTALL_TRITON"
 fi

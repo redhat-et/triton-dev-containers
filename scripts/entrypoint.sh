@@ -19,7 +19,7 @@ trap "echo -e '\nScript interrupted. Exiting gracefully.'; exit 1" SIGINT
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-./setup.sh
+devsetup
 
 if [ -n "${USERNAME:-}" ]; then
 	exec gosu "$USERNAME" "$@"

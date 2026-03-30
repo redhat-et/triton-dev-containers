@@ -180,7 +180,7 @@ install_whl() {
 	pip_install -U --force-reinstall "${PIP_INSTALL_ARGS[@]}" "triton${PIP_TRITON_VERSION:-}"
 
 	# Fix up LD_LIBRARY_PATH for CUDA
-	"${WORKSPACE}"/ldpretend.sh
+	ldpretend
 }
 
 usage() {
