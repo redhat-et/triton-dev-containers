@@ -82,7 +82,6 @@ ENV BASH_ENV=/workspace/bin/activate \
 
 WORKDIR /workspace
 RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
-RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY scripts/setup_triton.sh setup_triton.sh
 COPY scripts/setup_user.sh setup_user.sh
