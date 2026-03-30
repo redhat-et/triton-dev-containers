@@ -15,7 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUSTOM_LLVM=false
-ARG CUDA_VERSION=12-8
+ARG BUILD_CUDA_VERSION=12-8
 
 FROM registry.access.redhat.com/ubi9/python-312 AS base
 ARG CUSTOM_LLVM
@@ -40,7 +40,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 
 # Use intermediate stage selection
 FROM llvm-local-${CUSTOM_LLVM} AS final
-ARG CUDA_VERSION
+ARG BUILD_CUDA_VERSION
 
 # Create the /workspace directory and set permissions
 WORKDIR /workspace
@@ -51,7 +51,7 @@ RUN python -m pip install uv && \
 
 ENV BASH_ENV=/workspace/bin/activate \
     ENV=/workspace/bin/activate \
-    CUDA_VERSION=${CUDA_VERSION} \
+    CUDA_VERSION=${BUILD_CUDA_VERSION} \
     PROMPT_COMMAND=". /workspace/bin/activate" \
     PYTHON_VERSION=3.12 \
     PATH=/workspace/bin:$PATH \

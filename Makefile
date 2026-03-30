@@ -47,6 +47,8 @@ user_path ?=
 INSTALL_TRITON ?= source # Options: release, source, skip
 INSTALL_JUPYTER ?= true
 USE_CCACHE ?= 0
+CUDA_VERSION ?= 12-8
+ROCM_VERSION ?= 6.2
 
 # Modify image tag if CUSTOM_LLVM is enabled
 ifeq ($(CUSTOM_LLVM),true)
@@ -83,7 +85,8 @@ gosu-image: image-builder-check ## Build the Triton gosu image
 .PHONY: triton-image
 triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg BUILD_CUDA_VERSION=$(CUDA_VERSION) \
+		-f dockerfiles/Dockerfile.triton .
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
@@ -94,7 +97,8 @@ triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-amd .
+		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg BUILD_ROCM_VERSION=$(ROCM_VERSION) \
+		-f dockerfiles/Dockerfile.triton-amd .
 
 ##@ Container Run
 # If you are on an OS that has the user in /etc/passwd then we can pass

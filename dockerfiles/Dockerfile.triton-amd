@@ -15,11 +15,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG CUSTOM_LLVM=false
-ARG ROCM_VERSION=6.2
+ARG BUILD_ROCM_VERSION=6.2
 
 # Base Stage with ROCm Installation
 FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG ROCM_VERSION
+ARG BUILD_ROCM_VERSION
 
 USER 0
 
@@ -27,7 +27,7 @@ USER 0
 RUN RHEL_VERSION=$(rpm --eval '%{rhel}') && \
     echo "[ROCm]" > /etc/yum.repos.d/rocm.repo && \
     echo "name=ROCm" >> /etc/yum.repos.d/rocm.repo && \
-    echo "baseurl=https://repo.radeon.com/rocm/rhel${RHEL_VERSION}/${ROCM_VERSION}/main" >> /etc/yum.repos.d/rocm.repo && \
+    echo "baseurl=https://repo.radeon.com/rocm/rhel${RHEL_VERSION}/${BUILD_ROCM_VERSION}/main" >> /etc/yum.repos.d/rocm.repo && \
     echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
     echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo && \
     dnf install -y llvm clang clang-libs lld && \
@@ -56,7 +56,7 @@ ENV TRITON_OFFLINE_BUILD=NO
 
 # Final Stage
 FROM llvm-local-${CUSTOM_LLVM} AS final
-ARG ROCM_VERSION
+ARG BUILD_ROCM_VERSION
 
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
@@ -71,7 +71,7 @@ ENV BASH_ENV=/workspace/bin/activate \
     PYTHON_VERSION=3.12 \
     PATH=/workspace/bin:$PATH \
     PYTHONUNBUFFERED=1 \
-    ROCM_VERSION=$ROCM_VERSION \
+    ROCM_VERSION=$BUILD_ROCM_VERSION \
     PIP_PREFIX=/workspace \
     PYTHONPATH=/workspace/lib/python3.12/site-packages \
     XDG_CACHE_HOME=/workspace \
