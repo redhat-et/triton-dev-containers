@@ -171,7 +171,7 @@ install_whl() {
 		PIP_TRITON_VERSION="==$PIP_TRITON_VERSION"
 	fi
 
-	pip_install "${PIP_INSTALL_ARGS[@]}" "triton${PIP_TRITON_VERSION:-}"
+	pip_install -U --force-reinstall "${PIP_INSTALL_ARGS[@]}" "triton${PIP_TRITON_VERSION:-}"
 
 	# Fix up LD_LIBRARY_PATH for CUDA
 	"${WORKSPACE}"/ldpretend.sh
