@@ -110,10 +110,10 @@ create_user() {
 fix_permissions() {
 	echo "Fixing permissions for user $USERNAME ..."
 	chown "$USERNAME:$GROUP_ID" -R "$HOME"
-	chown "$USERNAME:$GROUP_ID" -R /opt
-	chown "$USERNAME:$GROUP_ID" -R "$WORKSPACE"
-	mkdir -p "/run/user/$USER_ID"
-	chown "$USERNAME:$GROUP_ID" "/run/user/$USER_ID"
+	[[ -n "$WORKSPACE" && -d $WORKSPACE ]] && chown "$USERNAME:$GROUP_ID" -R "$WORKSPACE"
+
+	mkdir -p "/run/user/$USER_UID"
+	chown "$USERNAME:$USER_GID" "/run/user/$USER_UID"
 }
 
 ##
