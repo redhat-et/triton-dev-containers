@@ -60,7 +60,7 @@ ENV BASH_ENV=/workspace/bin/activate \
     UV_HTTP_TIMEOUT=60
 
 WORKDIR /workspace
-RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
 COPY scripts/setup_triton.sh setup_triton.sh
 COPY scripts/setup_user.sh setup_user.sh
@@ -69,5 +69,6 @@ COPY scripts/install_software.sh install_software.sh
 COPY scripts/ldpretend.sh ldpretend.sh
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY hack/triton-gpu-check.py triton-gpu-check.py
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
