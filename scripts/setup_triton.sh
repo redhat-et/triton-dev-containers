@@ -27,6 +27,11 @@ WORKSPACE=${WORKSPACE:-${HOME}}
 TRITON_DIR=${WORKSPACE}/triton
 TRITON_REPO=https://github.com/triton-lang/triton.git
 
+# Remove the dashes or periods from the CUDA version, e.g. 128 from 12-8
+get_cuda_version() {
+	echo "${CUDA_VERSION//[.-]/}"
+}
+
 # Extract the major.minor version from ROCM_VERSION, e.g. 6.4 from 6.4.4
 get_rocm_version() {
 	[[ "$ROCM_VERSION" =~ ^([0-9]+\.[0-9]+) ]] && echo "${BASH_REMATCH[1]}" ||
@@ -133,7 +138,7 @@ install_deps() {
 	elif [ -n "${CUDA_VERSION:-}" ]; then
 		echo "Installing torch for CUDA version $CUDA_VERSION"
 		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cu${CUDA_VERSION/[.-]/}"
+			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cu$(get_cuda_version)"
 	else
 		echo "Installing torch ..."
 		pip_install "torch${PIP_TORCH_VERSION:-}"
@@ -154,7 +159,7 @@ install_whl() {
 			UV_TORCH_BACKEND=cpu
 		elif [ -n "${CUDA_VERSION:-}" ]; then
 			echo "Using the torch CUDA version $CUDA_VERSION backend"
-			UV_TORCH_BACKEND="cu${CUDA_VERSION/[.-]/}"
+			UV_TORCH_BACKEND="cu$(get_cuda_version)"
 		else
 			echo "Using the torch auto backend"
 			UV_TORCH_BACKEND=auto
