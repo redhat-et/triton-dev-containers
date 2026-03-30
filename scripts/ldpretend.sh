@@ -24,6 +24,9 @@ PYTHON_CUDA_LDCONFIG_FILE=/etc/ld.so.conf.d/988-python-cuda.conf
 SUDO=''
 if ((EUID != 0)) && command -v sudo &>/dev/null; then
 	SUDO="sudo"
+elif ((EUID != 0)); then
+	echo "ERROR: $(basename "$0") requires root privileges or sudo." >&2
+	exit 1
 fi
 
 if [ -d "${PYTHONPATH}/nvidia" ]; then

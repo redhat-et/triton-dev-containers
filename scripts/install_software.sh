@@ -22,6 +22,9 @@ set -euo pipefail
 SUDO=''
 if ((EUID != 0)) && command -v sudo &>/dev/null; then
 	SUDO="sudo"
+elif ((EUID != 0)); then
+	echo "ERROR: $(basename "$0") requires root privileges or sudo." >&2
+	exit 1
 fi
 
 pip_install() {
