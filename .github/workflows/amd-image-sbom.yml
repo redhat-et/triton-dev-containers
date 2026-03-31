@@ -30,14 +30,14 @@ jobs:
         uses: sigstore/cosign-installer@main
 
       - name: Login to Quay
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: quay.io/triton-dev-containers
           username: ${{ secrets.qt_username }}
           password: ${{ secrets.qt_password }}
 
       - name: Generate SBOM with Trivy
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: quay.io/triton-dev-containers/amd:${{ inputs.image-tag }}
           format: spdx-json
@@ -51,7 +51,7 @@ jobs:
         run: gzip ./sbom-amd-${{ inputs.image-tag }}.spdx.json
 
       - name: Save SBOM as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
           path: ./sbom-amd-${{ inputs.image-tag }}.spdx.json.gz
