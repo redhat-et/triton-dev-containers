@@ -29,7 +29,7 @@ elif ((EUID != 0)); then
 	exit 1
 fi
 
-if [ -d "${PYTHONPATH}/nvidia" ]; then
+if [ -n "${PYTHONPATH:-}" ] && [ -d "${PYTHONPATH}/nvidia" ]; then
 	echo "Fixing the system not seeing the NVIDIA CUDA libraries installed from pip ..."
 	readarray -t cuda_libs < <(find "${PYTHONPATH}"/nvidia -iname '*.so*')
 

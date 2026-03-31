@@ -112,8 +112,8 @@ fix_permissions() {
 	chown "$USERNAME:$GROUP_ID" -R "$HOME"
 	[[ -n "$WORKSPACE" && -d $WORKSPACE ]] && chown "$USERNAME:$GROUP_ID" -R "$WORKSPACE"
 
-	mkdir -p "/run/user/$USER_UID"
-	chown "$USERNAME:$USER_GID" "/run/user/$USER_UID"
+	mkdir -p "/run/user/$USER_ID"
+	chown "$USERNAME:$GROUP_ID" "/run/user/$GROUP_ID"
 }
 
 ##
