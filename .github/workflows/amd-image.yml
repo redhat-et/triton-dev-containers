@@ -7,14 +7,22 @@ on: # yamllint disable-line rule:truthy
     paths:
       - .github/workflows/amd-image.yml
       - dockerfiles/Dockerfile.triton-amd
-      - entrypoint.sh
-      - users.sh
+      - scripts/entrypoint.sh
+      - scripts/devinstall_software.sh
+      - scripts/ldpretend.sh
+      - scripts/devinstall_triton.sh
+      - scripts/devcreate_user.sh
+      - scripts/devsetup.sh
   pull_request:
     paths:
       - .github/workflows/amd-image.yml
       - dockerfiles/Dockerfile.triton-amd
-      - entrypoint.sh
-      - users.sh
+      - scripts/entrypoint.sh
+      - scripts/devinstall_software.sh
+      - scripts/ldpretend.sh
+      - scripts/devinstall_triton.sh
+      - scripts/devcreate_user.sh
+      - scripts/devsetup.sh
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
