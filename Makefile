@@ -43,6 +43,9 @@ USERNAME ?=triton
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 INSTALL_NSIGHT ?=false
 user_path ?=
+torch_path ?=
+user_path ?=
+INSTALL_TORCH ?= skip # Options: nightly, release, source, skip, test
 INSTALL_TRITON ?= source # Options: release, source, skip
 INSTALL_JUPYTER ?= true
 USE_CCACHE ?= 0
@@ -113,6 +116,9 @@ define run_container
 	else \
 		volume_arg=""; \
 	fi; \
+	if [ -n "$(torch_path)" ]; then \
+		volume_arg+=" -v $(torch_path):/workspace/torch$(SELINUXFLAG)"; \
+	fi; \
 	if [ -n "$(user_path)" ]; then \
 		volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
 	fi; \
@@ -151,7 +157,10 @@ define run_container
 	else \
 		port_arg=""; \
 	fi; \
-	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
+	if [ "$(CUSTOM_LLVM)" = "false" ]; then \
+		install_llvm="-e INSTALL_LLVM=$(INSTALL_LLVM)"; \
+	fi; \
+	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TORCH=$(INSTALL_TORCH) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
 	if [ "$(STRIPPED_CMD)" = "docker" ]; then \
 		$(CTR_CMD) run $$env_vars $$gpu_args $$profiling_args $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \

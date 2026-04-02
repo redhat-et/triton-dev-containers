@@ -20,7 +20,6 @@ trap "echo -e '\nScript interrupted. Exiting gracefully.'; exit 1" SIGINT
 set -euo pipefail
 
 declare -a PIP_INSTALL_ARGS
-PIP_TORCH_INDEX_URL_BASE=https://download.pytorch.org/whl
 
 WORKSPACE=${WORKSPACE:-${HOME}}
 
@@ -123,27 +122,8 @@ install_deps() {
 	pip_install cmake ctypeslib2 matplotlib ninja \
 		numpy pandas pybind11 pytest pyyaml scipy tabulate wheel
 
-	if [ -n "${TORCH_VERSION:-}" ]; then
-		echo "Installing the specified version $TORCH_VERSION of torch"
-		PIP_TORCH_VERSION="==$TORCH_VERSION"
-	fi
-
-	if [ -n "${ROCM_VERSION:-}" ]; then
-		echo "Installing torch for ROCm version $ROCM_VERSION"
-		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/rocm$(get_rocm_version)"
-	elif ((${TRITON_CPU_BACKEND:-0} == 1)); then
-		echo "Installing torch for CPU"
-		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cpu"
-	elif [ -n "${CUDA_VERSION:-}" ]; then
-		echo "Installing torch for CUDA version $CUDA_VERSION"
-		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cu$(get_cuda_version)"
-	else
-		echo "Installing torch ..."
-		pip_install "torch${PIP_TORCH_VERSION:-}"
-	fi
+	echo "Installing Torch as a Triton dependency ..."
+	devinstall_torch release
 }
 
 install_whl() {

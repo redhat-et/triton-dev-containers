@@ -25,6 +25,7 @@ declare -a SAVE_VARS=(
 	"DISPLAY"
 	"INSTALL_JUPYTER"
 	"INSTALL_TOOLS"
+	"INSTALL_TORCH"
 	"INSTALL_TRITON"
 	"MAX_JOBS"
 	"PIP_TRITON_VERSION"
@@ -63,4 +64,8 @@ run_as_user devinstall_software
 
 if [ "${INSTALL_TRITON:-skip}" != "skip" ]; then
 	run_as_user devinstall_triton "$INSTALL_TRITON"
+fi
+
+if [ "${INSTALL_TORCH:-skip}" != "skip" ]; then
+	run_as_user devinstall_torch "$INSTALL_TORCH"
 fi
