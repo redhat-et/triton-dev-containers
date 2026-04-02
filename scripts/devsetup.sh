@@ -24,6 +24,7 @@ declare -a SAVE_VARS=(
 	"CUSTOM_LLVM"
 	"DISPLAY"
 	"INSTALL_JUPYTER"
+	"INSTALL_HELION"
 	"INSTALL_TOOLS"
 	"INSTALL_TRITON"
 	"MAX_JOBS"
@@ -60,6 +61,10 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 fi
 
 run_as_user devinstall_software
+
+if [ "${INSTALL_HELION:-skip}" != "skip" ]; then
+	run_as_user devinstall_helion "$INSTALL_HELION"
+fi
 
 if [ "${INSTALL_TRITON:-skip}" != "skip" ]; then
 	run_as_user devinstall_triton "$INSTALL_TRITON"
