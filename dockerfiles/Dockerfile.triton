@@ -32,7 +32,7 @@ RUN dnf -y update && \
 
 # Stage for llvm-local-true
 FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-project/install
+COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-install
 
 # Stage for llvm-local-false
 FROM base AS llvm-local-false
@@ -66,6 +66,7 @@ ENV BASH_ENV=/workspace/bin/activate \
 
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
 
+COPY scripts/devinstall_llvm.sh /workspace/bin/devinstall_llvm
 COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
 COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
 COPY scripts/devsetup.sh /workspace/bin/devsetup

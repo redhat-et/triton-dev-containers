@@ -42,7 +42,9 @@ gitconfig_path ?="$(HOME)/.gitconfig"
 USERNAME ?=triton
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 INSTALL_NSIGHT ?=false
+llvm_path ?=
 user_path ?=
+INSTALL_LLVM ?= skip # Options: source, skip
 INSTALL_TRITON ?= source # Options: release, source, skip
 INSTALL_JUPYTER ?= true
 USE_CCACHE ?= 0
@@ -113,6 +115,9 @@ define run_container
 	else \
 		volume_arg=""; \
 	fi; \
+	if [ -n "$(llvm_path)" ]; then \
+		volume_arg+=" -v $(llvm_path):/workspace/llvm-project$(SELINUXFLAG)"; \
+	fi; \
 	if [ -n "$(user_path)" ]; then \
 		volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
 	fi; \
@@ -151,12 +156,17 @@ define run_container
 	else \
 		port_arg=""; \
 	fi; \
+	if [ "$(CUSTOM_LLVM)" = "false" ]; then \
+		install_llvm="-e INSTALL_LLVM=$(INSTALL_LLVM)"; \
+	else \
+		install_llvm=""; \
+	fi; \
 	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
 	if [ "$(STRIPPED_CMD)" = "docker" ]; then \
-		$(CTR_CMD) run $$env_vars $$gpu_args $$profiling_args $$port_arg \
+		$(CTR_CMD) run $$env_vars $$gpu_args $$profiling_args $$install_llvm $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run $$env_vars $$keep_ns_arg $$gpu_args $$profiling_args $$port_arg \
+		$(CTR_CMD) run $$env_vars $$keep_ns_arg $$gpu_args $$profiling_args $$install_llvm $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef

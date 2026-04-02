@@ -49,7 +49,7 @@ ENV LC_ALL=C.UTF-8 \
 
 # LLVM Integration Stages
 FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-project/install
+COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-install
 
 FROM base AS llvm-local-false
 ENV TRITON_OFFLINE_BUILD=NO
@@ -84,6 +84,7 @@ WORKDIR /workspace
 
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
 
+COPY scripts/devinstall_llvm.sh /workspace/bin/devinstall_llvm
 COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
 COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
 COPY scripts/devsetup.sh /workspace/bin/devsetup
