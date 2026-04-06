@@ -15,8 +15,8 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         dnf update -y && \
         dnf -y install clang rpm-build git ninja-build cmake lld && \
         dnf clean all && rm -rf /var/cache/dnf && \
-        python3 -m pip install --upgrade uv && \
-        uv pip install --system --upgrade cmake ninja sccache pybind11 && \
+        python3 -m pip install --upgrade pip && \
+        pip install --upgrade cmake ninja sccache pybind11 && \
         export WORKSPACE=/usr/src && \
         ./devinstall_llvm source && \
         cd "/usr/src/llvm-project" && \
