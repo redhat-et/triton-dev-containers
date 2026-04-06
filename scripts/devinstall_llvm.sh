@@ -45,10 +45,12 @@ setup_src() {
 		else
 			pushd "$LLVM_DIR" 1>/dev/null || exit 1
 
-			# shellcheck source=/dev/null
-			[ -f "${HOME}"/.bashrc ] && source "${HOME}"/.bashrc
+			if [ -f "${HOME}"/.bashrc.d/00-triton_llvm_gitref.sh ]; then
+				LLVM_GITREF=$(grep LLVM_GITREF "${HOME}/.bashrc.d/00-triton_llvm_gitref.sh" | cut -d'=' -f 2)
+			fi
 
 			if [ -n "${LLVM_GITREF:-}" ]; then
+				echo "Checking out LLVM_GITREF $LLVM_GITREF ..."
 				git checkout "$LLVM_GITREF"
 			fi
 			popd 1>/dev/null
@@ -57,8 +59,15 @@ setup_src() {
 		echo "LLVM repo already present, not cloning ..."
 	fi
 
-	echo "Adding LLVM_BUILD_PATH to ${HOME}/.bashrc ..."
-	echo "export LLVM_BUILD_PATH=$LLVM_BUILD_PATH" >>"${HOME}/.bashrc.d/99-llvm_build_path.sh"
+	if [ "${CUSTOM_LLVM:-false}" = "true" ] && [ -d "/llvm-install" ]; then
+		echo "WARNING: A CUSTOM_LLVM has been installed to /llvm-install"
+		echo "${HOME}/.bashrc.d/00-custom_llvm.sh sets the LLVM environment variables to use it"
+		echo "Override with a new file (i.e. ${HOME}/.bashrc.d/99-llvm-project.sh) or update that one to point to this directory"
+	else
+		echo "Adding LLVM_BUILD_PATH to ${HOME}/.bashrc.d/00-llvm_project.sh ..."
+		echo "export LLVM_BUILD_PATH=$LLVM_BUILD_PATH" >>"${HOME}/.bashrc.d/00-llvm_project.sh"
+	fi
+
 }
 
 install_build_deps() {

@@ -110,15 +110,19 @@ create_user() {
 fix_permissions() {
 	echo "Fixing permissions for user $USERNAME ..."
 	chown "$USERNAME:$GROUP_ID" -R "$HOME"
-	[[ -n "$WORKSPACE" && -d $WORKSPACE ]] && chown "$USERNAME:$GROUP_ID" -R "$WORKSPACE"
+	[[ -n "${WORKSPACE:-}" && -d $WORKSPACE ]] && chown "$USERNAME:$GROUP_ID" -R "$WORKSPACE"
 
 	mkdir -p "/run/user/$USER_ID"
 	chown "$USERNAME:$GROUP_ID" "/run/user/$USER_ID"
 }
 
+get_user_home() {
+	grep "$USERNAME" /etc/passwd | cut -d':' -f 6
+}
+
 create_bashrc() {
 	if [ ! -f "${HOME}/.bashrc" ]; then
-		echo "Creating up ${HOME}/.bashrc ..."
+		echo "Setting up ${HOME}/.bashrc for user $USERNAME ..."
 		install -m 0644 -t "$HOME" \
 			/etc/skel/.bash_logout \
 			/etc/skel/.bash_profile \
@@ -136,15 +140,16 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 	echo "Creating user $USERNAME ..."
 	update_max_uid_gid
 	create_user
-	create_bashrc
-	fix_permissions
+	install_sudo
 
 	if [ -n "${ROCM_VERSION:-}" ]; then
 		echo "Adding the user $USERNAME to the video and render groups ..."
 		usermod -aG video,render "$USERNAME"
 	fi
 
-	install_sudo
+	export HOME=$(get_user_home)
+	create_bashrc
+	fix_permissions
 else
 	echo "No user specified or user is root, not creating a user ..."
 	create_bashrc
