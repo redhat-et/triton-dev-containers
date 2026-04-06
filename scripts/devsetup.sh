@@ -62,10 +62,10 @@ fi
 
 run_as_user devinstall_software
 
-if [ "${INSTALL_LLVM:-skip}" != "skip" ]; then
-	run_as_user devinstall_llvm "$INSTALL_LLVM"
-fi
-
 if [ "${INSTALL_TRITON:-skip}" != "skip" ]; then
 	run_as_user devinstall_triton "$INSTALL_TRITON"
+fi
+
+if [ "${INSTALL_LLVM:-skip}" != "skip" ]; then
+	run_as_user devinstall_llvm "$INSTALL_LLVM"
 fi
