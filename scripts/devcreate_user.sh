@@ -116,6 +116,18 @@ fix_permissions() {
 	chown "$USERNAME:$GROUP_ID" "/run/user/$USER_ID"
 }
 
+create_bashrc() {
+	if [ ! -f "${HOME}/.bashrc" ]; then
+		echo "Creating up ${HOME}/.bashrc ..."
+		install -m 0644 -t "$HOME" \
+			/etc/skel/.bash_logout \
+			/etc/skel/.bash_profile \
+			/etc/skel/.bashrc
+
+		mkdir -p ${HOME}/.bashrc.d
+	fi
+}
+
 ##
 ## Main
 ##
@@ -124,6 +136,7 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 	echo "Creating user $USERNAME ..."
 	update_max_uid_gid
 	create_user
+	create_bashrc
 	fix_permissions
 
 	if [ -n "${ROCM_VERSION:-}" ]; then
@@ -134,4 +147,5 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 	install_sudo
 else
 	echo "No user specified or user is root, not creating a user ..."
+	create_bashrc
 fi

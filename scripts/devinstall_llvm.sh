@@ -58,8 +58,7 @@ setup_src() {
 	fi
 
 	echo "Adding LLVM_BUILD_PATH to ${HOME}/.bashrc ..."
-	echo "export LLVM_BUILD_PATH=$LLVM_BUILD_PATH" >>"${HOME}/.bashrc"
-	echo "Run 'source ${HOME}/.bashrc' to update the current shell"
+	echo "export LLVM_BUILD_PATH=$LLVM_BUILD_PATH" >>"${HOME}/.bashrc.d/99-llvm_build_path.sh"
 }
 
 install_build_deps() {

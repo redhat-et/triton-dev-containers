@@ -75,13 +75,14 @@ setup_src() {
 			popd 1>/dev/null
 		fi
 
-		echo "Setting the LLVM_GITREF as specified by Triton ..."
-		tee -a "${HOME}/.bashrc" <<EOF
+		echo "Setting the LLVM_GITREF as specified by Triton to ${HOME}/.bashrc ..."
+		tee "${HOME}/.bashrc.d/00-triton_llvm_gitref.sh" <<EOF
 
 # Setting the LLVM Triton gitref
 export LLVM_GITREF=$(cat "${TRITON_DIR}/cmake/llvm-hash.txt")
 EOF
 
+		echo "Run 'source ${HOME}/.bashrc' to update the current shell"
 	else
 		echo "Triton repo already present, not cloning ..."
 	fi
@@ -95,7 +96,7 @@ install_build_deps() {
 	make dev-install-requires
 
 	if ((${USE_CCACHE:-0} != 0)); then
-		tee -a "${HOME}"/.bashrc <<EOF
+		tee "${HOME}/.bashrc.d/00-triton_ccache.sh" <<EOF
 
 # Use ccache when building Triton
 export TRITON_BUILD_WITH_CCACHE=true
@@ -108,7 +109,7 @@ EOF
 	if [ "${CUSTOM_LLVM:-false}" = "true" ]; then
 		if [ -d "/llvm-install" ]; then
 			echo "Using custom LLVM from /llvm-install"
-			tee -a "${HOME}/.bashrc" <<EOF
+			tee "${HOME}/.bashrc.d/00-custom_llvm.sh" <<EOF
 
 # Using custom LLVM
 export LLVM_BUILD_DIR="/llvm-install"

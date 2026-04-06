@@ -88,7 +88,7 @@ if ((${USE_CCACHE:-0} != 0)); then
 	$SUDO dnf -y install ccache
 
 	echo "Adding CCACHE environment variables to ${HOME}/.bashrc ..."
-	tee -a "${HOME}/.bashrc" <<EOF
+	tee "${HOME}/.bashrc.d/00-ccache.sh" <<EOF
 
 # Enable CCACHE use
 export CCACHE_DIR=${WORKSPACE}/.cache/ccache
@@ -108,7 +108,7 @@ if [ -n "${CUDA_VERSION:-}" ]; then
 		"cuda-cupti-$CUDA_VERSION" cudnn cudss "libcusparse-devel-$CUDA_VERSION"
 
 	echo "Adding CUDA paths to the user environment ..."
-	tee -a "${HOME}/.bashrc" <<EOF
+	tee "${HOME}/.bashrc.d/00-cuda_path.sh" <<EOF
 
 export CUDA_HOME=/usr/local/cuda
 export PATH=/usr/local/cuda/bin:\$PATH

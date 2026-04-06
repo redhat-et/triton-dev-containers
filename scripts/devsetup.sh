@@ -56,9 +56,8 @@ run_as_user() {
 ##
 
 echo "Setting up the container environment ..."
-if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
-	devcreate_user
-fi
+
+devcreate_user
 
 run_as_user devinstall_software
 
