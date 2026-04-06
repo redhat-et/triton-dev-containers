@@ -156,17 +156,12 @@ define run_container
 	else \
 		port_arg=""; \
 	fi; \
-	if [ "$(CUSTOM_LLVM)" = "false" ]; then \
-		install_llvm="-e INSTALL_LLVM=$(INSTALL_LLVM)"; \
-	else \
-		install_llvm=""; \
-	fi; \
-	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
+	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_LLVM=$(INSTALL_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
 	if [ "$(STRIPPED_CMD)" = "docker" ]; then \
-		$(CTR_CMD) run $$env_vars $$gpu_args $$profiling_args $$install_llvm $$port_arg \
+		$(CTR_CMD) run $$env_vars $$gpu_args $$profiling_args $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	elif [ "$(STRIPPED_CMD)" = "podman" ]; then \
-		$(CTR_CMD) run $$env_vars $$keep_ns_arg $$gpu_args $$profiling_args $$install_llvm $$port_arg \
+		$(CTR_CMD) run $$env_vars $$keep_ns_arg $$gpu_args $$profiling_args $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \
 	fi
 endef
