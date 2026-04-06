@@ -128,7 +128,7 @@ create_bashrc() {
 			/etc/skel/.bash_profile \
 			/etc/skel/.bashrc
 
-		mkdir -p ${HOME}/.bashrc.d
+		mkdir -p "${HOME}/.bashrc.d"
 	fi
 }
 
@@ -147,7 +147,8 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 		usermod -aG video,render "$USERNAME"
 	fi
 
-	export HOME=$(get_user_home)
+	HOME=$(get_user_home)
+	export HOME
 	create_bashrc
 	fix_permissions
 else
