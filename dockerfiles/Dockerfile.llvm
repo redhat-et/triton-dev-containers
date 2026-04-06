@@ -18,6 +18,7 @@ RUN if [ "$CUSTOM_LLVM" = "true" ]; then \
         python3 -m pip install --upgrade pip && \
         pip install --upgrade cmake ninja sccache pybind11 && \
         export WORKSPACE=/usr/src && \
+        mkdir -p "${HOME}/.bashrc.d" && \
         ./devinstall_llvm source && \
         cd "/usr/src/llvm-project" && \
         REPO="triton"; \
