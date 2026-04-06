@@ -44,7 +44,6 @@ setup_src() {
 			exit 1
 		else
 			pushd "$LLVM_DIR" 1>/dev/null || exit 1
-			git fetch origin
 
 			# shellcheck source=/dev/null
 			[ -f "${HOME}"/.bashrc ] && source "${HOME}"/.bashrc
