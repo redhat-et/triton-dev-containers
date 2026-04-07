@@ -60,19 +60,15 @@ setup_src() {
 		echo "LLVM repo already present, not cloning ..."
 	fi
 
-	if [ "${CUSTOM_LLVM:-false}" = "true" ] && [ -d "/llvm-install" ]; then
-		echo "WARNING: A CUSTOM_LLVM has been installed to /llvm-install"
-		echo "${HOME}/.bashrc.d/00-custom_llvm.sh sets the LLVM environment variables to use it"
-	else
-		echo "Setting LLVM local build variables in ${HOME}/.bashrc.d/00-llvm_project.sh ..."
-		tee "${HOME}/.bashrc.d/00-llvm_project.sh" <<EOF
+	echo "Setting LLVM local build variables in ${HOME}/.bashrc.d/00-llvm_project.sh ..."
+	tee "${HOME}/.bashrc.d/00-llvm_project.sh" <<EOF
 # Using local LLVM build
 export LLVM_BUILD_PATH="${LLVM_BUILD_PATH}"
 export LLVM_INSTALL_PATH="${LLVM_INSTALL_PATH}"
 EOF
-		if ((${USE_CCACHE:-0} != 0)); then
-			echo "export LLVM_CCACHE_BUILD=ON" >>"${HOME}/.bashrc.d/00-llvm_project.sh"
-		fi
+
+	if ((${USE_CCACHE:-0} != 0)); then
+		echo "export LLVM_CCACHE_BUILD=ON" >>"${HOME}/.bashrc.d/00-llvm_project.sh"
 	fi
 }
 

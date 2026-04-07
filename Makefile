@@ -21,13 +21,10 @@ help: ## Display this help.
 AMD_IMAGE_NAME ?=amd
 CPU_IMAGE_NAME ?=cpu
 CTR_CMD := $(or $(shell command -v podman), $(shell command -v docker))
-CUSTOM_LLVM ?=false
 DEMO_TOOLS ?= false
 NOTEBOOK_PORT ?= 8888
 HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
 IMAGE_REPO ?=quay.io/triton-dev-containers
-LLVM_IMAGE_LABEL ?= latest # Need a separate tag so we only update TRITON_TAG for custom builds
-LLVM_TAG ?=
 mkfile_path :=$(abspath $(lastword $(MAKEFILE_LIST)))
 NVIDIA_IMAGE_NAME ?=nvidia
 OS := $(shell uname -s)
@@ -52,15 +49,6 @@ CUDA_VERSION ?= 12-8
 ROCM_VERSION ?= 6.2
 MAX_JOBS ?= $(shell nproc --all)
 
-# Modify image tag if CUSTOM_LLVM is enabled
-ifeq ($(CUSTOM_LLVM),true)
-    TRITON_TAG := custom-llvm-$(TRITON_TAG)
-endif
-
-ifeq ($(TRITON_CPU_BACKEND),1)
-    LLVM_IMAGE_LABEL := cpu-$(LLVM_IMAGE_LABEL)
-endif
-
 ##@ Container Build
 .PHONY: image-builder-check
 image-builder-check: ## Verify if container runtime is available
@@ -72,34 +60,25 @@ image-builder-check: ## Verify if container runtime is available
 .PHONY: all
 all: triton-image triton-cpu-image triton-amd-image
 
-.PHONY: llvm-image
-llvm-image: image-builder-check ## Build the Triton LLVM image
-	$(CTR_CMD) build -t $(IMAGE_REPO)/llvm:$(LLVM_IMAGE_LABEL) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) \
-		--build-arg LLVM_TAG=$(LLVM_TAG) \
-		--build-arg TRITON_CPU_BACKEND=$(TRITON_CPU_BACKEND) \
-		-f dockerfiles/Dockerfile.llvm .
-
 .PHONY: gosu-image
 gosu-image: image-builder-check ## Build the Triton gosu image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/gosu:latest -f dockerfiles/Dockerfile.gosu .
 
 .PHONY: triton-image
-triton-image: image-builder-check gosu-image llvm-image ## Build the Triton devcontainer image
+triton-image: image-builder-check gosu-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg BUILD_CUDA_VERSION=$(CUDA_VERSION) \
+		--build-arg BUILD_CUDA_VERSION=$(CUDA_VERSION) \
 		-f dockerfiles/Dockerfile.triton .
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check gosu-image ## Build the Triton CPU image
-	$(MAKE) llvm-image CUSTOM_LLVM=$(CUSTOM_LLVM) TRITON_CPU_BACKEND=1 LLVM_IMAGE_LABEL=cpu-latest
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) -f dockerfiles/Dockerfile.triton-cpu .
+		-f dockerfiles/Dockerfile.triton-cpu .
 
 .PHONY: triton-amd-image
-triton-amd-image: image-builder-check gosu-image llvm-image ## Build the Triton AMD devcontainer image
+triton-amd-image: image-builder-check gosu-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(TRITON_TAG) \
-		--build-arg CUSTOM_LLVM=$(CUSTOM_LLVM) --build-arg BUILD_ROCM_VERSION=$(ROCM_VERSION) \
+		--build-arg BUILD_ROCM_VERSION=$(ROCM_VERSION) \
 		-f dockerfiles/Dockerfile.triton-amd .
 
 ##@ Container Run
@@ -156,7 +135,7 @@ define run_container
 	else \
 		port_arg=""; \
 	fi; \
-	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e CUSTOM_LLVM=$(CUSTOM_LLVM) -e INSTALL_LLVM=$(INSTALL_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
+	env_vars="-e USERNAME=$(USER) -e USER_UID=`id -u $(USER)` -e USER_GID=`id -g $(USER)` -e TORCH_VERSION=$(torch_version) -e INSTALL_LLVM=$(INSTALL_LLVM) -e INSTALL_TOOLS=$(DEMO_TOOLS) -e INSTALL_JUPYTER=$(INSTALL_JUPYTER) -e NOTEBOOK_PORT=$(NOTEBOOK_PORT) -e INSTALL_TRITON=$(INSTALL_TRITON) -e USE_CCACHE=$(USE_CCACHE) -e MAX_JOBS=$(MAX_JOBS)"; \
 	if [ "$(STRIPPED_CMD)" = "docker" ]; then \
 		$(CTR_CMD) run $$env_vars $$gpu_args $$profiling_args $$port_arg \
 		-ti $$volume_arg $$gitconfig_arg $(IMAGE_REPO)/$(strip $(1)):$(TRITON_TAG) bash; \

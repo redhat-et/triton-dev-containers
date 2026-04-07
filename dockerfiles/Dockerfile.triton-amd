@@ -14,12 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-ARG CUSTOM_LLVM=false
+FROM registry.access.redhat.com/ubi9/python-312
 ARG BUILD_ROCM_VERSION=6.2
-
-# Base Stage with ROCm Installation
-FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG BUILD_ROCM_VERSION
 
 USER 0
 
@@ -46,17 +42,6 @@ ENV LC_ALL=C.UTF-8 \
     ROCM_PATH=/opt/rocm \
     LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
     PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
-
-# LLVM Integration Stages
-FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-install
-
-FROM base AS llvm-local-false
-ENV TRITON_OFFLINE_BUILD=NO
-
-# Final Stage
-FROM llvm-local-${CUSTOM_LLVM} AS final
-ARG BUILD_ROCM_VERSION
 
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \

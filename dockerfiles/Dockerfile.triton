@@ -14,11 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-ARG CUSTOM_LLVM=false
+FROM registry.access.redhat.com/ubi9/python-312
 ARG BUILD_CUDA_VERSION=12-8
-
-FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG CUSTOM_LLVM
 
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 ARG NSIGHT_GUI=false
@@ -29,18 +26,6 @@ RUN dnf -y update && \
     dnf -y install clang cmake lld ninja-build openblas openblas-devel \
     llvm llvm-libs libomp libomp-devel sudo && \
     dnf clean all && rm -rf /var/cache/dnf
-
-# Stage for llvm-local-true
-FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-install
-
-# Stage for llvm-local-false
-FROM base AS llvm-local-false
-ENV TRITON_OFFLINE_BUILD=NO
-
-# Use intermediate stage selection
-FROM llvm-local-${CUSTOM_LLVM} AS final
-ARG BUILD_CUDA_VERSION
 
 # Create the /workspace directory and set permissions
 WORKDIR /workspace

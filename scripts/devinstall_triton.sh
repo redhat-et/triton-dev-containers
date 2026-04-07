@@ -101,22 +101,6 @@ EOF
 	fi
 
 	popd 1>/dev/null
-
-	if [ "${CUSTOM_LLVM:-false}" = "true" ]; then
-		if [ -d "/llvm-install" ]; then
-			echo "Setting custom LLVM from /llvm-install in ${HOME}/.bashrc.d/00-custom_llvm.sh ..."
-			tee "${HOME}/.bashrc.d/00-custom_llvm.sh" <<EOF
-# Using custom LLVM
-export LLVM_BUILD_DIR="/llvm-install"
-export LLVM_INCLUDE_DIRS="/llvm-install/include"
-export LLVM_LIBRARY_DIR="/llvm-install/lib"
-export LLVM_SYSPATH="/llvm-install"
-EOF
-		else
-			echo "Error: CUSTOM_LLVM=true but /llvm-install was not found." >&2
-			exit 1
-		fi
-	fi
 }
 
 install_deps() {

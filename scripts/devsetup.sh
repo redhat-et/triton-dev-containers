@@ -21,7 +21,6 @@ set -euo pipefail
 
 declare -a SAVE_VARS=(
 	"CUDA_VERSION"
-	"CUSTOM_LLVM"
 	"DISPLAY"
 	"INSTALL_JUPYTER"
 	"INSTALL_LLVM"
