@@ -117,19 +117,27 @@ fix_permissions() {
 }
 
 get_user_home() {
-	grep "$USERNAME" /etc/passwd | cut -d':' -f 6
+	local home_dir
+
+	home_dir=$(getent passwd "$USERNAME" | cut -d':' -f6)
+	if [ -n "${home_dir:-}" ]; then
+		echo "$home_dir"
+	else
+		echo "Error: could not resolve home directory for user $USERNAME." >&2
+		exit 1
+	fi
 }
 
-create_bashrc() {
+setup_bashrc() {
 	if [ ! -f "${HOME}/.bashrc" ]; then
 		echo "Setting up ${HOME}/.bashrc for user $USERNAME ..."
 		install -m 0644 -t "$HOME" \
 			/etc/skel/.bash_logout \
 			/etc/skel/.bash_profile \
 			/etc/skel/.bashrc
-
-		mkdir -p "${HOME}/.bashrc.d"
 	fi
+
+	mkdir -p "${HOME}/.bashrc.d"
 }
 
 ##
@@ -149,9 +157,9 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 
 	HOME=$(get_user_home)
 	export HOME
-	create_bashrc
+	setup_bashrc
 	fix_permissions
 else
 	echo "No user specified or user is root, not creating a user ..."
-	create_bashrc
+	setup_bashrc
 fi

@@ -38,12 +38,12 @@ torch_version ?=$(shell curl -s https://api.github.com/repos/pytorch/pytorch/rel
 TRITON_CPU_BACKEND ?=0
 TRITON_TAG ?= latest
 triton_path ?=$(source_dir)
+llvm_path ?=
+user_path ?=
 gitconfig_path ?="$(HOME)/.gitconfig"
 USERNAME ?=triton
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 INSTALL_NSIGHT ?=false
-llvm_path ?=
-user_path ?=
 INSTALL_LLVM ?= skip # Options: source, skip
 INSTALL_TRITON ?= source # Options: release, source, skip
 INSTALL_JUPYTER ?= true
