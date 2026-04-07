@@ -78,10 +78,10 @@ setup_src() {
 		echo "Triton repo already present, not cloning ..."
 	fi
 
-	echo "Setting LLVM_GITREF in ${HOME}/.bashrc.d/00-triton_llvm_gitref.sh ..."
-	tee "${HOME}/.bashrc.d/00-triton_llvm_gitref.sh" <<EOF
-# Setting the LLVM Triton gitref
-export LLVM_GITREF=$(cat "${TRITON_DIR}/cmake/llvm-hash.txt")
+	echo "Setting LLVM_COMMIT_HASH in ${HOME}/.bashrc.d/00-triton_llvm_commit_hash.sh ..."
+	tee "${HOME}/.bashrc.d/00-triton_llvm_commit_hash.sh" <<EOF
+# Set LLVM to the Triton LLVM commit hash
+export LLVM_COMMIT_HASH=$(cat "${TRITON_DIR}/cmake/llvm-hash.txt")
 EOF
 }
 
@@ -207,7 +207,6 @@ case $COMMAND in
 source)
 	setup_src
 	install_build_deps
-	install_deps
 	;;
 release)
 	install_deps

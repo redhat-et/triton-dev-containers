@@ -22,8 +22,9 @@ set -euo pipefail
 WORKSPACE=${WORKSPACE:-${HOME}}
 
 LLVM_DIR=${WORKSPACE}/llvm-project
+LLVM_BUILD_PATH=${LLVM_DIR}/build
+LLVM_INSTALL_PATH=${LLVM_DIR}/install
 LLVM_REPO=https://github.com/llvm/llvm-project.git
-LLVM_BUILD_PATH=$LLVM_DIR/build
 
 pip_install() {
 	if command -v uv &>/dev/null; then
@@ -45,8 +46,8 @@ setup_src() {
 		else
 			pushd "$LLVM_DIR" 1>/dev/null || exit 1
 
-			if [ -f "${HOME}"/.bashrc.d/00-triton_llvm_gitref.sh ]; then
-				LLVM_GITREF=$(grep LLVM_GITREF "${HOME}/.bashrc.d/00-triton_llvm_gitref.sh" | cut -d'=' -f 2)
+			if [ -f "${HOME}"/.bashrc.d/00-triton_llvm_commit_hash.sh ]; then
+				LLVM_GITREF=$(grep LLVM_COMMIT_HASH "${HOME}/.bashrc.d/00-triton_llvm_commit_hash.sh" | cut -d'=' -f 2)
 			fi
 
 			if [ -n "${LLVM_GITREF:-}" ]; then
@@ -62,12 +63,17 @@ setup_src() {
 	if [ "${CUSTOM_LLVM:-false}" = "true" ] && [ -d "/llvm-install" ]; then
 		echo "WARNING: A CUSTOM_LLVM has been installed to /llvm-install"
 		echo "${HOME}/.bashrc.d/00-custom_llvm.sh sets the LLVM environment variables to use it"
-		echo "Override with a new file (i.e. ${HOME}/.bashrc.d/99-llvm-project.sh) or update that one to point to this directory"
 	else
-		echo "Adding LLVM_BUILD_PATH to ${HOME}/.bashrc.d/00-llvm_project.sh ..."
-		echo "export LLVM_BUILD_PATH=$LLVM_BUILD_PATH" >>"${HOME}/.bashrc.d/00-llvm_project.sh"
+		echo "Setting LLVM local build variables in ${HOME}/.bashrc.d/00-llvm_project.sh ..."
+		tee "${HOME}/.bashrc.d/00-llvm_project.sh" <<EOF
+# Using local LLVM build
+export LLVM_BUILD_PATH="${LLVM_BUILD_PATH}"
+export LLVM_INSTALL_PATH="${LLVM_INSTALL_PATH}"
+EOF
+		if ((${USE_CCACHE:-0} != 0)); then
+			echo "export LLVM_CCACHE_BUILD=ON" >>"${HOME}/.bashrc.d/00-llvm_project.sh"
+		fi
 	fi
-
 }
 
 install_build_deps() {
