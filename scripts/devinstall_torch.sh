@@ -170,6 +170,9 @@ install_whl() {
 		if [ -n "${compute_platform:-}" ]; then
 			PIP_TORCH_INDEX_URL="${pip_torch_index_url_base}/${compute_platform}"
 			pip_install_args+=("--index-url" "$PIP_TORCH_INDEX_URL")
+		else
+			PIP_TORCH_INDEX_URL="${pip_torch_index_url_base}"
+			pip_install_args+=("--index-url" "$PIP_TORCH_INDEX_URL")
 		fi
 	fi
 
