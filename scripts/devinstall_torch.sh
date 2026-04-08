@@ -27,9 +27,6 @@ TORCH_REPO=https://github.com/pytorch/pytorch.git
 SUDO=''
 if ((EUID != 0)) && command -v sudo &>/dev/null; then
 	SUDO="sudo"
-elif ((EUID != 0)); then
-	echo "ERROR: $(basename "$0") requires root privileges or sudo." >&2
-	exit 1
 fi
 
 pip_install() {
@@ -89,7 +86,12 @@ install_build_deps() {
 		pip_install mkl-static mkl-include
 	fi
 
-	$SUDO dnf -y install numactl-devel
+	if ((EUID == 0)) || [ -n "${SUDO:-}" ]; then
+		$SUDO dnf -y install numactl-devel
+	else
+		echo "ERROR: Can't install some build deps without root or sudo permissions." >&2
+		exit 1
+	fi
 
 	if [ -n "${ROCM_VERSION:-}" ]; then
 		python tools/amd_build/build_amd.py
