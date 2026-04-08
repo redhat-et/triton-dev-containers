@@ -137,16 +137,6 @@ commands.
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
-### Building the vanilla containers with custom LLVM
-
-```sh
- make CUSTOM_LLVM=true [triton-image | triton-amd-image ]
-```
-
-> **_NOTE_**: this command will use the commit in `llvm-hash.txt` from the relevant
-Triton repo.
-> To use a specific tag also use LLVM_TAG=<commit-id>
-
 ### Using .devcontainers with VSCODE
 
 Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)

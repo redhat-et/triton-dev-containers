@@ -1,4 +1,4 @@
-# Copyright (C) 2024-2025 Red Hat, Inc.
+# Copyright (C) 2024-2026 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
-ARG CUSTOM_LLVM=false
 
-FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG CUSTOM_LLVM
+FROM registry.access.redhat.com/ubi9/python-312
+ARG BUILD_CUDA_VERSION=12-8
 
 # NOTE: Requires host build system to have a valid Red Hat Subscription if true
 ARG NSIGHT_GUI=false
@@ -26,30 +25,18 @@ USER 0
 RUN dnf -y update && \
     dnf -y install clang cmake lld ninja-build openblas openblas-devel \
     llvm llvm-libs libomp libomp-devel sudo && \
-    dnf clean all
-
-# Stage for llvm-local-true
-FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:latest /install /llvm-project/install
-
-# Stage for llvm-local-false
-FROM base AS llvm-local-false
-ENV TRITON_OFFLINE_BUILD=NO
-
-# Use intermediate stage selection
-FROM llvm-local-${CUSTOM_LLVM} AS final
+    dnf clean all && rm -rf /var/cache/dnf
 
 # Create the /workspace directory and set permissions
-RUN mkdir -p /workspace && \
-    python -m venv /workspace && \
+WORKDIR /workspace
+RUN python -m pip install uv && \
+    uv venv --python 3.12 --seed /workspace && \
     echo "unset BASH_ENV PROMPT_COMMAND ENV" >> /workspace/bin/activate && \
     chmod -R 777 /workspace
 
-# Create a symlink to the installed version of CUDA
-RUN ln -sf /usr/local/cuda-${CUDA_VERSION/-/.} /usr/local/cuda
-
 ENV BASH_ENV=/workspace/bin/activate \
     ENV=/workspace/bin/activate \
+    CUDA_VERSION=${BUILD_CUDA_VERSION} \
     PROMPT_COMMAND=". /workspace/bin/activate" \
     PYTHON_VERSION=3.12 \
     PATH=/workspace/bin:$PATH \
@@ -58,15 +45,23 @@ ENV BASH_ENV=/workspace/bin/activate \
     PYTHONPATH=/workspace/lib/python$PYTHON_VERSION/site-packages \
     XDG_CACHE_HOME=/workspace \
     TRITON_CACHE_DIR=/workspace/.triton/cache \
-    TRITON_HOME=/workspace/
+    TRITON_HOME=/workspace/ \
+    WORKSPACE=/workspace \
+    UV_HTTP_TIMEOUT=60
 
-WORKDIR /workspace
-RUN echo 'export LD_LIBRARY_PATH=/usr/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
-RUN echo "export MAX_JOBS=$(nproc --all)" >> "${HOME}"/.bashrc
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
-COPY dockerfiles/user.sh user.sh
-COPY dockerfiles/entrypoint.sh /entrypoint.sh
+
+COPY scripts/devinstall_llvm.sh /workspace/bin/devinstall_llvm
+COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
+COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
+COPY scripts/devsetup.sh /workspace/bin/devsetup
+COPY scripts/devinstall_software.sh /workspace/bin/devinstall_software
+COPY scripts/ldpretend.sh /workspace/bin/ldpretend
+
+COPY scripts/entrypoint.sh /entrypoint.sh
+
 COPY hack/triton-gpu-check.py triton-gpu-check.py
 COPY examples/flash_attention_demo.ipynb flash_attention_demo.ipynb
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]
