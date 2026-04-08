@@ -106,7 +106,7 @@ install_deps() {
 		numpy pandas pybind11 pytest pyyaml scipy tabulate wheel
 
 	if [ "${INSTALL_TORCH:-}" != "source" ]; then
-		if [ -n "${INSTALL_TORCH:-}" ]; then
+		if [ -n "${INSTALL_TORCH:-}" ] && [ "${INSTALL_TORCH}" != "skip" ]; then
 			echo "Installing Torch $INSTALL_TORCH as a dependency ..."
 			devinstall_torch "${INSTALL_TORCH}"
 		else
