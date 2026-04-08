@@ -21,9 +21,9 @@ set -euo pipefail
 
 declare -a SAVE_VARS=(
 	"CUDA_VERSION"
-	"CUSTOM_LLVM"
 	"DISPLAY"
 	"INSTALL_JUPYTER"
+	"INSTALL_LLVM"
 	"INSTALL_TOOLS"
 	"INSTALL_TRITON"
 	"MAX_JOBS"
@@ -55,12 +55,15 @@ run_as_user() {
 ##
 
 echo "Setting up the container environment ..."
-if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
-	devcreate_user
-fi
+
+devcreate_user
 
 run_as_user devinstall_software
 
 if [ "${INSTALL_TRITON:-skip}" != "skip" ]; then
 	run_as_user devinstall_triton "$INSTALL_TRITON"
+fi
+
+if [ "${INSTALL_LLVM:-skip}" != "skip" ]; then
+	run_as_user devinstall_llvm "$INSTALL_LLVM"
 fi

@@ -14,10 +14,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-ARG CUSTOM_LLVM=false
-
-FROM registry.access.redhat.com/ubi9/python-312 AS base
-ARG CUSTOM_LLVM
+FROM registry.access.redhat.com/ubi9/python-312
 
 USER 0
 
@@ -25,17 +22,6 @@ RUN dnf update -y && \
     dnf -y install clang cmake lld ninja-build \
     openblas openblas-devel llvm llvm-libs libomp libomp-devel && \
     dnf clean all && rm -rf /var/cache/dnf
-
-# Stage for llvm-local-true
-FROM base AS llvm-local-true
-COPY --from=quay.io/triton-dev-containers/llvm:cpu-latest /install /llvm-project/install
-
-# Stage for llvm-local-false
-FROM base AS llvm-local-false
-ENV TRITON_OFFLINE_BUILD=NO
-
-# Use intermediate stage selection
-FROM llvm-local-${CUSTOM_LLVM} AS final
 
 # Create the /workspace directory and set permissions
 RUN mkdir -p /workspace && \
@@ -63,6 +49,7 @@ WORKDIR /workspace
 
 COPY --from=quay.io/triton-dev-containers/gosu /usr/local/bin/gosu /usr/local/bin/gosu
 
+COPY scripts/devinstall_llvm.sh /workspace/bin/devinstall_llvm
 COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
 COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
 COPY scripts/devsetup.sh /workspace/bin/devsetup
