@@ -59,12 +59,13 @@ setup_src() {
 			exit 1
 		else
 			pushd "$TORCH_DIR" 1>/dev/null || exit 1
-			git submodule sync
-			git submodule update --init --recursive
 
 			if [ -n "${TORCH_GITREF:-}" ]; then
 				git checkout "$TORCH_GITREF"
 			fi
+
+			git submodule sync
+			git submodule update --init --recursive
 
 			echo "Install pre-commit hooks into your local Torch git repo (one-time)"
 			pip_install pre-commit
