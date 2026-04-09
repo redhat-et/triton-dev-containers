@@ -100,20 +100,45 @@ define run_container
 	else \
 		volume_arg=""; \
 	fi; \
-	if [ -n "$(llvm_path)" ] && [ -d "$(llvm_path)" ]; then \
-		volume_arg+=" -v $(llvm_path):/workspace/llvm-project$(SELINUXFLAG)"; \
+	if [ -n "$(llvm_path)" ]; then \
+		if [ -d "$(llvm_path)" ]; then \
+			volume_arg+=" -v $(llvm_path):/workspace/llvm-project$(SELINUXFLAG)"; \
+		else \
+			echo "ERROR: llvm_path does not exist: $(llvm_path)" >&2; \
+			exit 1; \
+		fi; \
 	fi; \
-	if [ -n "$(torch_path)" ] && [ -d "$(torch_path)" ]; then \
-		volume_arg+=" -v $(torch_path):/workspace/torch$(SELINUXFLAG)"; \
+	if [ -n "$(torch_path)" ]; then \
+		if [ -d "$(torch_path)" ]; then \
+			volume_arg+=" -v $(torch_path):/workspace/torch$(SELINUXFLAG)"; \
+		else \
+			echo "ERROR: torch_path does not exist: $(torch_path)" >&2; \
+			exit 1; \
+		fi; \
 	fi; \
-	if [ -n "$(helion_path)" ] && [ -d "$(helion_path)" ]; then \
-		volume_arg+=" -v $(helion_path):/workspace/helion$(SELINUXFLAG)"; \
+	if [ -n "$(helion_path)" ]; then \
+		if [ -d "$(helion_path)" ]; then \
+			volume_arg+=" -v $(helion_path):/workspace/helion$(SELINUXFLAG)"; \
+		else \
+			echo "ERROR: helion_path does not exist: $(helion_path)" >&2; \
+			exit 1; \
+		fi; \
 	fi; \
-	if [ -n "$(vllm_path)" ] && [ -d "$(vllm_path)" ]; then \
-		volume_arg+=" -v $(vllm_path):/workspace/vllm$(SELINUXFLAG)"; \
+	if [ -n "$(vllm_path)" ]; then \
+		if [ -d "$(vllm_path)" ]; then \
+			volume_arg+=" -v $(vllm_path):/workspace/vllm$(SELINUXFLAG)"; \
+		else \
+			echo "ERROR: vllm_path does not exist: $(vllm_path)" >&2; \
+			exit 1; \
+		fi; \
 	fi; \
-	if [ -n "$(user_path)" ] && [ -d "$(user_path)" ]; then \
-		volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
+	if [ -n "$(user_path)" ]; then \
+		if [ -d "$(user_path)" ]; then \
+			volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
+		else \
+			echo "ERROR: user_path does not exist: $(user_path)" >&2; \
+			exit 1; \
+		fi; \
 	fi; \
 	if [ "$(OS)" != "Darwin" ] && ! getent passwd $(USER) > /dev/null; then \
 		volume_arg+=" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro"; \
