@@ -117,7 +117,7 @@ install_whl() {
 
 	if [ -n "${PIP_HELION_INDEX_URL:-}" ]; then
 		echo "Using the specified index, $PIP_HELION_INDEX_URL"
-		pip_install_args+=("--index-url $PIP_HELION_INDEX_URL")
+		pip_install_args+=("--index-url" "$PIP_HELION_INDEX_URL")
 	fi
 
 	if [ -n "${PIP_HELION_VERSION:-}" ]; then
