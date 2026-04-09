@@ -25,11 +25,17 @@ declare -a SAVE_VARS=(
 	"INSTALL_JUPYTER"
 	"INSTALL_LLVM"
 	"INSTALL_TOOLS"
+	"INSTALL_TORCH"
 	"INSTALL_TRITON"
 	"MAX_JOBS"
+	"PIP_TORCH_VERSION"
+	"PIP_TORCHVISION_VERSION"
+	"PIP_TORCHAUDIO_VERSION"
+	"PIP_TORCH_INDEX_URL"
 	"PIP_TRITON_VERSION"
 	"ROCM_VERSION"
 	"ROCR_VISIBLE_DEVICES"
+	"TORCH_GITREF"
 	"TORCH_VERSION"
 	"TRITON_CPU_BACKEND"
 	"TRITON_GITREF"
@@ -66,4 +72,8 @@ fi
 
 if [ "${INSTALL_LLVM:-skip}" != "skip" ]; then
 	run_as_user devinstall_llvm "$INSTALL_LLVM"
+fi
+
+if [ "${INSTALL_TORCH:-skip}" != "skip" ]; then
+	run_as_user devinstall_torch "$INSTALL_TORCH"
 fi

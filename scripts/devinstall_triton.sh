@@ -19,9 +19,6 @@ trap "echo -e '\nScript interrupted. Exiting gracefully.'; exit 1" SIGINT
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-declare -a PIP_INSTALL_ARGS
-PIP_TORCH_INDEX_URL_BASE=https://download.pytorch.org/whl
-
 WORKSPACE=${WORKSPACE:-${HOME}}
 
 TRITON_DIR=${WORKSPACE}/triton
@@ -108,30 +105,20 @@ install_deps() {
 	pip_install cmake ctypeslib2 matplotlib ninja \
 		numpy pandas pybind11 pytest pyyaml scipy tabulate wheel
 
-	if [ -n "${TORCH_VERSION:-}" ]; then
-		echo "Installing the specified version $TORCH_VERSION of torch"
-		PIP_TORCH_VERSION="==$TORCH_VERSION"
-	fi
-
-	if [ -n "${ROCM_VERSION:-}" ]; then
-		echo "Installing torch for ROCm version $ROCM_VERSION"
-		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/rocm$(get_rocm_version)"
-	elif ((${TRITON_CPU_BACKEND:-0} == 1)); then
-		echo "Installing torch for CPU"
-		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cpu"
-	elif [ -n "${CUDA_VERSION:-}" ]; then
-		echo "Installing torch for CUDA version $CUDA_VERSION"
-		pip_install "torch${PIP_TORCH_VERSION:-}" \
-			--index-url "${PIP_TORCH_INDEX_URL_BASE}/cu$(get_cuda_version)"
-	else
-		echo "Installing torch ..."
-		pip_install "torch${PIP_TORCH_VERSION:-}"
+	if [ "${INSTALL_TORCH:-}" != "source" ]; then
+		if [ -n "${INSTALL_TORCH:-}" ] && [ "${INSTALL_TORCH}" != "skip" ]; then
+			echo "Installing Torch $INSTALL_TORCH as a dependency ..."
+			devinstall_torch "${INSTALL_TORCH}"
+		else
+			echo "Installing Torch as a dependency ..."
+			devinstall_torch release
+		fi
 	fi
 }
 
 install_whl() {
+	local -a pip_install_args
+
 	echo "Installing Triton from PyPI ..."
 
 	if command -v uv &>/dev/null; then
@@ -151,7 +138,7 @@ install_whl() {
 			UV_TORCH_BACKEND=auto
 		fi
 
-		PIP_INSTALL_ARGS+=("--torch-backend" "$UV_TORCH_BACKEND")
+		pip_install_args+=("--torch-backend" "$UV_TORCH_BACKEND")
 	elif ! command -v uv &>/dev/null && [ -n "${UV_TORCH_BACKEND:-}" ]; then
 		echo "Error: UV_TORCH_BACKEND is set to $UV_TORCH_BACKEND but uv is not available."
 		exit 1
@@ -162,7 +149,7 @@ install_whl() {
 		PIP_TRITON_VERSION="==$PIP_TRITON_VERSION"
 	fi
 
-	pip_install -U --force-reinstall "${PIP_INSTALL_ARGS[@]}" "triton${PIP_TRITON_VERSION:-}"
+	pip_install -U --force-reinstall "${pip_install_args[@]}" "triton${PIP_TRITON_VERSION:-}"
 
 	# Fix up LD_LIBRARY_PATH for CUDA
 	ldpretend
