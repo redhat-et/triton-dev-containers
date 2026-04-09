@@ -22,12 +22,16 @@ set -euo pipefail
 declare -a SAVE_VARS=(
 	"CUDA_VERSION"
 	"DISPLAY"
+	"HELION_GITREF"
 	"INSTALL_JUPYTER"
 	"INSTALL_LLVM"
+	"INSTALL_HELION"
 	"INSTALL_TOOLS"
 	"INSTALL_TORCH"
 	"INSTALL_TRITON"
 	"MAX_JOBS"
+	"PIP_HELION_INDEX_URL"
+	"PIP_HELION_VERSION"
 	"PIP_TORCH_VERSION"
 	"PIP_TORCHVISION_VERSION"
 	"PIP_TORCHAUDIO_VERSION"
@@ -76,4 +80,8 @@ fi
 
 if [ "${INSTALL_TORCH:-skip}" != "skip" ]; then
 	run_as_user devinstall_torch "$INSTALL_TORCH"
+fi
+
+if [ "${INSTALL_HELION:-skip}" != "skip" ]; then
+	run_as_user devinstall_helion "$INSTALL_HELION"
 fi
