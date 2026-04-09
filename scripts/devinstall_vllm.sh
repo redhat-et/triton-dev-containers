@@ -72,13 +72,21 @@ setup_src() {
 }
 
 install_build_deps() {
+	local -a pip_install_args
+
 	pushd "$VLLM_DIR" 1>/dev/null || exit 1
+
+	if command -v uv &>/dev/null; then
+		pip_install_args=("--prerelease=allow")
+	else
+		pip_install_args=("--pre")
+	fi
 
 	if [ "${INSTALL_TORCH:-}" = "source" ]; then
 		echo "Using existing torch source build ..."
 		python use_existing_torch.py
 	elif [ "${INSTALL_TORCH:-}" != "source" ]; then
-		if [ -n "${INSTALL_TORCH:-}" ]; then
+		if [ -n "${INSTALL_TORCH:-}" ] && [ "${INSTALL_TORCH}" != "skip" ]; then
 			echo "Installing Torch $INSTALL_TORCH as a dependency ..."
 			devinstall_torch "${INSTALL_TORCH}"
 		else
@@ -92,7 +100,7 @@ install_build_deps() {
 
 		if [ -e requirements/cuda.txt ]; then
 			echo "Installing vLLM CUDA build dependencies ..."
-			pip_install --prerelease=allow -r requirements/cuda.txt
+			pip_install "${pip_install_args[@]}" -r requirements/cuda.txt
 		fi
 	elif [ -n "${ROCM_VERSION:-}" ]; then
 		VLLM_TARGET_DEVICE=rocm
@@ -106,39 +114,42 @@ install_build_deps() {
 
 		if [ -e requirements/rocm.txt ]; then
 			echo "Installing vLLM ROCm build dependencies ..."
-			pip_install --prerelease=allow -r requirements/rocm.txt
+			pip_install "${pip_install_args[@]}" -r requirements/rocm.txt
 		fi
 	elif [ "${TRITON_CPU_BACKEND:-0}" -eq 1 ]; then
 		VLLM_TARGET_DEVICE=cpu
 
 		if [ -e requirements/cpu.txt ]; then
 			echo "Installing vLLM CPU build dependencies ..."
-			pip_install --prerelease=allow -r requirements/cpu.txt
+			pip_install "${pip_install_args[@]}" -r requirements/cpu.txt
 		fi
 	fi
 
 	if [ -f requirements/build.txt ]; then
 		echo "Installing vLLM build dependencies ..."
-		pip_install --prerelease=allow -r requirements/build.txt
+		pip_install "${pip_install_args[@]}" -r requirements/build.txt
 	fi
 
 	popd 1>/dev/null
 
-	echo "Set the target device for vLLM build ..."
-	tee -a "${HOME}/.bashrc" <<EOF
+	if [ -n "${VLLM_TARGET_DEVICE:-}" ]; then
+		echo "Set the target device for vLLM build ..."
+		tee -a "${HOME}/.bashrc" <<EOF
 
 # Target device for vLLM build
 export VLLM_TARGET_DEVICE=$VLLM_TARGET_DEVICE
 EOF
-	echo "Run 'source ${HOME}/.bashrc' before building vLLM"
+		echo "Run 'source ${HOME}/.bashrc' before building vLLM"
+	fi
 }
 
 install_whl() {
 	local pip_build="$1"
 
-	local pip_vllm_index_url_base
 	local -a pip_install_args
+	local pip_vllm_index_url_base
 
+	pip_install_args=("-U" "--force-reinstall")
 	pip_vllm_index_url_base="https://wheels.vllm.ai"
 
 	case "$pip_build" in
@@ -155,7 +166,7 @@ install_whl() {
 		pip_install_args+=("--extra-index-url" "$PIP_VLLM_EXTRA_INDEX_URL")
 	elif [ -n "${VLLM_COMMIT:-}" ]; then
 		echo "Using the build from commit $VLLM_COMMIT ..."
-		pip_install_args+=("--extra-index-url ${pip_vllm_index_url_base}/${VLLM_COMMIT}")
+		pip_install_args+=("--extra-index-url" "${pip_vllm_index_url_base}/${VLLM_COMMIT}")
 	elif command -v uv &>/dev/null; then
 		if [ -n "${UV_TORCH_BACKEND:-}" ]; then
 			echo "Using the specified uv backend, $UV_TORCH_BACKEND"
@@ -184,7 +195,7 @@ install_whl() {
 		PIP_VLLM_VERSION="==$PIP_VLLM_VERSION"
 	fi
 
-	pip_install -U --force-reinstall "${pip_install_args[@]}" "vllm${PIP_VLLM_VERSION:-}"
+	pip_install "${pip_install_args[@]}" "vllm${PIP_VLLM_VERSION:-}"
 
 	# Fix up LD_LIBRARY_PATH for CUDA
 	ldpretend

@@ -100,19 +100,19 @@ define run_container
 	else \
 		volume_arg=""; \
 	fi; \
-	if [ -n "$(llvm_path)" ]; then \
+	if [ -n "$(llvm_path)" ] && [ -d "$(llvm_path)" ]; then \
 		volume_arg+=" -v $(llvm_path):/workspace/llvm-project$(SELINUXFLAG)"; \
 	fi; \
-	if [ -n "$(torch_path)" ]; then \
+	if [ -n "$(torch_path)" ] && [ -d "$(torch_path)" ]; then \
 		volume_arg+=" -v $(torch_path):/workspace/torch$(SELINUXFLAG)"; \
 	fi; \
-	if [ -n "$(helion_path)" ]; then \
+	if [ -n "$(helion_path)" ] && [ -d "$(helion_path)" ]; then \
 		volume_arg+=" -v $(helion_path):/workspace/helion$(SELINUXFLAG)"; \
 	fi; \
-	if [ -n "$(vllm_path)" ]; then \
+	if [ -n "$(vllm_path)" ] && [ -d "$(vllm_path)" ]; then \
 		volume_arg+=" -v $(vllm_path):/workspace/vllm$(SELINUXFLAG)"; \
 	fi; \
-	if [ -n "$(user_path)" ]; then \
+	if [ -n "$(user_path)" ] && [ -d "$(user_path)" ]; then \
 		volume_arg+=" -v $(user_path):/workspace/user$(SELINUXFLAG)"; \
 	fi; \
 	if [ "$(OS)" != "Darwin" ] && ! getent passwd $(USER) > /dev/null; then \
