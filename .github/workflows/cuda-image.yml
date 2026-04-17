@@ -34,9 +34,14 @@ on: # yamllint disable-line rule:truthy
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
+  workflow_run:
+    workflows: ["base-image"]
+    types:
+        - completed
 
 jobs:
   cuda-image-build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: cuda
