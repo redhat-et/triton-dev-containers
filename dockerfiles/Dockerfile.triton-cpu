@@ -53,6 +53,7 @@ COPY scripts/devinstall_llvm.sh /workspace/bin/devinstall_llvm
 COPY scripts/devinstall_torch.sh /workspace/bin/devinstall_torch
 COPY scripts/devinstall_helion.sh /workspace/bin/devinstall_helion
 COPY scripts/devinstall_triton.sh /workspace/bin/devinstall_triton
+COPY scripts/devinstall_vllm.sh /workspace/bin/devinstall_vllm
 COPY scripts/devcreate_user.sh /workspace/bin/devcreate_user
 COPY scripts/devsetup.sh /workspace/bin/devsetup
 COPY scripts/devinstall_software.sh /workspace/bin/devinstall_software
