@@ -37,7 +37,7 @@ on: # yamllint disable-line rule:truthy
   workflow_run:
     workflows: ["base-image"]
     types:
-        - completed
+      - completed
 
 jobs:
   cpu-image-build:
