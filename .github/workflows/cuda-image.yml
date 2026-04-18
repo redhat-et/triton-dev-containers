@@ -49,6 +49,7 @@ jobs:
       dockerfile: dockerfiles/Dockerfile.cuda
       build-args: |
         USERNAME=triton
+        BUILD_CUDA_VERSION=13-2
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}

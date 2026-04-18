@@ -19,13 +19,13 @@ ARG BASE_IMAGE_TAG=centos10
 
 FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG} as base
 
-ARG BUILD_CUDA_VERSION=13-0
+ARG BUILD_CUDA_VERSION=13-2
 
 # Update and install base cuda dependencies
 RUN dnf -y update && \
     dnf -y install libglvnd-opengl libxkbfile \
     qt5-qtwayland xcb-util-cursor && \
-    dnf clean all && rm -rf /var/cache/dnf
+    dnf clean all
 
 ENV CUDA_VERSION=$BUILD_CUDA_VERSION
 

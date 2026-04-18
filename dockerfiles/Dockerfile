@@ -23,7 +23,7 @@ ARG GOSU_VERSION=1.19
 ENV GOSU_VERSION=${GOSU_VERSION}
 RUN microdnf update -y && \
     microdnf install -y wget && \
-    microdnf clean all && rm -rf /var/cache/dnf
+    microdnf clean all
 RUN set -eux; \
     rpmArch="$(rpm --query --queryformat='%{ARCH}' rpm)"; \
     case "$rpmArch" in \
@@ -37,9 +37,9 @@ RUN set -eux; \
     esac; \
     wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-$dpkgArch"; \
     chmod +x /usr/local/bin/gosu && \
-    rm -rf /var/cache/dnf /tmp/*
+    rm -rf /tmp/*
 
-FROM quay.io/centos/centos:${CENTOS_VERSION} AS base
+FROM quay.io/centos/centos:stream${CENTOS_VERSION} AS base
 
 ARG CENTOS_VERSION
 ARG PYTHON_VERSION=3.12
@@ -62,7 +62,7 @@ RUN dnf -y update && \
     dnf -y install clang cmake git glibc-langpack-en libxml2-devel \
     lld llvm llvm-libs libomp libomp-devel ninja-build openblas openblas-devel \
     python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip zlib-devel && \
-    dnf clean all && rm -rf /var/cache/dnf
+    dnf clean all
 
 # Create the /workspace directory and set permissions
 WORKDIR $WORKSPACE

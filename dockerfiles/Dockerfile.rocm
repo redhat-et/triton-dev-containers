@@ -23,7 +23,7 @@ ARG BUILD_ROCM_VERSION=7.2.1
 ARG AMDGPU_INSTALL_URL=https://repo.radeon.com/amdgpu-install/${BUILD_ROCM_VERSION}/rhel
 
 # Install the AMD ROCm Repo and GPG key
-RUN source /etc/os-release && \
+RUN set -o pipefail && source /etc/os-release && \
     if [ "$VERSION_ID" = "10.0" ]; then RHEL_VERSION=${VERSION_ID%.*}; else RHEL_VERSION=${VERSION_ID}; fi; \
     AMDGPU_INSTALL_RPM=$(curl -s ${AMDGPU_INSTALL_URL}/${RHEL_VERSION}/ | grep href | sed -e 's/.*href="//' -e 's/".*//' |grep "amdgpu-install-${BUILD_ROCM_VERSION%.*}.*${PLATFORM_ID#*:}.noarch.rpm") && \
     dnf -y install ${AMDGPU_INSTALL_URL}/${RHEL_VERSION}/${AMDGPU_INSTALL_RPM}
@@ -31,7 +31,7 @@ RUN source /etc/os-release && \
 # Install the ROCm rpms
 RUN dnf -y install --nodocs --setopt=install_weak_deps=False \
     amd-smi-lib rocminfo && \
-    dnf clean all && rm -rf /var/cache/yum
+    dnf clean all
 
 # Set environment variables for ROCm
 ENV ROCM_VERSION=$BUILD_ROCM_VERSION \
