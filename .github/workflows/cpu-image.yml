@@ -34,14 +34,21 @@ on: # yamllint disable-line rule:truthy
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
-  workflow_run:
-    workflows: ["base-image"]
-    types:
-      - completed
 
 jobs:
+  base-image-build:
+    uses: ./.github/workflows/image-build.yml
+    with:
+      image-name: base
+      image-tag: centos10
+      dockerfile: dockerfiles/Dockerfile
+      platforms: linux/amd64
+    secrets:
+      qt_username: ${{ secrets.qt_username }}
+      qt_password: ${{ secrets.qt_password }}
+
   cpu-image-build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: base-image-build
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: cpu
