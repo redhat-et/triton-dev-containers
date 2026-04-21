@@ -17,7 +17,7 @@
 ARG BASE_IMAGE_NAME=base
 ARG BASE_IMAGE_TAG=centos10
 
-FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG} as base
+FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}
 
 ENV TRITON_CPU_BACKEND=1
 

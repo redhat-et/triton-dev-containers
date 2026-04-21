@@ -17,7 +17,7 @@
 ARG BASE_IMAGE_NAME=base
 ARG BASE_IMAGE_TAG=centos10
 
-FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG} as base
+FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}
 
 ARG BUILD_ROCM_VERSION=7.2.1
 ARG AMDGPU_INSTALL_URL=https://repo.radeon.com/amdgpu-install/${BUILD_ROCM_VERSION}/rhel
