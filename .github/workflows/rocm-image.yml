@@ -36,19 +36,7 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  base-image-build:
-    uses: ./.github/workflows/image-build.yml
-    with:
-      image-name: base
-      image-tag: centos10
-      dockerfile: dockerfiles/Dockerfile
-      platforms: linux/amd64
-    secrets:
-      qt_username: ${{ secrets.qt_username }}
-      qt_password: ${{ secrets.qt_password }}
-
   rocm-image_build:
-    needs: base-image-build
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: rocm
