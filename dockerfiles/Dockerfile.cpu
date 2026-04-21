@@ -21,8 +21,6 @@ FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG} as base
 
 ENV TRITON_CPU_BACKEND=1
 
-COPY hack/triton-gpu-check.py triton-gpu-check.py
-
 COPY scripts/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]

@@ -1,4 +1,4 @@
-name: amd-image-sbom
+name: rocm-image-sbom
 
 on: # yamllint disable-line rule:truthy
   workflow_call:
