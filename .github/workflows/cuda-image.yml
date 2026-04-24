@@ -6,6 +6,7 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - .github/workflows/cuda-image.yml
+      - dockerfiles/Dockerfile
       - dockerfiles/Dockerfile.cuda
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
@@ -20,6 +21,7 @@ on: # yamllint disable-line rule:truthy
   pull_request:
     paths:
       - .github/workflows/cuda-image.yml
+      - dockerfiles/Dockerfile
       - dockerfiles/Dockerfile.cuda
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
