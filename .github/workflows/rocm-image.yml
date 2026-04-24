@@ -38,7 +38,7 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  rocm-image_build:
+  rocm-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: rocm
@@ -53,7 +53,7 @@ jobs:
       qt_password: ${{ secrets.qt_password }}
 
   rocm-image-sbom:
-    needs: rocm-image_build
+    needs: rocm-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
