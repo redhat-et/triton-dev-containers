@@ -24,13 +24,12 @@ IMAGE_REPO ?= quay.io/triton-dev-containers
 AMD_IMAGE_NAME ?= rocm
 CPU_IMAGE_NAME ?= cpu
 NVIDIA_IMAGE_NAME ?= cuda
-CENTOS_VERSION ?= 10
+CENTOS_VERSION ?= 9
+BASE_IMAGE_NAME ?= base
 BASE_IMAGE_TAG ?= centos$(CENTOS_VERSION)
 NVIDIA_IMAGE_TAG ?= $(CUDA_VERSION)-$(BASE_IMAGE_TAG)
 CPU_IMAGE_TAG ?= $(BASE_IMAGE_TAG)
 AMD_IMAGE_TAG ?= $(ROCM_VERSION)-$(BASE_IMAGE_TAG)
-DEMO_TOOLS ?= false
-INSTALL_TOOLS ?= $(DEMO_TOOLS)
 NOTEBOOK_PORT ?= 8888
 HIP_DEVICES := $(or $(HIP_VISIBLE_DEVICES), 0)
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -52,11 +51,15 @@ INSTALL_LLVM ?= skip # Options: source, skip
 INSTALL_TORCH ?= skip # Options: nightly, release, source, skip, test
 INSTALL_HELION ?= skip # Options: release, source, skip
 INSTALL_VLLM ?= skip # Options: nightly, release, source, skip
-INSTALL_NSIGHT ?= false
+DEMO_TOOLS ?= false
+INSTALL_TOOLS ?= $(DEMO_TOOLS)
+INSTALL_NSIGHT ?= $(INSTALL_TOOLS)
 INSTALL_JUPYTER ?= true
 USE_CCACHE ?= 0
-CUDA_VERSION ?= 13-2
-ROCM_VERSION ?= 7.2.1
+CUDA_VERSION ?= 12-9
+ROCM_VERSION ?= 7.1.1
+ROCM_RHEL_VERSION ?= 9.7
+GOSU_VERSION ?= 1.19
 MAX_JOBS ?= $(shell nproc --all)
 
 ##@ Container Build
@@ -74,23 +77,31 @@ all: triton-image triton-cpu-image triton-amd-image
 base-image: image-builder-check ## Build the Triton base image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/base:$(BASE_IMAGE_TAG) \
 	--build-arg CENTOS_VERSION=$(CENTOS_VERSION) \
+	--build-arg GOSU_VERSION=$(GOSU_VERSION) \
 	-f dockerfiles/Dockerfile .
 
 .PHONY: triton-image
 triton-image: image-builder-check base-image ## Build the Triton devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(NVIDIA_IMAGE_NAME):$(NVIDIA_IMAGE_TAG) \
+		--build-arg BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) \
+		--build-arg BASE_IMAGE_TAG=$(BASE_IMAGE_TAG) \
 		--build-arg BUILD_CUDA_VERSION=$(CUDA_VERSION) \
 		-f dockerfiles/Dockerfile.cuda .
 
 .PHONY: triton-cpu-image
 triton-cpu-image: image-builder-check base-image ## Build the Triton CPU image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(CPU_IMAGE_NAME):$(CPU_IMAGE_TAG) \
+		--build-arg BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) \
+		--build-arg BASE_IMAGE_TAG=$(BASE_IMAGE_TAG) \
 		-f dockerfiles/Dockerfile.cpu .
 
 .PHONY: triton-amd-image
 triton-amd-image: image-builder-check base-image ## Build the Triton AMD devcontainer image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(AMD_IMAGE_NAME):$(AMD_IMAGE_TAG) \
+		--build-arg BASE_IMAGE_NAME=$(BASE_IMAGE_NAME) \
+		--build-arg BASE_IMAGE_TAG=$(BASE_IMAGE_TAG) \
 		--build-arg BUILD_ROCM_VERSION=$(ROCM_VERSION) \
+		--build-arg BUILD_ROCM_RHEL_VERSION=$(ROCM_RHEL_VERSION) \
 		-f dockerfiles/Dockerfile.rocm .
 
 ##@ Container Run

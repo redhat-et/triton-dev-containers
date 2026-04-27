@@ -93,7 +93,6 @@ install_build_deps() {
 		tee "${HOME}/.bashrc.d/00-triton_ccache.sh" <<EOF
 # Use ccache when building Triton
 export TRITON_BUILD_WITH_CCACHE=true
-export TRITON_CACHE_DIR=${WORKSPACE}/.triton/cache
 EOF
 	fi
 

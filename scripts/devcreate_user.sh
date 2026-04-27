@@ -151,8 +151,12 @@ if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
 	install_sudo
 
 	if [ -n "${ROCM_VERSION:-}" ]; then
-		echo "Adding the user $USERNAME to the video and render groups ..."
-		usermod -aG video,render "$USERNAME"
+		for grp in video render; do
+			echo "Adding the user $USERNAME to the $grp group ..."
+			if grep -q $grp /etc/group; then
+				usermod -aG $grp "$USERNAME"
+			fi
+		done
 	fi
 
 	HOME=$(get_user_home)

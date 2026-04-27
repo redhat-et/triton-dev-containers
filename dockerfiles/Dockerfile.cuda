@@ -15,11 +15,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG BASE_IMAGE_NAME=base
-ARG BASE_IMAGE_TAG=centos10
+ARG BASE_IMAGE_TAG=centos9
 
 FROM quay.io/triton-dev-containers/${BASE_IMAGE_NAME}:${BASE_IMAGE_TAG}
 
-ARG BUILD_CUDA_VERSION=13-2
+ARG BUILD_CUDA_VERSION=12-9
 
 # Update and install base cuda dependencies
 RUN dnf -y update && \

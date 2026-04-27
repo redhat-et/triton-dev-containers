@@ -61,7 +61,7 @@ RUN dnf -y install 'dnf-command(config-manager)' && \
 RUN dnf -y update && \
     dnf -y install clang cmake git glibc-langpack-en libxml2-devel \
     lld llvm llvm-libs libomp libomp-devel ninja-build openblas openblas-devel \
-    python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip zlib-devel && \
+    python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip vim zlib-devel && \
     dnf clean all
 
 # Create the /workspace directory and set permissions
@@ -82,6 +82,7 @@ ENV BASH_ENV=${WORKSPACE}/bin/activate \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=${WORKSPACE}/lib/python${PYTHON_VERSION}/site-packages \
     TRITON_HOME=$WORKSPACE \
+    TRITON_CACHE_DIR=${WORKSPACE}/.triton/cache \
     CENTOS_VERSION=$CENTOS_VERSION \
     UV_HTTP_TIMEOUT=60 \
     WORKSPACE=$WORKSPACE \
