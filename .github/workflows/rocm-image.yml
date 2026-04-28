@@ -42,11 +42,11 @@ jobs:
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: rocm
-      image-tag: 7.2.1-centos10
+      image-tag: 7.1.1-centos9
       dockerfile: dockerfiles/Dockerfile.rocm
       build-args: |
         USERNAME=triton
-        BUILD_ROCM_VERSION=7.2.1
+        BUILD_ROCM_VERSION=7.1.1
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
@@ -58,7 +58,7 @@ jobs:
     uses: ./.github/workflows/image-sbom.yml
     with:
       image-name: rocm
-      image-tag: 7.2.1-centos10
+      image-tag: 7.1.1-centos9
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

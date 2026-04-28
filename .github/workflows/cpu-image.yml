@@ -42,7 +42,7 @@ jobs:
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: cpu
-      image-tag: centos10
+      image-tag: centos9
       dockerfile: dockerfiles/Dockerfile.cpu
       build-args: |
         USERNAME=triton
@@ -57,7 +57,7 @@ jobs:
     uses: ./.github/workflows/image-sbom.yml
     with:
       image-name: cpu
-      image-tag: centos10
+      image-tag: centos9
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

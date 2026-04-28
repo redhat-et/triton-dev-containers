@@ -40,7 +40,7 @@ jobs:
     uses: ./.github/workflows/image-build.yml
     with:
       image-name: base
-      image-tag: centos10
+      image-tag: centos9
       dockerfile: dockerfiles/Dockerfile
       platforms: linux/amd64
     secrets:
@@ -53,7 +53,7 @@ jobs:
     uses: ./.github/workflows/image-sbom.yml
     with:
       image-name: base
-      image-tag: centos10
+      image-tag: centos9
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
