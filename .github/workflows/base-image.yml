@@ -1,12 +1,12 @@
-name: amd-image
+name: base-image
 
 on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
     paths:
-      - .github/workflows/amd-image.yml
-      - dockerfiles/Dockerfile.triton-amd
+      - .github/workflows/base-image.yml
+      - dockerfiles/Dockerfile
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -19,8 +19,8 @@ on: # yamllint disable-line rule:truthy
       - scripts/devsetup.sh
   pull_request:
     paths:
-      - .github/workflows/amd-image.yml
-      - dockerfiles/Dockerfile.triton-amd
+      - .github/workflows/base-image.yml
+      - dockerfiles/Dockerfile
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -36,26 +36,26 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  amd-image_build:
+  base-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
-      image-name: amd
-      image-tag: latest
-      dockerfile: dockerfiles/Dockerfile.triton-amd
+      image-name: base
+      image-tag: centos9
+      dockerfile: dockerfiles/Dockerfile
       build-args: |
-        USERNAME=triton
+        CENTOS_VERSION=9
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
 
-  amd-image-sbom:
-    needs: amd-image_build
+  base-image-sbom:
+    needs: base-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
-      image-name: amd
-      image-tag: latest
+      image-name: base
+      image-tag: centos9
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

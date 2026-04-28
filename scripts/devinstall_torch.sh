@@ -116,10 +116,10 @@ install_whl() {
 	pip_torch_index_url_base="https://download.pytorch.org/whl"
 
 	case "$pip_build" in
-		release) ;;
-		nightly | test)
-			pip_torch_index_url_base="${pip_torch_index_url_base}/${pip_build}"
-			;;
+	release) ;;
+	nightly | test)
+		pip_torch_index_url_base="${pip_torch_index_url_base}/${pip_build}"
+		;;
 	esac
 
 	echo "Installing Torch $pip_build from PyPI ..."

@@ -1,13 +1,13 @@
-name: cpu-image
+name: cuda-image
 
 on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
     paths:
-      - .github/workflows/cpu-image.yml
+      - .github/workflows/cuda-image.yml
       - dockerfiles/Dockerfile
-      - dockerfiles/Dockerfile.cpu
+      - dockerfiles/Dockerfile.cuda
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -20,9 +20,9 @@ on: # yamllint disable-line rule:truthy
       - scripts/devsetup.sh
   pull_request:
     paths:
-      - .github/workflows/cpu-image.yml
+      - .github/workflows/cuda-image.yml
       - dockerfiles/Dockerfile
-      - dockerfiles/Dockerfile.cpu
+      - dockerfiles/Dockerfile.cuda
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -38,26 +38,27 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  cpu-image-build:
+  cuda-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
-      image-name: cpu
-      image-tag: centos9
-      dockerfile: dockerfiles/Dockerfile.cpu
+      image-name: cuda
+      image-tag: 12-9-centos9
+      dockerfile: dockerfiles/Dockerfile.cuda
       build-args: |
         USERNAME=triton
+        BUILD_CUDA_VERSION=12-9
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
 
-  cpu-image-sbom:
-    needs: cpu-image-build
+  cuda-image-sbom:
+    needs: cuda-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
-      image-name: cpu
-      image-tag: centos9
+      image-name: cuda
+      image-tag: 12-9-centos9
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}

@@ -1,12 +1,13 @@
-name: nvidia-image
+name: rocm-image
 
 on: # yamllint disable-line rule:truthy
   push:
     branches:
       - main
     paths:
-      - .github/workflows/nvidia-image.yml
-      - dockerfiles/Dockerfile.triton
+      - .github/workflows/rocm-image.yml
+      - dockerfiles/Dockerfile
+      - dockerfiles/Dockerfile.rocm
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -19,8 +20,9 @@ on: # yamllint disable-line rule:truthy
       - scripts/devsetup.sh
   pull_request:
     paths:
-      - .github/workflows/nvidia-image.yml
-      - dockerfiles/Dockerfile.triton
+      - .github/workflows/rocm-image.yml
+      - dockerfiles/Dockerfile
+      - dockerfiles/Dockerfile.rocm
       - scripts/entrypoint.sh
       - scripts/devinstall_software.sh
       - scripts/ldpretend.sh
@@ -36,26 +38,28 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  nvidia-image-build:
+  rocm-image-build:
     uses: ./.github/workflows/image-build.yml
     with:
-      image-name: nvidia
-      image-tag: latest
-      dockerfile: dockerfiles/Dockerfile.triton
+      image-name: rocm
+      image-tag: 7.1.1-centos9
+      dockerfile: dockerfiles/Dockerfile.rocm
       build-args: |
         USERNAME=triton
+        BUILD_ROCM_VERSION=7.1.1
+        BUILD_ROCM_RHEL_VERSION=9.7
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
 
-  nvidia-image-sbom:
-    needs: nvidia-image-build
+  rocm-image-sbom:
+    needs: rocm-image-build
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/image-sbom.yml
     with:
-      image-name: nvidia
-      image-tag: latest
+      image-name: rocm
+      image-tag: 7.1.1-centos9
     secrets:
       qt_username: ${{ secrets.qt_username }}
       qt_password: ${{ secrets.qt_password }}
