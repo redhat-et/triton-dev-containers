@@ -104,10 +104,10 @@ ROCR_VISIBLE_DEVICES ?= $(HIP_DEVICES)
 llvm_path      ?=
 helion_path    ?=
 torch_path     ?=
-triton_path    ?= "$(source_dir)"
+triton_path    ?= $(source_dir)
 user_path      ?=
 vllm_path      ?=
-gitconfig_path ?= "$(HOME)/.gitconfig"
+gitconfig_path ?= $(HOME)/.gitconfig
 
 # Wheel url for PyTorch
 PIP_TORCH_INDEX_URL ?=
