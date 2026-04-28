@@ -83,11 +83,11 @@ INSTALL_TOOLS   ?= false
 INSTALL_JUPYTER ?= true
 
 # Operation to perform for each framework (default is skip)
-INSTALL_LLVM   ?= skip                # [ source | skip ]
+INSTALL_LLVM   ?= skip              # [ source | skip ]
 INSTALL_HELION ?= skip              # [ source | release | nightly | skip ]
-INSTALL_TORCH  ?= skip               # [ source | release | nightly | test | skip ]
-INSTALL_TRITON ?= skip              # [ source | release | skip ]
-INSTALL_VLLM   ?= skip                # [ source | release | nightly | skip ]
+INSTALL_TORCH  ?= skip              # [ source | release | nightly | test | skip ]
+INSTALL_TRITON ?= source            # [ source | release | skip ]
+INSTALL_VLLM   ?= skip              # [ source | release | nightly | skip ]
 
 # Framework versions to install from PyPi (latest is default for Torch)
 PIP_HELION_VERSION ?=
