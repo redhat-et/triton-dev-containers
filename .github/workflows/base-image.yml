@@ -42,6 +42,8 @@ jobs:
       image-name: base
       image-tag: centos9
       dockerfile: dockerfiles/Dockerfile
+      build-args: |
+        CENTOS_VERSION=9
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}

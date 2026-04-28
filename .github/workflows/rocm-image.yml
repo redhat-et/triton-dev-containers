@@ -47,6 +47,7 @@ jobs:
       build-args: |
         USERNAME=triton
         BUILD_ROCM_VERSION=7.1.1
+        BUILD_ROCM_RHEL_VERSION=9.7
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
