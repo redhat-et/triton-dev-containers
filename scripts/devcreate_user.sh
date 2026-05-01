@@ -130,7 +130,7 @@ get_user_home() {
 
 setup_bashrc() {
 	if [ ! -f "${HOME}/.bashrc" ]; then
-		echo "Setting up ${HOME}/.bashrc for user $USERNAME ..."
+		echo "Setting up ${HOME}/.bashrc ..."
 		install -m 0644 -t "$HOME" \
 			/etc/skel/.bash_logout \
 			/etc/skel/.bash_profile \

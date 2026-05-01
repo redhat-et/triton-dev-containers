@@ -28,8 +28,8 @@ set -euo pipefail
 TARGET_DEVICE=base
 
 ## Image versions
-CENTOS_VERSION=10
-CUDA_VERSION=13-0
+CENTOS_VERSION=9
+CUDA_VERSION=12-9
 ROCM_VERSION=7.1.1
 
 DEFAULT_IMAGE_REPO=quay.io/triton-dev-containers
@@ -58,10 +58,11 @@ DELETE_ON_EXIT=false
 # Container runtime command option arrays
 declare -a CTR_ENV_OPTS
 declare -a CTR_DEVICE_OPTS
+declare -a CTR_GLOBAL_ARGS
 declare -a CTR_SECURITY_OPTS
 declare -a CTR_VOLUME_OPTS
 
-declare -A VOL_DIRS=(
+declare -A SRC_VOLS=(
 	["LLVM"]=llvm-project
 	["HELION"]=helion
 	["TRITON"]=triton
@@ -69,6 +70,8 @@ declare -A VOL_DIRS=(
 	["VLLM"]=vllm
 	["USER"]=user
 )
+
+declare -A VOL_PATHS
 
 declare -A OPTS=(
 	["INSTALL_JUPYTER"]="true | false"
@@ -171,11 +174,11 @@ setup_volumes() {
 	fi
 
 	# Custom source code path(s)
-	for vol in "${!VOL_DIRS[@]}"; do
-		vol_path=${vol}_PATH
-		if [ -n "${!vol_path:-}" ]; then
-			if [ -d "${!vol_path}" ]; then
-				CTR_VOLUME_OPTS+=("-v ${!vol_path}:/workspace/${VOL_DIRS[$vol]}${selinux_flag:-}")
+	for vol in "${!SRC_VOLS[@]}"; do
+		vol_path="${VOL_PATHS[$vol]:-}"
+		if [ -n "${vol_path:-}" ]; then
+			if [ -d "${vol_path}" ]; then
+				CTR_VOLUME_OPTS+=("-v ${vol_path}:/workspace/${SRC_VOLS[$vol]}${selinux_flag:-}")
 			else
 				echo "Specified $vol path, $vol_path, does not exist."
 				exit 1
@@ -195,7 +198,7 @@ setup_volumes() {
 }
 
 set_device_opts() {
-	case $TARGET_DEVICE in
+	case ${TARGET_DEVICE,,} in
 	rocm)
 		CTR_DEVICE_OPTS+=(
 			"--device=/dev/kfd"
@@ -258,11 +261,11 @@ set_user_args() {
 		set_env_var USER_UID "$(id -u "$USER")"
 		set_env_var USER_GID "$(id -g "$USER")"
 	elif [ "$(basename "$CTR_CMD")" = "docker" ]; then
-		CTR_ARGS=(
+		CTR_RUN_ARGS=(
 			"--user $(id -u):$(id -g)"
 		)
 	elif [ "$(basename "$CTR_CMD")" = "podman" ]; then
-		CTR_ARGS=(
+		CTR_RUN_ARGS=(
 			"--user $USER"
 		)
 	fi
@@ -290,7 +293,7 @@ while getopts "c:d:i:j:k:o:p:rs:t:u:hv" opt; do
 		TARGET_STACK=$OPTARG
 		;;
 	o)
-		SUBOPT=${OPTARG/=*/}
+		SUBOPT="${OPTARG/=*/}"
 		case "${SUBOPT^^}" in
 		CUDA_VERSION)
 			CUDA_VERSION="${OPTARG/*=/}"
@@ -356,7 +359,7 @@ while getopts "c:d:i:j:k:o:p:rs:t:u:hv" opt; do
 			set_env_var UV_TORCH_BACKEND "${OPTARG/*=/}"
 			;;
 		*)
-			echo "Unknown option ${OPTARG}."
+			echo "Unknown option, ${OPTARG}."
 			exit 1
 			;;
 		esac
@@ -364,51 +367,34 @@ while getopts "c:d:i:j:k:o:p:rs:t:u:hv" opt; do
 	p)
 		INSTALL_JUPYTER=true
 		if [ "${OPTARG^^}" = "AUTO" ]; then
-			JUPYTER_NOTEBOOK_PORT=$DEFAULT_PORT
+			JUPYTER_NOTEBOOK_PORT="$DEFAULT_PORT"
 		else
-			JUPYTER_NOTEBOOK_PORT=$OPTARG
+			JUPYTER_NOTEBOOK_PORT="$OPTARG"
 		fi
 		;;
 	r)
 		DELETE_ON_EXIT=true
 		;;
 	s)
-		SUBOPT=${OPTARG/=*/}
-		case "${SUBOPT^^}" in
-		LLVM)
-			LLVM_PATH="${OPTARG/*=/}"
-			set_env_var "INSTALL_LLVM" source
-			;;
-		HELION)
-			HELION_PATH="${OPTARG/*=/}"
-			set_env_var "INSTALL_HELION" source
-			;;
-		TORCH)
-			TORCH_PATH="${OPTARG/*=/}"
-			set_env_var "INSTALL_TORCH" source
-			;;
-		TRITON)
-			TRITON_PATH="${OPTARG/*=/}"
-			set_env_var "INSTALL_TRITON" source
-			;;
-		VLLM)
-			VLLM_PATH="${OPTARG/*=/}"
-			set_env_var "INSTALL_VLLM" source
-			;;
-		USER)
-			USER_PATH="${OPTARG/*=/}"
+		SUBOPT="${OPTARG/=*/}"
+		case ${SUBOPT,,} in
+		llvm | helion | torch | triton | vllm | user)
+			VOL_PATHS["${SUBOPT^^}"]="${OPTARG/*=/}"
+			if [ "${SUBOPT^^}" != "USER" ]; then
+				set_env_var "INSTALL_${SUBOPT^^}" source
+			fi
 			;;
 		*)
-			echo "Unknown source path $OPTARG"
+			echo "Unknown source path, $OPTARG"
 			exit 1
 			;;
 		esac
 		;;
 	t)
-		IMAGE_TAG=$OPTARG
+		IMAGE_TAG="$OPTARG"
 		;;
 	u)
-		USERNAME=$OPTARG
+		USERNAME="$OPTARG"
 		;;
 	h)
 		usage
@@ -418,7 +404,7 @@ while getopts "c:d:i:j:k:o:p:rs:t:u:hv" opt; do
 		set -x
 		;;
 	*)
-		echo "Unknown option $opt."
+		echo "Unknown option, $opt."
 		exit 1
 		;;
 	esac
@@ -458,7 +444,7 @@ set_user_args
 
 # Set stack options
 if [ -n "${TARGET_STACK:-}" ]; then
-	case $TARGET_STACK in
+	case ${TARGET_STACK,,} in
 	helion)
 		set_env_var INSTALL_HELION "source"
 		set_env_var INSTALL_TORCH "release"
@@ -480,7 +466,7 @@ if [ -n "${TARGET_STACK:-}" ]; then
 	esac
 fi
 
-CTR_ARGS+=(
+CTR_RUN_ARGS+=(
 	"${CTR_ENV_OPTS[@]:-}"
 	"${CTR_DEVICE_OPTS[@]:-}"
 	"${CTR_PORT_OPT:-}"
@@ -489,16 +475,16 @@ CTR_ARGS+=(
 )
 
 if [ -n "${REMOTE_CONNECTION:-}" ]; then
-	CTR_CONNECTION="-r -c $REMOTE_CONNECTION"
+	CTR_GLOBAL_ARGS+=("-r" "-c $REMOTE_CONNECTION")
 fi
 
 if [ "${DELETE_ON_EXIT:-}" = "true" ]; then
-	CTR_ARGS+=("--rm")
+	CTR_RUN_ARGS+=("--rm")
 fi
 
 IMAGE=${IMAGE:-${DEFAULT_IMAGE_REPO}/${TARGET_DEVICE}:${IMAGE_TAG:-${DEFAULT_IMAGE_TAG}}}
 
 printf "Running container image: %s with %s\n" "$IMAGE" "$CTR_CMD"
-printf "%s %s run -ti %s %s bash\n" "$CTR_CMD" "${CTR_CONNECTION:-}" \
-	"${CTR_ARGS[*]}" "$IMAGE"
-$CTR_CMD ${CTR_CONNECTION:-} run -ti ${CTR_ARGS[@]} "${IMAGE}" bash
+printf "%s %s run -ti %s %s bash\n" "$CTR_CMD" "${CTR_GLOBAL_ARGS[*]}" \
+	"${CTR_RUN_ARGS[*]}" "$IMAGE"
+$CTR_CMD "${CTR_GLOBAL_ARGS[@]}" run -ti ${CTR_RUN_ARGS[@]} "${IMAGE}" bash

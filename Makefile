@@ -23,11 +23,8 @@ help: ## Display this help.
 # System environment and tooling
 # ------------------------------------------------------------------------------
 CTR_CMD      := $(or $(shell command -v podman), $(shell command -v docker))
-STRIPPED_CMD := $(shell basename $(CTR_CMD))
-OS           := $(shell uname -s)
 mkfile_path  := $(abspath $(lastword $(MAKEFILE_LIST)))
 source_dir   := $(dir $(mkfile_path))
-SELINUXFLAG  := $(shell if [ "$(shell getenforce 2> /dev/null)" == "Enforcing" ]; then echo ":z"; fi)
 
 # ------------------------------------------------------------------------------
 # Buildtime configuration
@@ -97,8 +94,7 @@ PIP_VLLM_VERSION   ?=
 
 # Device indices (NVIDIA and AMD)
 CUDA_VISIBLE_DEVICES ?=
-HIP_DEVICES          ?= $(or $(HIP_VISIBLE_DEVICES), 0)
-ROCR_VISIBLE_DEVICES ?= $(HIP_DEVICES)
+ROCR_VISIBLE_DEVICES ?=
 
 # Source code paths
 llvm_path      ?=
@@ -122,10 +118,6 @@ PIP_VLLM_EXTRA_INDEX_URL ?=
 PIP_VLLM_COMMIT ?=
 
 create_user ?= $(USER)
-
-TRITON_CPU_BACKEND ?= 0
-
-USERNAME ?= triton
 
 USE_CCACHE ?= 0
 
@@ -218,7 +210,7 @@ ifneq ($(vllm_path), )
 endif
 
 ifneq ($(gitconfig_path), )
-	RUNTIME_ARGS += -s GITCONFIG=$(gitconfig_path)
+	RUNTIME_ARGS += -o GITCONFIG=$(gitconfig_path)
 endif
 
 ifeq ($(INSTALL_JUPYTER),true)
@@ -271,6 +263,10 @@ endif
 
 ifneq ($(PIP_VLLM_COMMIT), )
 	RUNTIME_ARGS += -o PIP_VLLM_COMMIT=$(PIP_VLLM_COMMIT)
+endif
+
+ifneq ($(USE_CCACHE), )
+	RUNTIME_ARGS += -o USE_CCACHE=$(USE_CCACHE)
 endif
 
 ifneq ($(create_user), )
