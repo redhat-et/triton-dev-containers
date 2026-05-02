@@ -210,7 +210,7 @@ ifneq ($(vllm_path), )
 endif
 
 ifneq ($(gitconfig_path), )
-	RUNTIME_ARGS += -o GITCONFIG=$(gitconfig_path)
+	RUNTIME_ARGS += -s GITCONFIG=$(gitconfig_path)
 endif
 
 ifeq ($(INSTALL_JUPYTER),true)
