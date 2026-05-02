@@ -149,7 +149,7 @@ Options
         ROCR_VISIBLE_DEVICES         List of AMD device indices or UUIDs (i.e. 0,GPU-DEADBEEFDEADBEEF)
         USE_CCACHE                   Enable ccache [ 0 | 1 ] (Default: ${DEFAULT_ENV_OPTS["USE_CCACHE"]})
         UV_TORCH_BACKEND             Framwork version: [ cu${DEFAULT_ENV_OPTS["CUDA_VERSION"]//-/} | rocm${DEFAULT_ENV_OPTS["ROCM_VERSION"]%.*} | cpu ]
-    -p [ DEFAULT | PORT ]        Expose the specified port for the Jupyter notebook server (Default: $DEFAULT_PORT)
+    -p [ AUTO | PORT ]           Expose the specified port for the Jupyter notebook server (AUTO: $DEFAULT_PORT)
     -r                           Remove the container on exit
     -s SOURCE=PATH               Local source directories to mount as volumes
         GITCONFIG                    /path/to/gitconfig (Default: ${VOL_PATHS["GITCONFIG"]})
