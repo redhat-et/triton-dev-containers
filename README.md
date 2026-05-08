@@ -318,7 +318,8 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
 > **_NOTE_**: it's also advised that you commit the image after it's
   completed initialization
-  `[podman|docker] commit <container_id> quay.io/triton-dev-containers/[cuda|cpu|rocm]:<image tag>`
+  `[podman|docker] commit <container_id>
+  quay.io/triton-dev-containers/[cuda|cpu|rocm]:<image tag>`
 
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
 and `git submodule update` on the mounted repo if you haven't already run
