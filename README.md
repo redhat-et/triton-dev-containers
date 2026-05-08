@@ -2,27 +2,26 @@
 
 ## TL;DR
 
-- **What this repo provides**: Preconfigured development containers
-for building and running Triton and Triton-cpu.
-- **Who it's for**: Developers working on Triton.
+- **What this repo provides**: Preconfigured development containers for
+building and running Triton, Triton-cpu, PyTorch, Helion and vLLM.
+- **Who it's for**: Developers working on Triton, PyTorch, Helion and vLLM.
 - **Why use it**: Provides isolated, reproducible environments for
 development.
-- **How to use it**: Mount your Triton directory into the available
-containers and start working.
+- **How to use it**: Mount your Triton, PyTorch, Helion and/or vLLM
+source directory into the available containers and start working.
 
 ---
 
 ## Details
 
-This repository provides development containers preconfigured with
-all the necessary tools to build and run Triton and Triton-cpu.
-By mounting your Triton directory from the host into the container,
-you can continue working with your preferred IDE while keeping build
-and runtime tasks isolated within the container environment. This
-repo also provides the .devcontainer files that can be used with
-the VSCode development container extension. The goal of this repo
-is to provide consistent and reproducible development environments
-for Triton.
+This repository provides development containers preconfigured with all the
+necessary tools to build and run Triton, Triton-cpu, PyTorch, Helion and/or
+vLLM. By mounting your source directory from the host into the container,
+you can continue working with your preferred IDE while keeping build and
+runtime tasks isolated within the container environment. This repo also
+provides the .devcontainer files that can be used with the VSCode
+development container extension. The goal of this repo is to provide
+consistent and reproducible development environments for Triton.
 
 ### Available Containers
 
@@ -44,19 +43,12 @@ Before using these containers, ensure you have the following installed:
 
 > **Note:** If using an NVIDIA GPU, install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
-> **Note:** The NVIDIA Container Toolkit is not required for `triton-cpu`.
-
 > **Note:** If using an AMD GPU, install the
 [ROCm Docker Prerequisites](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/docker.html).
 
-> **Note:** To install the NVIDIA NSight profiling tools, the host system needs
-to have an active Red Hat subscription. A free subscription can be acquired from
-the Red Hat Developer website.
-[Red Hat Developer: Register](https://developers.redhat.com/register)
-
-> **Note:** If using a 'rootless' triton container, the NVIDIA NSight Compute
-application will not work without enabling access to the NVIDIA GPU performance
-counters. Follow this
+> **Note:** If using a 'rootless' container, the NVIDIA NSight Compute
+application will not work without enabling access to the NVIDIA GPU
+performance counters. Follow this
 [NVIDIA Development Tools Solution](https://developer.nvidia.com/nvidia-development-tools-solutions-err_nvgpuctrperm-permission-issue-performance-counters)
 
 ### Supported Hardware
@@ -65,83 +57,283 @@ counters. Follow this
 - AMD GPUs
 - CPUs
 
-### Using Vanilla Containers
+---
 
-#### Building the triton NVIDIA vanilla container
+## Vanilla Containers
+
+---
+
+### Building
+
+#### Build Options
+
+Arguments that can be added to the build commands below, i.e. `OPTION=VALUE`.
+
+- `CENTOS_VERSION`
+  - CentOS Stream image version to use, i.e. `9`
+- `CUDA_VERSION`
+  - Use the CUDA RPM package version, i.e. `12-9`
+- `GOSU_VERSION`
+  - Check the gosu GitHub for the desired release
+  - <https://github.com/tianon/gosu>
+- `PYTHON_VERSION`
+  - Use the desired RPM package version, i.e. `3.12`
+- `ROCM_VERSION`
+  - Use the ROCm RPM package version, i.e. `7.1.1`
+- `ROCM_RHEL_VERSION`
+  - Use the ROCm RPM package for specified RHEL version, i.e. `9.7`
+
+#### All of the container images
 
 ```sh
-make triton-image
+make build-images [OPTIONS]
 ```
 
-#### Running the triton NVIDIA vanilla container
+#### Base container build
 
 ```sh
- make triton-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace> INSTALL_NSIGHT=true]
+make base-image [OPTIONS]
 ```
 
-> **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
-at container startup time.
+#### NVIDIA CUDA container build
 
-> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
-and `git submodule update` on the mounted repo if you haven't already run these
-commands.
+```sh
+make cuda-image [OPTIONS]
+```
+
+#### CPU container build
+
+```sh
+ make cpu-image [OPTIONS]
+```
+
+#### AMD ROCm container build
+
+```sh
+ make rocm-image [OPTIONS]
+```
+
+---
+
+### Running
+
+#### Runtime Options
+
+Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
+
+- `CUDA_VERSION`
+  - Use the CUDA RPM package version, i.e. `12-9`
+  - Specifies the CUDA image to use
+- `ROCM_VERSION`
+  - Specifies the ROCm image to use
+  - Use the ROCm RPM package version, i.e. `6.3.4`
+- `CENTOS_VERSION`
+  - CentOS Stream image version to use
+- `MAX_JOBS`
+  - Number of cores to use when building Triton, PyTorch, Helion or vLLM
+  - Default is the `nproc --all`
+  - NOTE: Use a lower value if builds cause the host to run out of memory
+- `CUDA_VISIBLE_DEVICES`
+  - Used to specify the CUDA device index(s) to use, i.e. `0,1`
+- `ROCR_VISIBLE_DEVICES`
+  - Used to specify the ROCm device index(s) or UUID(s) to use, i.e. `0,GPU-<UUID>`
+- `NOTEBOOK_PORT`
+  - HTTP port to expose and use for the Jupyter notebook server
+- `INSTALL_TOOLS`
+  - Install extra tools, such as profiling tools like NVIDIA's Nsight
+- `INSTALL_JUPYTER`
+  - Enabled by default, so set to `false` to not install the server
+- `INSTALL_LLVM`
+  - Default is to `skip`
+  - Set to `source` to install build deps and download the source if not
+      passed in as a volume using `llvm_path=/path/to/source`
+- `INSTALL_HELION`
+  - Default is to `skip`
+  - Set to `source` to install build deps and download the source if not
+      passed in as a volume using `helion_path=/path/to/source`
+  - Set to `release` or `nightly` to install the wheel
+- `INSTALL_TRITON`
+  - Default is to `skip`
+  - Set to `source` to install build deps and download the source if not
+      passed in as a volume using `triton_path=/path/to/source`
+  - Set to `release` to install the wheel
+- `INSTALL_TORCH`
+  - Default is to `skip`
+  - Set to `source` to install build deps and download the source if not
+      passed in as a volume using `torch_path=/path/to/source`
+  - Set to `release`, `nightly`, `test` to install the wheel
+- `INSTALL_VLLM`
+  - Default is to `skip`
+  - Set to `source` to install build deps and download the source if not
+      passed in as a volume using `vllm_path=/path/to/source`
+  - Set to `release` or `nightly` to install the wheel
+- `llvm_path`
+  - Local path to LLVM project source to be mounted at `/workspace/llvm-project`
+      within the container
+- `helion_path`
+  - Local path to Helion source to be mounted at `/workspace/helion` within
+      the container
+- `triton_path`
+  - Local path to Triton source to be mounted at `/workspace/triton` within
+      the container
+- `torch_path`
+  - Local path to PyTorch source to be mounted at `/workspace/torch` within
+      the container
+- `vllm_path`
+  - Local path to vLLM source to be mounted at `/workspace/vllm` within
+      the container
+- `user_path`
+  - General use option to mount a host path into the container at
+      `/workspace/user`
+- `PIP_TORCH_VERSION`
+  - Specify the wheel version to install, i.e. `torch==<version>`
+- `PIP_HELION_VERSION`
+  - Specify the wheel version to install, i.e. `helion==<version>`
+- `PIP_TRITON_VERSION`
+  - Specify the wheel version to install, i.e. `triton==<version>`
+- `PIP_VLLM_VERSION`
+  - Specify the wheel version to install, i.e. `vllm==<version>`
+- `gitconfig_path`
+  - Default is `~/.gitconfig`, use to specify a different gitconfig file path
+- `PIP_TORCH_INDEX_URL`
+  - Default is `https://download.pytorch.org/whl`
+  - Specify a URL to install the torch wheel from
+- `PIP_VLLM_EXTRA_INDEX_URL`
+  - Same as the torch index url above except for the vLLM wheels
+- `PIP_VLLM_COMMIT`
+  - vLLM's default index url can install specific git commit builds, specify
+      the commit hash you would like to install here
+- `USE_CCACHE`
+  - Default is `0`, set to `1` to enable the use of CCACHE for builds
+- `UV_TORCH_BACKEND`
+  - Specify the torch backend to install for the `release` target of Triton
+    and vLLM
+  - CUDA specifies `cu<cuda version>`
+  - ROCm specifies `rocm<rocm version>`
+  - CPU specifies `cpu`
+  - Can use `auto` to let `uv` select the appropriate backend
+- `create_user`
+  - Default is the host username
+  - Used to specify the username used inside the container
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
-> **_NOTE_**: if you provide `INSTALL_NSIGHT=true` the NVIDIA NSight profiling
-tools will be installed. This requires the host system to have an active
-Red Hat subscription.
+#### NVIDIA CUDA container runtime
 
-#### Building the triton-cpu vanilla container
+##### CUDA Base container runtime
 
 ```sh
- make triton-cpu-image
+ make cuda-run [OPTIONS]
 ```
 
-#### Running the triton-cpu vanilla container
+=======
+
+##### CUDA Triton container runtime
 
 ```sh
- make triton-cpu-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
+ make triton-cuda-run [OPTIONS]
 ```
 
-> **_NOTE_**: if you do not provide `triton_path` the triton-cpu repo will be cloned
-at container startup time.
+##### CUDA PyTorch container runtime
+
+```sh
+ make torch-cuda-run [OPTIONS]
+```
+
+##### CUDA Helion container runtime
+
+```sh
+ make helion-cuda-run [OPTIONS]
+```
+
+##### CUDA vLLM container runtime
+
+```sh
+ make vllm-cuda-run [OPTIONS]
+```
+
+#### CPU container runtime
+
+##### CPU Base container runtime
+
+```sh
+ make cpu-run [OPTIONS]
+```
+
+##### CPU PyTorch container runtime
+
+```sh
+ make torch-cpu-run [OPTIONS]
+```
+
+##### CPU Triton container runtime
+
+```sh
+ make triton-cpu-run [OPTIONS]
+```
+
+##### CPU Helion container runtime
+
+```sh
+ make helion-cpu-run [OPTIONS]
+```
+
+##### CPU vLLM container runtime
+
+```sh
+ make vllm-cpu-run [OPTIONS]
+```
+
+#### AMD ROCm container runtime
+
+##### ROCm Base container runtime
+
+```sh
+ make rocm-run [OPTIONS]
+```
+
+##### ROCm Triton container runtime
+
+```sh
+ make triton-rocm-run [OPTIONS]
+```
+
+##### ROCm PyTorch container runtime
+
+```sh
+ make torch-rocm-run [OPTIONS]
+```
+
+##### ROCm Helion container runtime
+
+```sh
+ make helion-rocm-run [OPTIONS]
+```
+
+##### ROCm vLLM container runtime
+
+```sh
+ make vllm-rocm-run [OPTIONS]
+```
+
+> **_NOTE_**: it's also advised that you commit the image after it's
+  completed initialization
+  `[podman|docker] commit <container_id>
+  quay.io/triton-dev-containers/[cuda|cpu|rocm]:<image tag>`
 
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
-and `git submodule update` on the mounted repo if you haven't already run these
-commands.
+and `git submodule update` on the mounted repo if you haven't already run
+these commands.
 
-> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
+---
 
-#### Building the triton-amd vanilla container
-
-```sh
- make triton-amd-image
-```
-
-#### Running the triton-amd vanilla container
-
-```sh
- make triton-amd-run [triton_path=<path-to-triton-on-host> user_path=<path-to-user-workspace>]
-```
-
-> **_NOTE_**: if you do not provide `triton_path` the triton repo will be cloned
-at container startup time.
-
-> **_NOTE_**: it's also advised that you commit the image after it's completed initialization
-`[podman|docker] commit <container_id> quay.io/triton-dev-containers/amd:latest`
-
-> **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
-and `git submodule update` on the mounted repo if you haven't already run these
-commands.
-
-> **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
-
-### Using .devcontainers with VSCODE
+## Using .devcontainers with VSCODE
 
 Please see the [.devcontainer user guide](./.devcontainer/devcontainer.md)
 
-### Demos
+---
+
+## Demos
 
 To see the VSCODE devcontainers in action please check out the
 [Triton devcontainer vscode demo](https://www.youtube.com/watch?v=ZrCVtV2Bw3s)
@@ -149,42 +341,46 @@ To see the VSCODE devcontainers in action please check out the
 To see the vanilla development containers in action please checkout the
 [Triton devcontainer demo](https://www.youtube.com/watch?v=kEbN6-pk3sI)
 
-### Why Container-First Development Matters?
+## Why Container-First Development Matters?
 
 Please checkout [why container-first development matters](./docs/ContainerFirstDevelopment.md).
 
-### More about the containers
+## More about the containers
 
 The container images provided by this repo are based on
 [RHEL UBI images](https://www.redhat.com/en/blog/introducing-red-hat-universal-base-image).
 They support both root and non-root users. For non-root
 user support, the user is created at runtime via the container
-entrypoint script [entrypoint.sh](./entrypoint.sh).
+`devcreate_user` script [devcreate_user.sh](./scripts/devcreate_user.sh).
 
-### Adding packages as a non-root user inside the development containers
+To install additional software, `sudo` has been added and the user given
+non-passworded usage of it.
 
-To add extra packages to the non-root user container, create a
-Dockerfile that extends one of the provided base/vanilla
-images:
-
-- quay.io/triton-dev-containers/nvidia
-- quay.io/triton-dev-containers/cpu
-- quay.io/triton-dev-containers/amd
-
-```dockerfile
-FROM quay.io/triton-dev-containers/nvidia:latest
-
-USER 0
-
-RUN dnf update -y && \
-    dnf -y install <PACKAGES> && \ #### <==== modify this line to add your packages.
-    dnf clean all
-```
-
-### Why do the containers install some dependencies at startup time?
+## Why do the containers install some dependencies at startup time?
 
 Some dependencies are installed at runtime to optimize image size of
 the development containers. This allows the images to remain
 lightweight while still providing all necessary functionality.
 The packages installed at startup time can be found in
-[entrypoint.sh](./entrypoint.sh).
+[devinstall_software.sh](./scripts/devinstall_software.sh).
+
+## Using the containers as a base for a customized container
+
+Use the `devsetup` script [devsetup.sh](./scripts/devsetup.sh) to run the
+initial container configuration, like user creation and base software
+installation. It will also run the `devsetup_<framework>` scripts if the
+`INSTALL_<FRAMEWORK>` variables have been set. By default they are all set
+to `skip` and won't be run.
+
+Use the `devsetup_<framework>` scripts to install or setup the container to
+build the target source. Framework refers to triton, helion, torch, llvm,
+and vllm. The scripts can install the wheel packages or download the source
+and install build dependencies.
+
+Setup Framework scripts:
+
+- [devinstall_helion.sh](./scripts/devinstall_helion.sh)
+- [devinstall_llvm.sh](./scripts/devinstall_llvm.sh)
+- [devinstall_torch.sh](./scripts/devinstall_torch.sh)
+- [devinstall_triton.sh](./scripts/devinstall_triton.sh)
+- [devinstall_vllm.sh](./scripts/devinstall_vllm.sh)
