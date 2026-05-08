@@ -89,25 +89,25 @@ Arguments that can be added to the build commands below, i.e. `OPTION=VALUE`.
 make build-images [OPTIONS]
 ```
 
-#### Base container
+#### Base container build
 
 ```sh
 make base-image [OPTIONS]
 ```
 
-#### NVIDIA CUDA container
+#### NVIDIA CUDA container build
 
 ```sh
 make cuda-image [OPTIONS]
 ```
 
-#### CPU container
+#### CPU container build
 
 ```sh
  make cpu-image [OPTIONS]
 ```
 
-#### AMD ROCm container
+#### AMD ROCm container build
 
 ```sh
  make rocm-image [OPTIONS]
@@ -206,7 +206,8 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 - `USE_CCACHE`
   - Default is `0`, set to `1` to enable the use of CCACHE for builds
 - `UV_TORCH_BACKEND`
-  - Specify the torch backend to install for the `release` target of Triton and vLLM
+  - Specify the torch backend to install for the `release` target of Triton
+    and vLLM
   - CUDA specifies `cu<cuda version>`
   - ROCm specifies `rocm<rocm version>`
   - CPU specifies `cpu`
@@ -217,9 +218,9 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
 
-#### NVIDIA CUDA containers
+#### NVIDIA CUDA container runtime
 
-##### CUDA Base
+##### CUDA Base container runtime
 
 ```sh
  make cuda-run [OPTIONS]
@@ -227,100 +228,101 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
 =======
 
-##### CUDA Triton
+##### CUDA Triton container runtime
 
 ```sh
  make triton-cuda-run [OPTIONS]
 ```
 
-##### CUDA PyTorch
+##### CUDA PyTorch container runtime
 
 ```sh
  make torch-cuda-run [OPTIONS]
 ```
 
-##### CUDA Helion
+##### CUDA Helion container runtime
 
 ```sh
  make helion-cuda-run [OPTIONS]
 ```
 
-##### CUDA vLLM
+##### CUDA vLLM container runtime
 
 ```sh
  make vllm-cuda-run [OPTIONS]
 ```
 
-#### CPU container
+#### CPU container runtime
 
-##### CPU Base
+##### CPU Base container runtime
 
 ```sh
  make cpu-run [OPTIONS]
 ```
 
-##### CPU PyTorch
+##### CPU PyTorch container runtime
 
 ```sh
  make torch-cpu-run [OPTIONS]
 ```
 
-##### CPU Triton
+##### CPU Triton container runtime
 
 ```sh
  make triton-cpu-run [OPTIONS]
 ```
 
-##### CPU Helion
+##### CPU Helion container runtime
 
 ```sh
  make helion-cpu-run [OPTIONS]
 ```
 
-##### CPU vLLM
+##### CPU vLLM container runtime
 
 ```sh
  make vllm-cpu-run [OPTIONS]
 ```
 
-#### AMD ROCm container
+#### AMD ROCm container runtime
 
-##### ROCm Base
+##### ROCm Base container runtime
 
 ```sh
  make rocm-run [OPTIONS]
 ```
 
-##### ROCm Triton
+##### ROCm Triton container runtime
 
 ```sh
  make triton-rocm-run [OPTIONS]
 ```
 
-##### ROCm PyTorch
+##### ROCm PyTorch container runtime
 
 ```sh
  make torch-rocm-run [OPTIONS]
 ```
 
-##### ROCm Helion
+##### ROCm Helion container runtime
 
 ```sh
  make helion-rocm-run [OPTIONS]
 ```
 
-##### ROCm vLLM
+##### ROCm vLLM container runtime
 
 ```sh
  make vllm-rocm-run [OPTIONS]
 ```
 
-> **_NOTE_**: it's also advised that you commit the image after it's completed initialization
-`[podman|docker] commit <container_id> quay.io/triton-dev-containers/[cuda|cpu|rocm]:<image tag>`
+> **_NOTE_**: it's also advised that you commit the image after it's
+  completed initialization
+  `[podman|docker] commit <container_id> quay.io/triton-dev-containers/[cuda|cpu|rocm]:<image tag>`
 
 > **_NOTE_**: if you do provide a triton_path you should run `git submodule init`
-and `git submodule update` on the mounted repo if you haven't already run these
-commands.
+and `git submodule update` on the mounted repo if you haven't already run
+these commands.
 
 ---
 
@@ -363,13 +365,16 @@ The packages installed at startup time can be found in
 
 ## Using the containers as a base for a customized container
 
-Use the `devsetup` script [devsetup.sh](./scripts/devsetup.sh) to run the initial container configuration, like user creation and base software installation.
-It will also run the `devsetup_<framework>` scripts if the `INSTALL_<FRAMEWORK>` variables have been set. By default they are all set to `skip` and won't be run.
+Use the `devsetup` script [devsetup.sh](./scripts/devsetup.sh) to run the
+initial container configuration, like user creation and base software
+installation. It will also run the `devsetup_<framework>` scripts if the
+`INSTALL_<FRAMEWORK>` variables have been set. By default they are all set
+to `skip` and won't be run.
 
-Use the `devsetup_<framework>` scripts to install or setup the container to build
-the target source. Framework refers to triton, helion, torch, llvm, and vllm.
-The scripts can install the wheel packages or download the source and install
-build dependencies.
+Use the `devsetup_<framework>` scripts to install or setup the container to
+build the target source. Framework refers to triton, helion, torch, llvm,
+and vllm. The scripts can install the wheel packages or download the source
+and install build dependencies.
 
 Setup Framework scripts:
 
