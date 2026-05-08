@@ -65,7 +65,7 @@ performance counters. Follow this
 
 ### Building
 
-#### Options
+#### Build Options
 
 Arguments that can be added to the build commands below, i.e. `OPTION=VALUE`.
 
@@ -117,7 +117,7 @@ make cuda-image [OPTIONS]
 
 ### Running
 
-#### Options
+#### Runtime Options
 
 Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
@@ -219,32 +219,33 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
 #### NVIDIA CUDA containers
 
-##### Base
+##### CUDA Base
 
 ```sh
  make cuda-run [OPTIONS]
 ```
 
 =======
-##### Triton
+
+##### CUDA Triton
 
 ```sh
  make triton-cuda-run [OPTIONS]
 ```
 
-##### PyTorch
+##### CUDA PyTorch
 
 ```sh
  make torch-cuda-run [OPTIONS]
 ```
 
-##### Helion
+##### CUDA Helion
 
 ```sh
  make helion-cuda-run [OPTIONS]
 ```
 
-##### vLLM
+##### CUDA vLLM
 
 ```sh
  make vllm-cuda-run [OPTIONS]
@@ -252,31 +253,31 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
 #### CPU container
 
-##### Base
+##### CPU Base
 
 ```sh
  make cpu-run [OPTIONS]
 ```
 
-##### PyTorch
+##### CPU PyTorch
 
 ```sh
  make torch-cpu-run [OPTIONS]
 ```
 
-##### Triton
+##### CPU Triton
 
 ```sh
  make triton-cpu-run [OPTIONS]
 ```
 
-##### Helion
+##### CPU Helion
 
 ```sh
  make helion-cpu-run [OPTIONS]
 ```
 
-##### vLLM
+##### CPU vLLM
 
 ```sh
  make vllm-cpu-run [OPTIONS]
@@ -284,31 +285,31 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
 
 #### AMD ROCm container
 
-##### Base
+##### ROCm Base
 
 ```sh
  make rocm-run [OPTIONS]
 ```
 
-##### Triton
+##### ROCm Triton
 
 ```sh
  make triton-rocm-run [OPTIONS]
 ```
 
-##### PyTorch
+##### ROCm PyTorch
 
 ```sh
  make torch-rocm-run [OPTIONS]
 ```
 
-##### Helion
+##### ROCm Helion
 
 ```sh
  make helion-rocm-run [OPTIONS]
 ```
 
-##### vLLM
+##### ROCm vLLM
 
 ```sh
  make vllm-rocm-run [OPTIONS]
