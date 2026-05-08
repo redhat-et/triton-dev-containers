@@ -216,7 +216,7 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
   - Used to specify the username used inside the container
 
 > **_NOTE_**: the `user_path` will be mounted inside the container at `/workspace/user`.
-  
+
 #### NVIDIA CUDA containers
 
 ##### Base
