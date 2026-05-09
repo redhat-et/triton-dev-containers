@@ -90,7 +90,7 @@ This option clones the entire `triton-dev-containers` repository.
 ```bash
 git clone https://github.com/redhat-et/triton-dev-containers.git
 cd triton-dev-containers
-make devcontainers
+make -C .devcontainer generate
 ```
 
 ### Launch VSCode Dev Container

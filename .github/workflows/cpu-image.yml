@@ -44,8 +44,6 @@ jobs:
       image-name: cpu
       image-tag: centos9
       dockerfile: dockerfiles/Dockerfile.cpu
-      build-args: |
-        USERNAME=triton
       platforms: linux/amd64
     secrets:
       qt_username: ${{ secrets.qt_username }}
