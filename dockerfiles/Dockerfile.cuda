@@ -29,7 +29,7 @@ RUN dnf -y update && \
 
 ENV CUDA_VERSION=$BUILD_CUDA_VERSION
 
-COPY examples/flash_attention_demo.ipynb flash_attention_demo.ipynb
+COPY examples/flash_attention_demo.ipynb examples/flash_attention_demo.ipynb
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

@@ -44,8 +44,8 @@ ENV ROCM_VERSION=$BUILD_ROCM_VERSION \
     LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/opt/rocm/lib:/opt/rocm/llvm/lib \
     PATH=/opt/rocm/bin:/opt/rocm/llvm/bin:$PATH
 
-COPY examples/triton-vector-add-rocm.py triton-vector-add-rocm.py
-COPY examples/flash_attention_demo.ipynb flash_attention_demo.ipynb
+COPY examples/triton-vector-add-rocm.py examples/triton-vector-add-rocm.py
+COPY examples/flash_attention_demo.ipynb examples/flash_attention_demo.ipynb
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
