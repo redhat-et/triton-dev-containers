@@ -68,38 +68,38 @@ RUN dnf -y update && \
     python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip vim zlib-devel && \
     dnf clean all
 
-# Create the /workspace directory and set permissions
+# Create the /workspace directory and Python virtual environment
 WORKDIR $WORKSPACE
 RUN python${PYTHON_VERSION} -m pip install uv && \
-    uv venv --python ${PYTHON_VERSION} --seed $WORKSPACE && \
-    echo "unset BASH_ENV PROMPT_COMMAND ENV" >> ${WORKSPACE}/bin/activate && \
-    chmod -R 777 $WORKSPACE
+    uv venv --python ${PYTHON_VERSION} --seed $WORKSPACE/.venv && \
+    echo "unset BASH_ENV PROMPT_COMMAND ENV" >> ${WORKSPACE}/.venv/bin/activate && \
+    chmod -R 777 $WORKSPACE/.venv
 
-ENV BASH_ENV=${WORKSPACE}/bin/activate \
-    ENV=${WORKSPACE}/bin/activate \
+ENV BASH_ENV=${WORKSPACE}/.venv/bin/activate \
+    ENV=${WORKSPACE}/.venv/bin/activate \
     LANG=en_US.UTF-8 \
     LC_ALL=C.UTF-8 \
-    PATH=${WORKSPACE}/bin:$PATH \
-    PIP_PREFIX=$WORKSPACE \
-    PROMPT_COMMAND=". ${WORKSPACE}/bin/activate" \
+    PATH=${WORKSPACE}/.venv/bin:${WORKSPACE}/tools:$PATH \
+    PIP_PREFIX=$WORKSPACE/.venv \
+    PROMPT_COMMAND=". ${WORKSPACE}/.venv/bin/activate" \
     PYTHON_VERSION=$PYTHON_VERSION \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=${WORKSPACE}/lib/python${PYTHON_VERSION}/site-packages \
+    PYTHONPATH=${WORKSPACE}/.venv/lib/python${PYTHON_VERSION}/site-packages \
     TRITON_HOME=$WORKSPACE \
     TRITON_CACHE_DIR=${WORKSPACE}/.triton/cache \
     CENTOS_VERSION=$CENTOS_VERSION \
     UV_HTTP_TIMEOUT=60 \
     WORKSPACE=$WORKSPACE \
-    XDG_CACHE_HOME=$WORKSPACE
+    XDG_CACHE_HOME=$WORKSPACE/.cache
 
-COPY scripts/devcreate_user.sh ${WORKSPACE}/bin/devcreate_user
-COPY scripts/devinstall_llvm.sh ${WORKSPACE}/bin/devinstall_llvm
-COPY scripts/devinstall_torch.sh ${WORKSPACE}/bin/devinstall_torch
-COPY scripts/devinstall_helion.sh ${WORKSPACE}/bin/devinstall_helion
-COPY scripts/devinstall_software.sh ${WORKSPACE}/bin/devinstall_software
-COPY scripts/devinstall_triton.sh ${WORKSPACE}/bin/devinstall_triton
-COPY scripts/devinstall_vllm.sh ${WORKSPACE}/bin/devinstall_vllm
-COPY scripts/devsetup.sh ${WORKSPACE}/bin/devsetup
-COPY scripts/ldpretend.sh ${WORKSPACE}/bin/ldpretend
+COPY scripts/devcreate_user.sh ${WORKSPACE}/tools/devcreate_user
+COPY scripts/devinstall_llvm.sh ${WORKSPACE}/tools/devinstall_llvm
+COPY scripts/devinstall_torch.sh ${WORKSPACE}/tools/devinstall_torch
+COPY scripts/devinstall_helion.sh ${WORKSPACE}/tools/devinstall_helion
+COPY scripts/devinstall_software.sh ${WORKSPACE}/tools/devinstall_software
+COPY scripts/devinstall_triton.sh ${WORKSPACE}/tools/devinstall_triton
+COPY scripts/devinstall_vllm.sh ${WORKSPACE}/tools/devinstall_vllm
+COPY scripts/devsetup.sh ${WORKSPACE}/tools/devsetup
+COPY scripts/ldpretend.sh ${WORKSPACE}/tools/ldpretend
 
-COPY hack/triton-gpu-check.py triton-gpu-check.py
+COPY hack/triton-gpu-check.py ${WORKSPACE}/tools/triton-gpu-check
