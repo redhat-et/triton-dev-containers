@@ -155,7 +155,7 @@ install_whl() {
 	case "$pip_build" in
 	release) ;;
 	nightly)
-		PIP_VLLM_EXTRA_INDEX_URL="${pip_vllm_index_url_base}/nightly"
+		PIP_VLLM_EXTRA_INDEX_URL="${PIP_VLLM_EXTRA_INDEX_URL:-${pip_vllm_index_url_base}/nightly}"
 		;;
 	esac
 
