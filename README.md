@@ -226,8 +226,6 @@ Arguments that can be added to the run commands below, i.e. `OPTION=VALUE`.
  make cuda-run [OPTIONS]
 ```
 
-=======
-
 ##### CUDA Triton container runtime
 
 ```sh
