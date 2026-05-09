@@ -155,7 +155,7 @@ install_whl() {
 	case "$pip_build" in
 	release) ;;
 	nightly)
-		PIP_VLLM_EXTRA_INDEX_URL="${pip_vllm_index_url_base}/nightly"
+		PIP_VLLM_EXTRA_INDEX_URL="${PIP_VLLM_EXTRA_INDEX_URL:-${pip_vllm_index_url_base}/nightly}"
 		;;
 	esac
 
@@ -164,9 +164,9 @@ install_whl() {
 	if [ -n "${PIP_VLLM_EXTRA_INDEX_URL:-}" ]; then
 		echo "Using the specified index, $PIP_VLLM_EXTRA_INDEX_URL"
 		pip_install_args+=("--extra-index-url" "$PIP_VLLM_EXTRA_INDEX_URL")
-	elif [ -n "${VLLM_COMMIT:-}" ]; then
-		echo "Using the build from commit $VLLM_COMMIT ..."
-		pip_install_args+=("--extra-index-url" "${pip_vllm_index_url_base}/${VLLM_COMMIT}")
+	elif [ -n "${PIP_VLLM_COMMIT:-}" ]; then
+		echo "Using the build from commit $PIP_VLLM_COMMIT ..."
+		pip_install_args+=("--extra-index-url" "${pip_vllm_index_url_base}/${PIP_VLLM_COMMIT}")
 	elif command -v uv &>/dev/null; then
 		if [ -n "${UV_TORCH_BACKEND:-}" ]; then
 			echo "Using the specified uv backend, $UV_TORCH_BACKEND"
