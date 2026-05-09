@@ -14,7 +14,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-ARG CENTOS_VERSION=10
+ARG CENTOS_VERSION=9
 FROM quay.io/centos/centos:stream${CENTOS_VERSION}-minimal AS gosu
 
 USER 0

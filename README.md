@@ -366,11 +366,11 @@ The packages installed at startup time can be found in
 
 Use the `devsetup` script [devsetup.sh](./scripts/devsetup.sh) to run the
 initial container configuration, like user creation and base software
-installation. It will also run the `devsetup_<framework>` scripts if the
+installation. It will also run the `devinstall_<framework>` scripts if the
 `INSTALL_<FRAMEWORK>` variables have been set. By default they are all set
 to `skip` and won't be run.
 
-Use the `devsetup_<framework>` scripts to install or setup the container to
+Use the `devinstall_<framework>` scripts to install or setup the container to
 build the target source. Framework refers to triton, helion, torch, llvm,
 and vllm. The scripts can install the wheel packages or download the source
 and install build dependencies.

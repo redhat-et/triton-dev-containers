@@ -50,7 +50,6 @@ IMAGE_REPO = quay.io/triton-dev-containers
 BASE_IMAGE_NAME = base
 CPU_IMAGE_NAME  = cpu
 CUDA_IMAGE_NAME = cuda
-GOSU_IMAGE_NAME = gosu
 ROCM_IMAGE_NAME = rocm
 
 # Image tags
@@ -59,13 +58,11 @@ IMAGE_TAG      := centos$(CENTOS_VERSION)
 BASE_IMAGE_TAG := $(IMAGE_TAG)
 CPU_IMAGE_TAG  := $(IMAGE_TAG)
 CUDA_IMAGE_TAG := $(CUDA_VERSION)-$(IMAGE_TAG)
-GOSU_IMAGE_TAG := $(GOSU_VERSION)-$(IMAGE_TAG)
 ROCM_IMAGE_TAG := $(ROCM_VERSION)-$(IMAGE_TAG)
 
 # ------------------------------------------------------------------------------
 # Runtime configuration
 # ------------------------------------------------------------------------------
-RUNTIME_ARGS ?=
 
 # Set the max number of jobs to use when building a framework
 # Use a lower value to decrease ram usage during a build
@@ -137,16 +134,6 @@ define build-image
 	$(CTR_CMD) build -t $(IMAGE_REPO)/$(1):$(2) \
 		$(3) -f $(4) .
 endef
-
-# Old build targets (DEPRECATED)
-.PHONY: triton-image
-triton-image: cuda-image
-
-.PHONY: triton-cpu-image
-triton-cpu-image: cpu-image
-
-.PHONY: triton-amd-image
-triton-amd-image: rocm-image
 
 .PHONY: build-images
 build-images: cuda-image cpu-image rocm-image ## Build all container images
@@ -286,15 +273,6 @@ define ROCM_RUNTIME_ARGS
 	$(RUNTIME_ARGS) \
 	-o ROCM_VERSION=$(ROCM_VERSION)
 endef
-
-
-# Old runtime targets (DEPRECATED)
-.PHONY: triton-run
-triton-run: triton-cuda-run
-
-.PHONY: triton-amd-run
-triton-amd-run: triton-rocm-run
-
 
 .PHONY: base-run
 base-run: ## Run the Base container image
