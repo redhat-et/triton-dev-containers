@@ -47,6 +47,10 @@ ARG WORKSPACE=/workspace
 
 USER 0
 
+# Clean up CentOS kickstart artifacts from /root
+RUN rm -f /root/anaconda-ks.cfg /root/anaconda-post-nochroot.log \
+    /root/anaconda-post.log /root/original-ks.cfg
+
 COPY --from=gosu /usr/local/bin/gosu /usr/local/bin/gosu
 
 # Install the EPEL repo and enable CRB
