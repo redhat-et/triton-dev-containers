@@ -1,2 +1,21 @@
 # Generated devcontainer.json files
 */devcontainer.json
+
+# Python virtual environments
+venv/
+.venv/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
