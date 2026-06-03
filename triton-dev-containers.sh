@@ -91,7 +91,7 @@ declare -A DEFAULT_ENV_OPTS=(
 	["ROCM_VERSION"]=7.1.1
 	["ROCR_VISIBLE_DEVICES"]=${ROCR_VISIBLE_DEVICES:-0}
 	["USE_CCACHE"]=0
-	["USER"]=""
+	["USERNAME"]=""
 	["USER_UID"]=""
 	["USER_GID"]=""
 	["UV_TORCH_BACKEND"]=""
@@ -293,7 +293,7 @@ set_user_args() {
 	fi
 
 	if [ -n "${USERNAME:-}" ] && [ "${USERNAME:-}" != "root" ]; then
-		set_env_opt USER "$USERNAME"
+		set_env_opt USERNAME "$USERNAME"
 		set_env_opt USER_UID "$(id -u "$USER")"
 		set_env_opt USER_GID "$(id -g "$USER")"
 	elif [ "$(basename "$CTR_CMD")" = "docker" ]; then
