@@ -118,7 +118,7 @@ Options
     -c REMOTE_CONNECTION         Use the remote podman system
     -d DEVICE                    Target device [ base | cpu | cuda | rocm ] (Default: $TARGET_DEVICE)
     -i IMAGE                     Image (Default: $DEFAULT_IMAGE)
-    -j MAX_JOBS                  Maximum number of jobs to use when building Triton/Helion/PyTorch/vLLM (Default: $MAX_JOBS)
+    -j MAX_JOBS                  Maximum number of jobs to use when building Triton/Helion/PyTorch/vLLM (Default: ${DEFAULT_ENV_OPTS["MAX_JOBS"]})
     -k TARGET_STACK              Target stack [ helion | torch | triton | vllm ]
     -o OPTION=ARGUMENT           Specify a argument for an option
         CUDA_VERSION                 CUDA version (Default: ${DEFAULT_ENV_OPTS["CUDA_VERSION"]})
